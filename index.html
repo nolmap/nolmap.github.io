@@ -11,10 +11,9 @@
   카카오맵 SDK 로드
   * appkey= 뒤를 발급받은 "JavaScript 키"로 교체하세요 (REST API 키 아님)
   * developers.kakao.com 콘솔 > 내 애플리케이션 > 앱 설정 > 플랫폼 > Web
-    에 이 페이지의 정확한 도메인(예: https://pjy-server.github.io)을
-    등록해야 지도가 뜹니다. 미등록 시 "등록되지 않은 도메인" 에러 발생.
-  * autoload=false + kakao.maps.load() 조합은 스크립트 로딩 타이밍 문제
-    (가장 흔한 실패 원인)를 막기 위한 필수 패턴입니다.
+    에 이 페이지의 정확한 도메인을 등록해야 지도가 뜹니다.
+  * autoload=false + kakao.maps.load() 조합은 스크립트 로딩 타이밍 문제를
+    막기 위한 필수 패턴입니다.
   ============================================================
 -->
 <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=fdf609543f391b19f0295840c6173357&autoload=false"></script>
@@ -455,6 +454,56 @@
   const ANGEL_SPOT   = [37.4990, 126.8874];
   const DISCOVER_SPOT= [37.4983, 126.8891];
 
+  // ============================================================
+  // 도보 경로 조회 REST API 키
+  // * "JavaScript 키"가 아니라 "REST API 키"를 넣어야 합니다.
+  // * ⚠️ 정적 사이트(GitHub Pages)에는 서버가 없어서 이 키가
+  //   브라우저 소스에 그대로 노출됩니다. 소규모/비상업 데모용으로만
+  //   쓰고, 실서비스로 키우실 땐 서버리스 프록시로 숨기는 걸 권장합니다.
+  // ============================================================
+  const REST_API_KEY = '여기에_발급받은_REST_API_키_입력';
+
+  // 카카오맵 REST API로 실제 도보 경로(좌표 리스트)를 가져옵니다.
+  // 응답 구조가 예상과 다르면 콘솔에 원본 응답을 출력하고 null을 반환합니다.
+  async function fetchWalkingRoute(originArr, destArr){
+    const origin = `${originArr[1]},${originArr[0]}`;      // lng,lat
+    const destination = `${destArr[1]},${destArr[0]}`;      // lng,lat
+    const url = `https://dapi.kakao.com/v2/routing/walk?origin=${origin}&destination=${destination}`;
+
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: `KakaoAK ${REST_API_KEY}` }
+      });
+      if (!res.ok) {
+        console.warn('도보 경로 API 응답 실패:', res.status, await res.text());
+        return null;
+      }
+      const data = await res.json();
+      console.log('도보 경로 API 원본 응답(구조 확인용):', data);
+
+      // 흔한 카카오 라우팅 응답 형태를 방어적으로 파싱: routes[].sections[].roads[].vertexes
+      // vertexes는 [lng, lat, lng, lat, ...] 형태의 평탄화된 배열입니다.
+      const routes = data.routes || [];
+      if (!routes.length) { console.warn('routes가 비어 있습니다.'); return null; }
+
+      const points = [];
+      (routes[0].sections || []).forEach(section => {
+        (section.roads || []).forEach(road => {
+          const v = road.vertexes || [];
+          for (let i = 0; i < v.length; i += 2) {
+            points.push(new kakao.maps.LatLng(v[i + 1], v[i]));
+          }
+        });
+      });
+
+      if (!points.length) { console.warn('경로 좌표를 찾지 못했습니다. 응답 구조를 콘솔에서 확인하세요.'); return null; }
+      return points;
+    } catch (e) {
+      console.warn('도보 경로 API 호출 중 오류:', e);
+      return null;
+    }
+  }
+
   function go(name){
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-' + name).classList.add('active');
@@ -508,28 +557,45 @@
     return pos;
   }
 
-  function drawRouteOnMap(currentStart) {
+  async function drawRouteOnMap(currentStart) {
     const startLL   = new kakao.maps.LatLng(currentStart[0], currentStart[1]);
     const noguroLL  = new kakao.maps.LatLng(NOLGURO[0], NOLGURO[1]);
     const dangerLL  = new kakao.maps.LatLng(DANGER_SPOT[0], DANGER_SPOT[1]);
     const angelLL   = new kakao.maps.LatLng(ANGEL_SPOT[0], ANGEL_SPOT[1]);
     const discoverLL= new kakao.maps.LatLng(DISCOVER_SPOT[0], DISCOVER_SPOT[1]);
 
-    // 안전 전체 경로 (파란 점선)
-    new kakao.maps.Polyline({
-      map: map,
-      path: [startLL, dangerLL, angelLL, discoverLL, noguroLL],
-      strokeWeight: 5,
-      strokeColor: '#5BB8DB',
-      strokeOpacity: 0.9,
-      strokeStyle: 'shortdash'
-    });
+    // 실제 도보 경로(도로를 따라가는 선)를 먼저 시도합니다.
+    const realPath = await fetchWalkingRoute(currentStart, NOLGURO);
 
-    // 위험 구간 (빨간 실선)
+    if (realPath && realPath.length > 1) {
+      // 실제 도로를 따라가는 경로 (파란 실선)
+      new kakao.maps.Polyline({
+        map: map,
+        path: realPath,
+        strokeWeight: 5,
+        strokeColor: '#5BB8DB',
+        strokeOpacity: 0.9,
+        strokeStyle: 'solid'
+      });
+      setMapStatus('');
+    } else {
+      // 실패 시 기존 더미 직선 경로로 폴백 (파란 점선)
+      new kakao.maps.Polyline({
+        map: map,
+        path: [startLL, dangerLL, angelLL, discoverLL, noguroLL],
+        strokeWeight: 5,
+        strokeColor: '#5BB8DB',
+        strokeOpacity: 0.9,
+        strokeStyle: 'shortdash'
+      });
+      setMapStatus('실제 도보 경로를 불러오지 못해 임시 경로로 표시합니다. (콘솔 확인)', true);
+    }
+
+    // 위험 구간 표시 (빨간 실선) — 참고용 더미 구간, 위 실경로 위에 겹쳐 표시
     new kakao.maps.Polyline({
       map: map,
       path: [dangerLL, angelLL],
-      strokeWeight: 5,
+      strokeWeight: 6,
       strokeColor: '#E53E3E',
       strokeOpacity: 0.9,
       strokeStyle: 'solid'
