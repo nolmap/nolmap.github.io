@@ -2,63 +2,44 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>놀구로오는길</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@1.3.9/dist/web/static/pretendard.css">
-
-<!--
-  ============================================================
-  카카오맵 SDK 로드
-  * appkey= 뒤를 발급받은 "JavaScript 키"로 교체하세요 (REST API 키 아님)
-  * developers.kakao.com 콘솔 > 내 애플리케이션 > 앱 설정 > 플랫폼 > Web
-    에 이 페이지의 정확한 도메인을 등록해야 지도가 뜹니다.
-  * autoload=false + kakao.maps.load() 조합은 스크립트 로딩 타이밍 문제를
-    막기 위한 필수 패턴입니다.
-  ============================================================
--->
-<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=fdf609543f391b19f0295840c6173357&autoload=false"></script>
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=72a17c082364ffa07650f46c5870c1f7&autoload=false"></script>
 <style>
   :root{
-    --sky-100:#EAF7FC;
-    --sky-300:#BFE9F7;
-    --sky-500:#5BB8DB;
-    --sky-700:#2E7A99;
+    --bg-mint:#F2FAE7;
+    --leaf:#8FD14F;
+    --leaf-deep:#5FAE3A;
+    --leaf-text:#3E7A2C;
     --white:#FFFFFF;
-    --map-bg:#F7F9FA;
-    --road:#E2E8ED;
-    --ink:#26313D;
-    --muted:#6B7785;
-    --danger:#E53E3E;
-    --danger-bg:#FDECEA;
-    --angel:#F4B942;
-    --angel-bg:#FFF6E1;
-    --discover:#B5714A;
-    --discover-bg:#F4E9E2;
-    --yellow:#FFC93C;
-    --yellow-bg:#FFF6DA;
-    --shadow:0 8px 20px rgba(91,184,219,0.16);
-    --r-btn:16px;
-    --r-card:20px;
+    --danger:#FF6B6B;
+    --danger-bg:#FFEAEA;
+    --safe:#63C24A;
+    --safe-bg:#E9F8E1;
+    --lamp:#FFC94A;
+    --ink:#3A4A2E;
+    --muted:#8B9C7E;
+    --shadow: 0 8px 20px rgba(95,174,58,0.18);
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
-    background:#DCEEF5;
+    background:#DCE9D0;
     display:flex;
     justify-content:center;
     padding:40px 12px;
-    font-family:'Pretendard', sans-serif;
+    font-family:'Gowun Dodum', sans-serif;
     color:var(--ink);
-    -webkit-font-smoothing:antialiased;
   }
   .phone{
     width:390px;
     max-width:100%;
     height:800px;
-    background:var(--sky-100);
+    background:var(--bg-mint);
     border-radius:44px;
-    box-shadow:0 30px 60px rgba(0,0,0,0.22);
+    box-shadow:0 30px 60px rgba(0,0,0,0.25);
     overflow:hidden;
     position:relative;
     border:8px solid #FFFFFF;
@@ -66,586 +47,947 @@
     flex-direction:column;
   }
   .status{
-    display:flex;justify-content:space-between;
+    display:flex;
+    justify-content:space-between;
     padding:14px 26px 4px;
-    font-size:13px;font-weight:700;
-    color:var(--sky-700);
+    font-size:13px;
+    font-weight:700;
+    color:var(--leaf-text);
     flex-shrink:0;
   }
-  .brand-row{
-    padding:2px 22px 14px;
+  .header{
+    padding:6px 22px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
     flex-shrink:0;
-    text-align:center;
   }
-  .brand-title{
-    display:inline-block;
-    font-size:48px;
-    font-weight:800;
-    letter-spacing:-1px;
-    color:#F2B705;
-    transform:skewX(-9deg);
-    transform-origin:center bottom;
-    max-width:100%;
-    line-height:1;
+  .mascot-sm{width:38px;height:38px;flex-shrink:0;}
+  .title{
+    font-family:'Jua', sans-serif;
+    font-size:19px;
+    color:var(--leaf-text);
+    line-height:1.15;
+  }
+  .subtitle{
+    font-size:11px;
+    color:#79936A;
+    margin-top:1px;
   }
 
-  .screens{flex:1;overflow-y:auto;padding:0 18px 18px;}
+  .screens{
+    flex:1;
+    overflow-y:auto;
+    padding:0 18px 18px;
+    position:relative;
+  }
   .screen{display:none;}
-  .screen.active{display:block;animation:fade .25s ease;}
-  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .screen.active{display:block; animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
 
-  .icon{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;}
+  /* 지도 전체화면 모드 */
+  .screens.fullmap{padding:0; overflow:hidden;}
+  .map-screen{position:relative; width:100%; height:100%;}
+  .map-screen.active{display:block;}
+  .map-top-bar{
+    position:absolute; top:12px; left:12px; right:12px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:8px; z-index:5; pointer-events:none;
+  }
+  .map-top-bar .map-title{
+    background:var(--white);
+    padding:8px 14px; border-radius:999px;
+    box-shadow:var(--shadow);
+    font-family:'Jua', sans-serif; font-size:14px; color:var(--leaf-text);
+  }
+  .map-top-bar .badge-pill{
+    background:var(--white); box-shadow:var(--shadow);
+    padding:8px 13px;
+  }
+  .locate-fab{
+    position:absolute; right:14px; z-index:6;
+    bottom:calc(var(--sheet-h, 190px) + 14px);
+    width:46px; height:46px; border-radius:50%;
+    border:none; background:var(--white);
+    box-shadow:0 6px 16px rgba(0,0,0,0.2);
+    font-size:20px; cursor:pointer;
+    transition:bottom .3s ease;
+  }
+  .superzoom{
+    position:absolute; left:14px; z-index:6;
+    bottom:calc(var(--sheet-h, 190px) + 14px);
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .superzoom button{
+    width:44px; height:44px; border-radius:14px;
+    border:none; background:var(--white);
+    box-shadow:0 6px 16px rgba(0,0,0,0.2);
+    font-size:15px; cursor:pointer;
+  }
+  .map-sheet{
+    position:absolute; left:0; right:0; bottom:0; z-index:5;
+    background:var(--bg-mint);
+    border-radius:24px 24px 0 0;
+    box-shadow:0 -8px 24px rgba(0,0,0,0.16);
+    padding:8px 16px 16px;
+    max-height:78%;
+    overflow-y:auto;
+    transition:transform .3s ease;
+  }
+  .map-sheet.collapsed{transform:translateY(calc(100% - 96px));}
+  .sheet-handle{
+    width:44px; height:5px; border-radius:999px;
+    background:#C9DABB; margin:2px auto 12px;
+    cursor:pointer;
+  }
+  .sheet-handle::after{
+    content:''; display:block;
+    position:relative; top:-14px; height:26px;
+  }
+  .phone.mapmode .header{display:none;}
+
+  /* 놀구로 소개 카드 */
+  .place-card{
+    background:var(--white);
+    border-radius:22px;
+    padding:16px;
+    box-shadow:var(--shadow);
+    margin-bottom:6px;
+  }
+  .place-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .place-emoji{
+    width:46px;height:46px;border-radius:16px;
+    background:var(--safe-bg);
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;flex-shrink:0;
+  }
+  .place-head h4{
+    font-family:'Jua', sans-serif;font-size:15px;margin:0;color:var(--ink);
+  }
+  .place-tag{
+    font-size:10.5px;color:var(--leaf-deep);margin:3px 0 0;
+    background:var(--safe-bg);display:inline-block;
+    padding:3px 9px;border-radius:999px;
+  }
+  .place-desc{
+    font-size:11.5px;color:var(--muted);line-height:1.55;margin:0 0 12px;
+  }
+  .place-info{
+    background:var(--bg-mint);border-radius:14px;padding:10px 12px;
+  }
+  .info-row{
+    display:flex;gap:8px;align-items:flex-start;
+    font-size:11px;color:#5E7150;line-height:1.5;
+    padding:3px 0;
+  }
+  .info-row .ic{flex-shrink:0;}
+  .place-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .ptag{
+    background:var(--safe-bg);color:var(--leaf-deep);
+    font-size:10.5px;font-weight:700;
+    padding:5px 10px;border-radius:999px;
+  }
 
   /* 카드 공통 */
-  .card{background:var(--white);border-radius:var(--r-card);padding:14px 14px 12px;box-shadow:var(--shadow);}
+  .card{
+    background:var(--white);
+    border-radius:22px;
+    padding:14px 14px 12px;
+    box-shadow:var(--shadow);
+  }
   .card .icon-circle{
-    width:36px;height:36px;border-radius:12px;
-    background:var(--sky-100);color:var(--sky-700);
+    width:36px;height:36px;
+    border-radius:50%;
+    background:var(--leaf);
     display:flex;align-items:center;justify-content:center;
     margin-bottom:7px;
+    font-size:16px;
   }
-  .card .icon-circle.yellow{background:var(--yellow-bg);color:#B8860B;}
-  .card .icon-circle.red{background:var(--danger-bg);color:var(--danger);}
-  .card h4{font-size:13px;font-weight:800;margin:0 0 4px;color:var(--ink);}
-  .card p{font-size:11px;margin:0;color:var(--muted);line-height:1.4;}
-  .card .stat{font-size:19px;font-weight:800;color:var(--sky-700);}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .section-label{font-size:13px;font-weight:800;color:var(--sky-700);margin:14px 2px 8px;display:flex;align-items:center;gap:6px;}
+  .card .icon-circle.red{background:var(--danger-bg);}
+  .card .icon-circle.yellow{background:#FFF3D6;}
+  .card h4{
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+  .card p{
+    font-size:11px;
+    margin:0;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .card .stat{
+    font-family:'Jua', sans-serif;
+    font-size:18px;
+    color:var(--leaf-deep);
+  }
+  .grid2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .section-label{
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    color:var(--leaf-text);
+    margin:14px 2px 8px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
   .section-label:first-child{margin-top:2px;}
-  .section-label .icon{width:16px;height:16px;}
 
-  /* -------- 홈 -------- */
+  /* -------- 홈 화면 -------- */
   .hero-card{
-    background:linear-gradient(135deg,var(--sky-300),var(--sky-500));
-    border-radius:26px;padding:18px;color:white;box-shadow:var(--shadow);margin-bottom:14px;
+    background:linear-gradient(135deg,var(--leaf),var(--leaf-deep));
+    border-radius:26px;
+    padding:18px;
+    color:white;
+    box-shadow:var(--shadow);
+    margin-bottom:14px;
   }
   .hero-card .status-pill{
     display:inline-flex;align-items:center;gap:6px;
-    background:rgba(255,255,255,0.28);font-size:11px;font-weight:700;
-    padding:5px 12px;border-radius:999px;margin-bottom:10px;
+    background:rgba(255,255,255,0.25);
+    font-size:11px;font-weight:700;
+    padding:5px 12px;border-radius:999px;
+    margin-bottom:10px;
   }
-  .hero-card .status-pill .dotlive{width:7px;height:7px;border-radius:50%;background:#3CDB7A;display:inline-block;}
-  .hero-card h3{font-size:17px;font-weight:800;margin:0 0 4px;}
-  .hero-card p{font-size:11.5px;margin:0;opacity:0.95;}
+  .hero-card h3{
+    font-family:'Jua', sans-serif;
+    font-size:17px;
+    margin:0 0 4px;
+  }
+  .hero-card p{
+    font-size:11.5px;
+    margin:0;
+    opacity:0.92;
+  }
   .btnrow{display:flex;gap:8px;margin-top:16px;}
   .btn{
-    flex:1;border:none;border-radius:999px;padding:13px 0;font-weight:800;font-size:13px;
-    cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;
+    flex:1;
+    border:none;
+    border-radius:999px;
+    padding:13px 0;
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:5px;
   }
-  .btn .icon{width:16px;height:16px;}
-  .btn.primary{background:var(--sky-700);color:white;box-shadow:0 10px 18px rgba(46,122,153,0.35);}
-  .btn.on-hero{background:white;color:var(--sky-700);}
-  .btn.on-hero.outline{background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.65);}
+  .btn.primary{background:var(--leaf);color:white;box-shadow:0 10px 18px rgba(95,174,58,0.35);}
+  .btn.ghost{background:var(--white);color:var(--leaf-text);border:2px solid var(--leaf);}
+  .btn.on-hero{background:white;color:var(--leaf-deep);}
+  .btn.on-hero.outline{background:rgba(255,255,255,0.18);color:white;border:2px solid rgba(255,255,255,0.6);}
 
   .quicklink{
-    background:var(--white);border-radius:var(--r-card);padding:12px 14px;box-shadow:var(--shadow);
-    display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer;border:none;width:100%;text-align:left;
+    background:var(--white);
+    border-radius:20px;
+    padding:12px 14px;
+    box-shadow:var(--shadow);
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:10px;
+    cursor:pointer;
+    border:none;width:100%;text-align:left;
   }
   .quicklink .qicon{
-    width:42px;height:42px;border-radius:14px;background:var(--sky-100);color:var(--sky-700);
-    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    width:42px;height:42px;border-radius:14px;
+    background:var(--bg-mint);
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;flex-shrink:0;
   }
-  .quicklink.angel .qicon{background:var(--angel-bg);color:var(--angel);}
-  .quicklink.discover .qicon{background:var(--discover-bg);color:var(--discover);}
-  .quicklink h5{font-size:13px;font-weight:800;margin:0 0 2px;color:var(--ink);}
+  .quicklink h5{font-family:'Jua', sans-serif;font-size:13px;margin:0 0 2px;color:var(--ink);}
   .quicklink p{font-size:11px;margin:0;color:var(--muted);}
-  .quicklink .arrow{margin-left:auto;color:var(--sky-500);width:18px;height:18px;flex-shrink:0;}
+  .quicklink .arrow{margin-left:auto;color:var(--leaf-deep);font-size:16px;}
 
-  /* -------- 지도 -------- */
-  .map-card{background:var(--white);border-radius:24px;box-shadow:var(--shadow);padding:12px;margin-bottom:12px;position:relative;}
-  .map-title-row{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 8px;}
-  .map-title{font-size:15px;font-weight:800;color:var(--sky-700);display:flex;align-items:center;gap:6px;}
-  .map-title .icon{width:17px;height:17px;}
+  /* -------- 지도 화면 -------- */
+  .map-card{
+    background:var(--white);
+    border-radius:24px;
+    box-shadow:var(--shadow);
+    padding:12px;
+    margin-bottom:12px;
+  }
+  .map-title-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:2px 4px 8px;
+  }
+  .map-title{font-family:'Jua', sans-serif;font-size:15px;color:var(--leaf-text);}
   .badge-pill{
-    background:#E7F8ED;color:#1E9A4C;font-size:10.5px;font-weight:700;
-    padding:4px 11px;border-radius:999px;display:flex;align-items:center;gap:5px;
+    background:var(--safe-bg);color:var(--leaf-deep);
+    font-size:10.5px;font-weight:700;
+    padding:4px 11px;border-radius:999px;
+    display:flex;align-items:center;gap:4px;
   }
-  .badge-pill .dotlive{width:6px;height:6px;border-radius:50%;background:#1E9A4C;}
-  
-  /* 지도 영역 */
-  .map-wrap{position:relative;width:100%;height:250px;border-radius:18px;overflow:hidden;background:var(--map-bg);z-index:1;}
-  #kmap {width:100%; height:250px; border-radius:18px;}
-
-  .legend{display:flex;gap:10px;padding:10px 4px 0;font-size:10px;color:var(--muted);flex-wrap:wrap;}
+  svg.mapimg{width:100%;display:block;border-radius:18px;background:#EAF7DC;}
+  #kakaoMap{
+    width:100%;height:100%;
+    background:#EAF7DC;
+  }
+  .pin-icon, .lamp-icon, .danger-icon{
+    display:flex;align-items:center;justify-content:center;
+    border-radius:50%;
+    box-shadow:0 3px 8px rgba(0,0,0,0.25);
+    border:2px solid white;
+  }
+  .pin-icon{width:28px;height:28px;background:var(--leaf-deep);color:white;font-size:14px;}
+  .lamp-icon{width:20px;height:20px;background:var(--lamp);font-size:11px;}
+  .danger-icon{width:22px;height:22px;background:var(--danger);color:white;font-size:12px;font-family:'Jua',sans-serif;}
+  .label-pill{
+    background:var(--leaf-deep);color:white;
+    font-family:'Jua', sans-serif;font-size:11px;
+    padding:5px 10px;border-radius:999px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.25);
+    border:2px solid white;white-space:nowrap;
+    text-align:center;
+  }
+  .legend{display:flex;gap:12px;padding:9px 4px 0;font-size:10.5px;color:#6E8461;flex-wrap:wrap;}
+  .route-result{
+    margin-top:12px;
+    background:var(--safe-bg);
+    border-radius:18px;
+    padding:14px;
+  }
+  .route-result.err{background:var(--danger-bg);}
+  .route-result h5{
+    font-family:'Jua', sans-serif;font-size:13px;margin:0 0 8px;color:var(--leaf-text);
+    display:flex;align-items:center;gap:6px;
+  }
+  .route-result.err h5{color:#E14545;}
+  .route-result p{font-size:11.5px;margin:0;color:#5E7150;line-height:1.5;}
+  .route-stats{display:flex;gap:8px;margin-top:10px;}
+  .route-stat{
+    flex:1;background:white;border-radius:14px;padding:9px 6px;text-align:center;
+  }
+  .route-stat .num{font-family:'Jua', sans-serif;font-size:16px;color:var(--leaf-deep);}
+  .route-stat .lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+  .my-loc{
+    width:18px;height:18px;border-radius:50%;
+    background:#4A90E2;border:3px solid white;
+    box-shadow:0 0 0 4px rgba(74,144,226,0.25), 0 2px 6px rgba(0,0,0,0.3);
+  }
   .legend span{display:flex;align-items:center;gap:5px;}
-  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
-
-  .navi-bar-link {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #5BB8DB;
-    color: #fff;
-    padding: 10px 14px;
-    border-radius: 14px;
-    margin-top: 10px;
-    font-size: 12px;
-    font-weight: bold;
-    text-decoration: none;
-    box-shadow: 0 4px 10px rgba(91,184,219,0.3);
-  }
-
-  /* 카카오맵 로드 상태 표시줄 */
-  .map-status-line{font-size:10.5px;color:var(--muted);padding:8px 4px 0;min-height:14px;}
-  .map-status-line.error{color:var(--danger);font-weight:700;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
 
   /* -------- 위험요소 -------- */
-  .risk-card{background:var(--danger-bg);border-radius:20px;padding:12px 14px;box-shadow:0 6px 16px rgba(229,62,62,0.14);margin-bottom:12px;}
-  .risk-card .rtitle{font-size:12.5px;font-weight:800;color:var(--danger);display:flex;align-items:center;gap:6px;margin-bottom:7px;}
-  .risk-card .rtitle .icon{width:15px;height:15px;}
-  .risk-tag{display:inline-flex;align-items:center;background:#FFFFFF;color:var(--danger);font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:999px;margin:0 5px 5px 0;}
-
-  /* -------- 구로엔젤 -------- */
-  .angel-hero{background:var(--white);border-radius:26px;padding:22px;box-shadow:var(--shadow);text-align:center;margin-bottom:14px;}
-  .angel-big-wrap{
-    width:84px;height:84px;margin:0 auto 10px;border-radius:24px;background:var(--angel-bg);
-    display:flex;align-items:center;justify-content:center;
+  .risk-card{
+    background:var(--danger-bg);
+    border-radius:20px;
+    padding:12px 14px;
+    box-shadow:0 6px 16px rgba(255,107,107,0.18);
+    margin-bottom:12px;
   }
-  .angel-big-wrap svg{width:44px;height:44px;color:var(--angel);}
-  .angel-hero h3{font-size:16px;font-weight:800;margin:0 0 6px;color:var(--ink);}
+  .risk-card .rtitle{
+    font-family:'Jua', sans-serif;font-size:12.5px;color:#E14545;
+    display:flex;align-items:center;gap:6px;margin-bottom:7px;
+  }
+  .risk-tag{
+    display:inline-flex;align-items:center;gap:5px;
+    background:#FFFFFF;color:#E14545;font-size:10.5px;font-weight:700;
+    padding:5px 9px;border-radius:999px;margin:0 5px 5px 0;
+  }
+
+  /* -------- 구로엔젤 화면 -------- */
+  .angel-hero{
+    background:var(--white);
+    border-radius:26px;
+    padding:20px;
+    box-shadow:var(--shadow);
+    text-align:center;
+    margin-bottom:14px;
+  }
+  .angel-big{width:90px;height:90px;margin-bottom:8px;}
+  .angel-hero h3{font-family:'Jua', sans-serif;font-size:16px;margin:0 0 6px;color:var(--ink);}
   .angel-hero p{font-size:12px;color:var(--muted);line-height:1.5;margin:0;}
-  .feature-item{display:flex;gap:12px;align-items:flex-start;background:var(--white);border-radius:18px;padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);}
-  .feature-item .fic{width:38px;height:38px;border-radius:12px;background:var(--angel-bg);color:var(--angel);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .feature-item .fic svg{width:20px;height:20px;}
-  .feature-item h5{font-size:12.5px;font-weight:800;margin:0 0 3px;color:var(--ink);}
+  .feature-item{
+    display:flex;gap:12px;align-items:flex-start;
+    background:var(--white);border-radius:18px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .feature-item .fic{font-size:20px;}
+  .feature-item h5{font-family:'Jua', sans-serif;font-size:12.5px;margin:0 0 3px;color:var(--ink);}
   .feature-item p{font-size:11px;margin:0;color:var(--muted);line-height:1.4;}
 
-  /* -------- 삼대발견 -------- */
-  .discover-card{display:flex;align-items:center;gap:12px;background:var(--white);border-radius:20px;padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);}
-  .discover-num{width:38px;height:38px;border-radius:12px;background:var(--discover-bg);color:var(--discover);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .discover-num svg{width:20px;height:20px;}
-  .discover-card h5{margin:0;font-size:13px;font-weight:800;color:var(--ink);}
+  /* -------- 삼대발견 화면 -------- */
+  .discover-card{
+    display:flex;align-items:center;gap:12px;
+    background:var(--white);border-radius:20px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .discover-num{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--leaf);color:white;
+    font-family:'Jua', sans-serif;font-size:14px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .discover-card h5{margin:0;font-family:'Jua', sans-serif;font-size:13px;color:var(--ink);}
   .discover-card p{margin:2px 0 0;font-size:11px;color:var(--muted);}
 
-  /* -------- 탭바 -------- */
-  .tabbar{flex-shrink:0;display:flex;background:var(--white);border-top:1px solid #EAF3F7;padding:8px 6px 4px;box-shadow:0 -6px 16px rgba(91,184,219,0.10);z-index:10;}
-  .tab{flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 4px;cursor:pointer;color:#9FB2BE;font-size:10.5px;font-weight:700;}
-  .tab .ticon{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:14px;transition:all .2s ease;}
-  .tab .ticon .icon{width:19px;height:19px;}
-  .tab.active{color:var(--sky-700);}
-  .tab.active .ticon{background:var(--sky-100);}
-  .homebar{width:120px;height:5px;background:#C9E3EE;border-radius:999px;margin:8px auto 0;flex-shrink:0;}
+  /* -------- 설정 화면 -------- */
+  .setting-row{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--white);border-radius:18px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .setting-label{display:flex;align-items:center;gap:10px;}
+  .setting-label .fic{font-size:18px;}
+  .setting-label h5{margin:0;font-family:'Jua', sans-serif;font-size:12.5px;color:var(--ink);}
+  .setting-label p{margin:2px 0 0;font-size:10.5px;color:var(--muted);}
+  .switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{
+    position:absolute;cursor:pointer;inset:0;
+    background:#DCE6D2;border-radius:999px;
+    transition:.2s;
+  }
+  .slider::before{
+    content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;
+    background:white;border-radius:50%;transition:.2s;
+    box-shadow:0 1px 3px rgba(0,0,0,0.25);
+  }
+  .switch input:checked + .slider{background:var(--leaf);}
+  .switch input:checked + .slider::before{transform:translateX(18px);}
+  .app-version{
+    text-align:center;font-size:10.5px;color:#A7B89A;
+    margin:18px 0 6px;
+  }
+
+  /* -------- 하단 탭바 -------- */
+  .tabbar{
+    flex-shrink:0;
+    display:flex;
+    background:var(--white);
+    border-top:1px solid #E7F1DC;
+    padding:8px 6px 4px;
+    box-shadow:0 -6px 16px rgba(95,174,58,0.10);
+  }
+  .tab{
+    flex:1;
+    border:none;background:none;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:6px 0 4px;
+    cursor:pointer;
+    color:#A7B89A;
+    font-family:'Jua', sans-serif;
+    font-size:9.5px;
+    white-space:nowrap;
+  }
+  .tab .ticon{
+    font-size:17px;
+    width:30px;height:30px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:12px;
+    transition:all .2s ease;
+  }
+  .tab.active{color:var(--leaf-deep);}
+  .tab.active .ticon{background:var(--safe-bg);}
+  .homebar{width:120px;height:5px;background:#C9DABB;border-radius:999px;margin:8px auto 0;flex-shrink:0;}
 </style>
 </head>
 <body>
 <div class="phone">
 
-  <div class="status"><span>9:41</span><span>100%</span></div>
+  <div class="status">
+    <span>9:41</span>
+    <span>🔋 100%</span>
+  </div>
 
-  <div class="brand-row"><span class="brand-title">놀맵</span></div>
+  <div class="header">
+    <svg class="mascot-sm" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="48" fill="#FFF3D6"/>
+      <path d="M20 40 Q50 15 80 40 L74 46 Q50 28 26 46 Z" fill="#8FD14F"/>
+      <circle cx="50" cy="55" r="22" fill="#FFFFFF" stroke="#8FD14F" stroke-width="3"/>
+      <circle cx="43" cy="53" r="3" fill="#3E7A2C"/>
+      <circle cx="57" cy="53" r="3" fill="#3E7A2C"/>
+      <path d="M42 62 Q50 68 58 62" stroke="#3E7A2C" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle cx="34" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+      <circle cx="66" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+    </svg>
+    <div>
+      <div class="title" id="screenTitle">놀구로오는길</div>
+      <div class="subtitle" id="screenSubtitle">신도림놀구로 가는 가장 안전한 길</div>
+    </div>
+  </div>
 
   <div class="screens">
 
     <!-- ============ 홈 ============ -->
     <section class="screen active" id="screen-home">
       <div class="hero-card">
-        <div class="status-pill"><span class="dotlive"></span>지금 통행 가능해요</div>
-        <h3>오늘도 안전하게, 놀구로!</h3>
+        <div class="status-pill">🟢 지금 통행 가능해요</div>
+        <h3>오늘도 안전하게, 신도림놀구로!</h3>
         <p>추천 경로로 걸으면 도보 12분, 가로등 14개가 함께해요.</p>
         <div class="btnrow">
-          <button class="btn on-hero" onclick="go('map')">
-            <svg viewBox="0 0 24 24" class="icon"><path d="M4 19c2-4 4-4 6-8s2-6 6-6"/><circle cx="4" cy="19" r="1.6" fill="currentColor" stroke="none"/><circle cx="16" cy="5" r="1.6" fill="currentColor" stroke="none"/></svg>
-            경로 보기
-          </button>
-          <button class="btn on-hero outline" onclick="go('angel')">
-            <svg viewBox="0 0 24 24" class="icon"><path d="M3 10v4a1 1 0 0 0 1 1h2l4 3v-12L6 9H4a1 1 0 0 0-1 1Z"/><path d="M14 8a4 4 0 0 1 0 8"/><path d="M17 5a8 8 0 0 1 0 14"/></svg>
-            위험 신고
-          </button>
+          <button class="btn on-hero" onclick="go('map'); setTimeout(findMyRoute, 600);">🍀 경로 보기</button>
+          <button class="btn on-hero outline" onclick="go('angel')">📢 위험 신고</button>
         </div>
       </div>
 
-      <div class="section-label">
-        <svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
-        바로가기
-      </div>
-
+      <div class="section-label">👀 바로가기</div>
       <button class="quicklink" onclick="go('map')">
-        <div class="qicon"><svg viewBox="0 0 24 24" class="icon"><path d="M4 19c2-4 4-4 6-8s2-6 6-6"/><circle cx="4" cy="19" r="1.6" fill="currentColor" stroke="none"/><circle cx="16" cy="5" r="1.6" fill="currentColor" stroke="none"/></svg></div>
-        <div><h5>최적의 길 · 지도</h5><p>안전 경로와 위험 구간을 한눈에</p></div>
-        <svg viewBox="0 0 24 24" class="arrow icon"><path d="M9 5l7 7-7 7"/></svg>
+        <div class="qicon">🗺️</div>
+        <div>
+          <h5>최적의 길 · 지도</h5>
+          <p>안전 경로와 위험 구간을 한눈에</p>
+        </div>
+        <div class="arrow">›</div>
       </button>
-
-      <button class="quicklink angel" onclick="go('angel')">
-        <div class="qicon"><svg viewBox="0 0 24 24" class="icon"><ellipse cx="12" cy="4.5" rx="3" ry="1.6"/><circle cx="12" cy="10" r="3"/><path d="M9 12c-3 0-5 2-5 5"/><path d="M15 12c3 0 5 2 5 5"/><path d="M12 13v7"/></svg></div>
-        <div><h5>구로엔젤</h5><p>우리 동네 안전 도우미 소개</p></div>
-        <svg viewBox="0 0 24 24" class="arrow icon"><path d="M9 5l7 7-7 7"/></svg>
+      <button class="quicklink" onclick="go('angel')">
+        <div class="qicon">🧚</div>
+        <div>
+          <h5>구로엔젤</h5>
+          <p>우리 동네 안전 도우미 소개</p>
+        </div>
+        <div class="arrow">›</div>
       </button>
-
-      <button class="quicklink discover" onclick="go('discover')">
-        <div class="qicon"><svg viewBox="0 0 24 24" class="icon"><rect x="3" y="11" width="18" height="10" rx="1"/><path d="M7 11V7l3 2V6l3 2V5l3 2v4"/><path d="M8 21v-4M12 21v-4M16 21v-4"/></svg></div>
-        <div><h5>삼대발견</h5><p>가는 길에 만나는 공장지대 이야기</p></div>
-        <svg viewBox="0 0 24 24" class="arrow icon"><path d="M9 5l7 7-7 7"/></svg>
+      <button class="quicklink" onclick="go('discover')">
+        <div class="qicon">✨</div>
+        <div>
+          <h5>삼대발견</h5>
+          <p>가는 길에 들러볼 안심 명소 3곳</p>
+        </div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink" onclick="go('place')">
+        <div class="qicon">🎈</div>
+        <div>
+          <h5>신도림놀구로</h5>
+          <p>어떤 곳인지 알아보기</p>
+        </div>
+        <div class="arrow">›</div>
       </button>
     </section>
 
     <!-- ============ 지도 ============ -->
-    <section class="screen" id="screen-map">
-      <div class="map-card">
-        <div class="map-title-row">
-          <div class="map-title">
-            <svg viewBox="0 0 24 24" class="icon"><path d="M4 19c2-4 4-4 6-8s2-6 6-6"/><circle cx="4" cy="19" r="1.6" fill="currentColor" stroke="none"/><circle cx="16" cy="5" r="1.6" fill="currentColor" stroke="none"/></svg>
-            최적의 길
-          </div>
-          <div class="badge-pill"><span class="dotlive"></span>통행 가능</div>
-        </div>
+    <section class="screen map-screen" id="screen-map">
+      <div id="kakaoMap"></div>
 
-        <div class="map-wrap">
-          <div id="kmap" style="width:100%;height:250px;border-radius:18px;"></div>
-        </div>
-        <div class="map-status-line" id="map-status-line">지도를 불러오는 중...</div>
+      <div class="map-top-bar">
+        <div class="map-title">🗺️ 최적의 길</div>
+        <div class="badge-pill">🟢 통행 가능</div>
+      </div>
+
+      <button class="locate-fab" onclick="findMyRoute()" title="현재 위치에서 길찾기">📍</button>
+      <div class="superzoom">
+        <button onclick="superZoom(1)" title="더 크게">🔍➕</button>
+        <button onclick="superZoom(-1)" title="작게">🔍➖</button>
+      </div>
+
+      <div class="map-sheet" id="mapSheet">
+        <div class="sheet-handle" onclick="toggleSheet()"></div>
+
+        <button class="btn primary" style="width:100%;" onclick="findMyRoute()">
+          <span id="findBtnText">📍 현재 위치에서 길찾기</span>
+        </button>
+        <div id="routeResult" class="route-result" style="display:none;"></div>
 
         <div class="legend">
-          <span><i class="dot" style="background:#5BB8DB"></i>최적경로</span>
-          <span><i class="dot" style="background:#E53E3E"></i>위험 구간</span>
-          <span><i class="dot" style="background:#FFC93C"></i>가로등</span>
-          <span><i class="dot" style="background:#F4B942"></i>구로엔젤</span>
-          <span><i class="dot" style="background:#B5714A"></i>삼대발견</span>
+          <span><i class="dot" style="background:#5FAE3A"></i>신도림놀구로</span>
+          <span><i class="dot" style="background:#4A90E2"></i>내 위치 · 경로</span>
         </div>
 
-        <a id="navi-btn" href="#" target="_blank" class="navi-bar-link">
-          <span>길찾기 안내 시작</span>
-          <span>&rarr;</span>
-        </a>
-      </div>
+        <div class="grid2" style="margin:12px 0;">
+          <div class="card">
+            <div class="icon-circle yellow">💡</div>
+            <div class="stat">14개</div>
+            <h4>가로등 개수</h4>
+            <p>경로 전체에 밝은 가로등이 이어져 있어요</p>
+          </div>
+          <div class="card">
+            <div class="icon-circle">🚗</div>
+            <div class="stat">보통</div>
+            <h4>차량 통행량</h4>
+            <p>등하원 시간대엔 통행이 조금 늘어나요</p>
+          </div>
+        </div>
 
-      <div class="grid2" style="margin-bottom:12px;">
+        <div class="risk-card">
+          <div class="rtitle">🚧 위험요소, 이런 점을 조심하세요</div>
+          <span class="risk-tag">🚸 좁은 골목</span>
+          <span class="risk-tag">🌙 가로등 부족 구간</span>
+          <span class="risk-tag">🚗 급커브 도로</span>
+        </div>
+
         <div class="card">
-          <div class="icon-circle yellow"><svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="6" r="3.4"/><path d="M12 9.4V21M9 21h6"/></svg></div>
-          <div class="stat">14개</div>
-          <h4>가로등 개수</h4>
-          <p>경로 전체에 밝은 가로등이 이어져 있어요</p>
+          <div class="icon-circle">✅</div>
+          <h4>지금 통행하기 충분해요</h4>
+          <p>도로 폭과 인도가 넉넉해서 여러 명이 함께 걸어도 편안해요.</p>
         </div>
-        <div class="card">
-          <div class="icon-circle"><svg viewBox="0 0 24 24" class="icon"><path d="M4 16l1.5-5A2 2 0 0 1 7.4 9.5h9.2a2 2 0 0 1 1.9 1.5L20 16"/><rect x="3" y="16" width="18" height="4" rx="1.5"/><circle cx="7.5" cy="20" r="1.4" fill="currentColor" stroke="none"/><circle cx="16.5" cy="20" r="1.4" fill="currentColor" stroke="none"/></svg></div>
-          <div class="stat">보통</div>
-          <h4>차량 통행량</h4>
-          <p>등하원 시간대엔 통행이 조금 늘어나요</p>
-        </div>
-      </div>
-
-      <div class="risk-card">
-        <div class="rtitle">
-          <svg viewBox="0 0 24 24" class="icon"><path d="M12 4 21 20H3Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/></svg>
-          위험요소, 이런 점을 조심하세요
-        </div>
-        <span class="risk-tag">좁은 골목</span>
-        <span class="risk-tag">가로등 부족 구간</span>
-        <span class="risk-tag">급커브 도로</span>
-      </div>
-
-      <div class="card">
-        <div class="icon-circle"><svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div>
-        <h4>지금 통행하기 충분해요</h4>
-        <p>도로 폭과 인도가 넉넉해서 여러 명이 함께 걸어도 편안해요.</p>
       </div>
     </section>
 
     <!-- ============ 구로엔젤 ============ -->
     <section class="screen" id="screen-angel">
       <div class="angel-hero">
-        <div class="angel-big-wrap">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="4.5" rx="3" ry="1.6"/><circle cx="12" cy="10" r="3"/><path d="M9 12c-3 0-5 2-5 5"/><path d="M15 12c3 0 5 2 5 5"/><path d="M12 13v7"/></svg>
-        </div>
+        <svg class="angel-big" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="48" fill="#FFF3D6"/>
+          <path d="M20 40 Q50 15 80 40 L74 46 Q50 28 26 46 Z" fill="#8FD14F"/>
+          <circle cx="50" cy="55" r="22" fill="#FFFFFF" stroke="#8FD14F" stroke-width="3"/>
+          <circle cx="43" cy="53" r="3" fill="#3E7A2C"/>
+          <circle cx="57" cy="53" r="3" fill="#3E7A2C"/>
+          <path d="M42 62 Q50 68 58 62" stroke="#3E7A2C" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <circle cx="34" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+          <circle cx="66" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+        </svg>
         <h3>구로엔젤이 함께 걸어요</h3>
         <p>경로 곳곳을 살피고 위험 구간을 미리 알려주는 우리 동네 안전 도우미예요.</p>
       </div>
 
-      <div class="section-label">
-        <svg viewBox="0 0 24 24" class="icon"><ellipse cx="12" cy="4.5" rx="3" ry="1.6"/><circle cx="12" cy="10" r="3"/><path d="M9 12c-3 0-5 2-5 5"/><path d="M15 12c3 0 5 2 5 5"/><path d="M12 13v7"/></svg>
-        구로엔젤이 하는 일
-      </div>
-
+      <div class="section-label">🧚 구로엔젤이 하는 일</div>
       <div class="feature-item">
-        <div class="fic"><svg viewBox="0 0 24 24" class="icon"><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 14 6 10Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></div>
-        <div><h5>안전벨</h5><p>위급할 때 누르면 도움을 요청할 수 있어요</p></div>
-      </div>
-      <div class="feature-item">
-        <div class="fic"><svg viewBox="0 0 24 24" class="icon"><path d="M12 21s7-6.5 7-11.5A7 7 0 0 0 5 9.5C5 14.5 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg></div>
-        <div><h5>실시간 위치 안내</h5><p>지금 걷는 구간의 위험 요소를 바로 알려줘요</p></div>
+        <div class="fic">🔔</div>
+        <div>
+          <h5>안전벨</h5>
+          <p>위급할 때 누르면 도움을 요청할 수 있어요</p>
+        </div>
       </div>
       <div class="feature-item">
-        <div class="fic"><svg viewBox="0 0 24 24" class="icon"><path d="M6.6 10.8c1.4 2.7 3.6 4.9 6.3 6.3l2.1-2.1c.3-.3.7-.4 1.1-.3 1.2.4 2.5.6 3.8.6.6 0 1.1.5 1.1 1.1V20c0 .6-.5 1.1-1.1 1.1C10.9 21.1 3 13.2 3 4.1 3 3.5 3.5 3 4.1 3h3.6c.6 0 1.1.5 1.1 1.1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1L6.6 10.8Z"/></svg></div>
-        <div><h5>도움 요청</h5><p>가까운 지킴이집과 어른에게 빠르게 연결돼요</p></div>
+        <div class="fic">📍</div>
+        <div>
+          <h5>실시간 위치 안내</h5>
+          <p>지금 걷는 구간의 위험 요소를 바로 알려줘요</p>
+        </div>
       </div>
-
-      <button class="btn primary" style="width:100%;margin-top:4px;">
-        <svg viewBox="0 0 24 24" class="icon"><path d="M3 10v4a1 1 0 0 0 1 1h2l4 3v-12L6 9H4a1 1 0 0 0-1 1Z"/><path d="M14 8a4 4 0 0 1 0 8"/><path d="M17 5a8 8 0 0 1 0 14"/></svg>
-        위험 신고하기
-      </button>
+      <div class="feature-item">
+        <div class="fic">☎️</div>
+        <div>
+          <h5>도움 요청</h5>
+          <p>가까운 지킴이집과 어른에게 빠르게 연결돼요</p>
+        </div>
+      </div>
+      <button class="btn primary" style="width:100%;margin-top:4px;">📢 위험 신고하기</button>
     </section>
 
     <!-- ============ 삼대발견 ============ -->
     <section class="screen" id="screen-discover">
-      <div class="section-label">
-        <svg viewBox="0 0 24 24" class="icon"><rect x="3" y="11" width="18" height="10" rx="1"/><path d="M7 11V7l3 2V6l3 2V5l3 2v4"/><path d="M8 21v-4M12 21v-4M16 21v-4"/></svg>
-        가는 길에 만나는 공장지대 이야기
+      <div class="section-label">✨ 가는 길에 만나는 안심 명소</div>
+      <div class="discover-card">
+        <div class="discover-num">1</div>
+        <div>
+          <h5>구로엔젤 안전벨</h5>
+          <p>위급할 때 누르면 도움을 요청할 수 있어요</p>
+        </div>
+      </div>
+      <div class="discover-card">
+        <div class="discover-num">2</div>
+        <div>
+          <h5>초록 우체통 쉼터</h5>
+          <p>잠깐 쉬어가기 좋은 작은 쉼터예요</p>
+        </div>
+      </div>
+      <div class="discover-card">
+        <div class="discover-num">3</div>
+        <div>
+          <h5>동네 지킴이집</h5>
+          <p>도움이 필요할 때 들를 수 있는 안심 장소</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 놀구로 소개 ============ -->
+    <section class="screen" id="screen-place">
+      <div class="place-card">
+        <div class="place-head">
+          <div class="place-emoji">🎈</div>
+          <div>
+            <h4>신도림놀구로</h4>
+            <p class="place-tag">청소년활동시설 · 청소년입장지대</p>
+          </div>
+        </div>
+        <p class="place-desc">
+          PLAY YOUR DREAM! 문화 · 여가 · 진로 활동을 마음껏 즐길 수 있는
+          청소년 전용 공간이에요. 친구들과 놀고, 쉬고, 하고 싶은 걸 찾아볼 수 있어요.
+        </p>
+        <div class="place-info">
+          <div class="info-row"><span class="ic">📍</span>서울 구로구 신도림로13길 51 (지하1층, 1~2층)</div>
+          <div class="info-row"><span class="ic">🕗</span>운영 중 · 20:00 운영 종료</div>
+          <div class="info-row"><span class="ic">☎️</span>02-2068-2511</div>
+          <div class="info-row"><span class="ic">🎫</span>이용료 무료</div>
+        </div>
+        <div class="place-tags">
+          <span class="ptag">🎮 놀이공간</span>
+          <span class="ptag">📚 진로활동</span>
+          <span class="ptag">🛋️ 휴식공간</span>
+        </div>
       </div>
 
-      <div class="discover-card">
-        <div class="discover-num"><svg viewBox="0 0 24 24" class="icon"><rect x="3" y="11" width="18" height="10" rx="1"/><path d="M7 11V7l3 2V6l3 2V5l3 2v4"/></svg></div>
-        <div><h5>옛 방직공장 굴뚝</h5><p>구로 산업단지 시절을 기억하는 붉은 벽돌 굴뚝이에요</p></div>
+      <div class="section-label">🎯 이런 걸 할 수 있어요</div>
+      <div class="feature-item">
+        <div class="fic">🎮</div>
+        <div>
+          <h5>놀이 공간</h5>
+          <p>보드게임, 콘솔게임 등 친구들과 즐길 거리가 가득해요</p>
+        </div>
       </div>
-      <div class="discover-card">
-        <div class="discover-num"><svg viewBox="0 0 24 24" class="icon"><path d="M12 21s7-6.5 7-11.5A7 7 0 0 0 5 9.5C5 14.5 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg></div>
-        <div><h5>공장 담장 벽화 거리</h5><p>옛 공장 담벼락에 그려진 노동자와 마을 이야기 벽화예요</p></div>
+      <div class="feature-item">
+        <div class="fic">📚</div>
+        <div>
+          <h5>진로 · 문화 프로그램</h5>
+          <p>하고 싶은 걸 찾고 배워볼 수 있는 활동이 열려요</p>
+        </div>
       </div>
-      <div class="discover-card">
-        <div class="discover-num"><svg viewBox="0 0 24 24" class="icon"><path d="M4 19c2-4 4-4 6-8s2-6 6-6"/><circle cx="4" cy="19" r="1.6" fill="currentColor" stroke="none"/><circle cx="16" cy="5" r="1.6" fill="currentColor" stroke="none"/></svg></div>
-        <div><h5>철길 흔적 산책로</h5><p>공장으로 물자를 나르던 옛 철길을 따라 걷는 짧은 코스예요</p></div>
+      <div class="feature-item">
+        <div class="fic">🛋️</div>
+        <div>
+          <h5>편히 쉬는 공간</h5>
+          <p>학교 끝나고 부담 없이 들러 쉬어갈 수 있어요</p>
+        </div>
       </div>
+
+      <button class="btn primary" style="width:100%;margin-top:6px;" onclick="go('map'); setTimeout(findMyRoute, 600);">
+        🗺️ 놀구로 가는 길 보기
+      </button>
     </section>
 
     <!-- ============ 설정 ============ -->
     <section class="screen" id="screen-settings">
-      <div class="section-label">
-        <svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.4M12 18.6V21M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M3 12h2.4M18.6 12H21M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>
-        기본 설정
+      <div class="section-label">⚙️ 알림</div>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="fic">🔔</span>
+          <div>
+            <h5>위험구간 알림</h5>
+            <p>위험한 구간에 들어서면 알려줘요</p>
+          </div>
+        </div>
+        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
       </div>
-      <div class="feature-item">
-        <div class="fic"><svg viewBox="0 0 24 24" class="icon"><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 14 6 10Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></div>
-        <div><h5>위험 알림</h5><p>경로 위험 구간 진입 시 바로 알려드려요</p></div>
-      </div>
-      <div class="feature-item">
-        <div class="fic"><svg viewBox="0 0 24 24" class="icon"><path d="M12 21s7-6.5 7-11.5A7 7 0 0 0 5 9.5C5 14.5 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg></div>
-        <div><h5>위치 권한</h5><p>실시간 안전 안내를 위해 위치 접근이 필요해요</p></div>
-      </div>
-      <div class="feature-item">
-        <div class="fic"><svg viewBox="0 0 24 24" class="icon"><path d="M6.6 10.8c1.4 2.7 3.6 4.9 6.3 6.3l2.1-2.1c.3-.3.7-.4 1.1-.3 1.2.4 2.5.6 3.8.6.6 0 1.1.5 1.1 1.1V20c0 .6-.5 1.1-1.1 1.1C10.9 21.1 3 13.2 3 4.1 3 3.5 3.5 3 4.1 3h3.6c.6 0 1.1.5 1.1 1.1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1L6.6 10.8Z"/></svg></div>
-        <div><h5>보호자 연락처</h5><p>위험 신고 시 함께 연락할 보호자를 등록해요</p></div>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="fic">🌙</span>
+          <div>
+            <h5>밤길 안심 모드</h5>
+            <p>해진 뒤에는 더 밝은 경로로 추천해요</p>
+          </div>
+        </div>
+        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
       </div>
 
-      <div class="section-label">
-        <svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
-        앱 정보
-      </div>
-      <div class="card">
-        <h4>놀구로오는길</h4>
-        <p>버전 1.0.0 · 신도림놀구로 청소년입장지대 안전 안내 앱</p>
-      </div>
+      <div class="section-label">👤 계정 · 정보</div>
+      <button class="quicklink">
+        <div class="qicon">🧸</div>
+        <div><h5>보호자 연락처 관리</h5><p>비상 연락처를 등록해요</p></div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink">
+        <div class="qicon">📄</div>
+        <div><h5>이용약관 · 개인정보처리방침</h5><p>안전하게 관리되고 있어요</p></div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink">
+        <div class="qicon">💌</div>
+        <div><h5>문의하기</h5><p>불편하거나 궁금한 점을 남겨주세요</p></div>
+        <div class="arrow">›</div>
+      </button>
+
+      <div class="app-version">놀구로오는길 v1.0.0</div>
     </section>
 
   </div>
 
   <div class="tabbar">
-    <button class="tab" data-tab="angel" onclick="go('angel')">
-      <span class="ticon"><svg viewBox="0 0 24 24" class="icon"><ellipse cx="12" cy="4.5" rx="3" ry="1.6"/><circle cx="12" cy="10" r="3"/><path d="M9 12c-3 0-5 2-5 5"/><path d="M15 12c3 0 5 2 5 5"/><path d="M12 13v7"/></svg></span>구로엔젤
+    <button class="tab" data-tab="map" onclick="go('map')">
+      <span class="ticon">🗺️</span>지도
     </button>
-    <button class="tab" data-tab="discover" onclick="go('discover')">
-      <span class="ticon"><svg viewBox="0 0 24 24" class="icon"><rect x="3" y="11" width="18" height="10" rx="1"/><path d="M7 11V7l3 2V6l3 2V5l3 2v4"/><path d="M8 21v-4M12 21v-4M16 21v-4"/></svg></span>삼대발견
+    <button class="tab" data-tab="angel" onclick="go('angel')">
+      <span class="ticon">🧚</span>구로엔젤
     </button>
     <button class="tab active" data-tab="home" onclick="go('home')">
-      <span class="ticon"><svg viewBox="0 0 24 24" class="icon"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10.5V20a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9.5"/></svg></span>홈
+      <span class="ticon">🏠</span>홈
     </button>
-    <button class="tab" data-tab="map" onclick="go('map')">
-      <span class="ticon"><svg viewBox="0 0 24 24" class="icon"><path d="M4 19c2-4 4-4 6-8s2-6 6-6"/><circle cx="4" cy="19" r="1.6" fill="currentColor" stroke="none"/><circle cx="16" cy="5" r="1.6" fill="currentColor" stroke="none"/></svg></span>지도
+    <button class="tab" data-tab="discover" onclick="go('discover')">
+      <span class="ticon">✨</span>삼대발견
+    </button>
+    <button class="tab" data-tab="place" onclick="go('place')">
+      <span class="ticon">🎈</span>놀구로
     </button>
     <button class="tab" data-tab="settings" onclick="go('settings')">
-      <span class="ticon"><svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.4M12 18.6V21M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M3 12h2.4M18.6 12H21M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg></span>설정
+      <span class="ticon">⚙️</span>설정
     </button>
   </div>
   <div class="homebar"></div>
 </div>
 
 <script>
-  let map = null;
-  let startPos = [37.5008, 126.8896];
-  const NOLGURO      = [37.4977, 126.8878];
-  const DANGER_SPOT  = [37.4995, 126.8883];
-  const ANGEL_SPOT   = [37.4990, 126.8874];
-  const DISCOVER_SPOT= [37.4983, 126.8891];
-
-  // ============================================================
-  // 도보 경로 조회 REST API 키
-  // * "JavaScript 키"가 아니라 "REST API 키"를 넣어야 합니다.
-  // * ⚠️ 정적 사이트(GitHub Pages)에는 서버가 없어서 이 키가
-  //   브라우저 소스에 그대로 노출됩니다. 소규모/비상업 데모용으로만
-  //   쓰고, 실서비스로 키우실 땐 서버리스 프록시로 숨기는 걸 권장합니다.
-  // ============================================================
-  const REST_API_KEY = '72d8ba657c7302d5fd8ac6f3ad6c7f77';
-
-  // 카카오맵 REST API로 실제 도보 경로(좌표 리스트)를 가져옵니다.
-  // 응답 구조가 예상과 다르면 콘솔에 원본 응답을 출력하고 null을 반환합니다.
-  async function fetchWalkingRoute(originArr, destArr){
-    const origin = `${originArr[1]},${originArr[0]}`;      // lng,lat
-    const destination = `${destArr[1]},${destArr[0]}`;      // lng,lat
-    const url = `https://dapi.kakao.com/v2/routing/walk?origin=${origin}&destination=${destination}`;
-
-    try {
-      const res = await fetch(url, {
-        headers: { Authorization: `KakaoAK ${REST_API_KEY}` }
-      });
-      if (!res.ok) {
-        console.warn('도보 경로 API 응답 실패:', res.status, await res.text());
-        return null;
-      }
-      const data = await res.json();
-      console.log('도보 경로 API 원본 응답(구조 확인용):', data);
-
-      // 흔한 카카오 라우팅 응답 형태를 방어적으로 파싱: routes[].sections[].roads[].vertexes
-      // vertexes는 [lng, lat, lng, lat, ...] 형태의 평탄화된 배열입니다.
-      const routes = data.routes || [];
-      if (!routes.length) { console.warn('routes가 비어 있습니다.'); return null; }
-
-      const points = [];
-      (routes[0].sections || []).forEach(section => {
-        (section.roads || []).forEach(road => {
-          const v = road.vertexes || [];
-          for (let i = 0; i < v.length; i += 2) {
-            points.push(new kakao.maps.LatLng(v[i + 1], v[i]));
-          }
-        });
-      });
-
-      if (!points.length) { console.warn('경로 좌표를 찾지 못했습니다. 응답 구조를 콘솔에서 확인하세요.'); return null; }
-      return points;
-    } catch (e) {
-      console.warn('도보 경로 API 호출 중 오류:', e);
-      return null;
-    }
-  }
+  const titles = {
+    home:  ['놀구로오는길', '신도림놀구로 가는 가장 안전한 길'],
+    map:   ['최적의 길', '안전 경로와 위험 구간을 한눈에'],
+    angel: ['구로엔젤', '우리 동네 안전 도우미'],
+    discover: ['삼대발견', '가는 길에 들러볼 안심 명소 3곳'],
+    place: ['신도림놀구로', '우리가 놀러가는 그곳'],
+    settings: ['설정', '알림과 계정 정보를 관리해요']
+  };
 
   function go(name){
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-' + name).classList.add('active');
+
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelector('.tab[data-tab="' + name + '"]').classList.add('active');
+
+    document.getElementById('screenTitle').textContent = titles[name][0];
+    document.getElementById('screenSubtitle').textContent = titles[name][1];
+
     document.querySelector('.screens').scrollTop = 0;
-    
-    if (name === 'map'){
-      setTimeout(() => {
-        if (!map) {
-          initMap();
-        } else {
-          map.relayout();
-          map.setCenter(new kakao.maps.LatLng(NOLGURO[0], NOLGURO[1]));
-        }
-      }, 150);
+    document.querySelector('.screens').classList.toggle('fullmap', name === 'map');
+    document.querySelector('.phone').classList.toggle('mapmode', name === 'map');
+
+    if(name === 'map' && !window._mapInited){
+      window._mapInited = true;
+      if(window.kakao && window.kakao.maps){
+        kakao.maps.load(initKakaoMap);
+      }
+    }
+    if(name === 'map' && window._map){
+      setTimeout(() => window._map.relayout(), 200);
     }
   }
 
-  function setMapStatus(msg, isError){
-    const el = document.getElementById('map-status-line');
-    if (!el) return;
-    el.textContent = msg || '';
-    el.classList.toggle('error', !!isError);
-  }
-
-  function makeMarkerImage(hexColor, glyph){
-    const glyphs = {
-      danger: '<circle cx="15" cy="15" r="11" fill="' + hexColor + '"/><text x="15" y="19.5" font-size="13" font-weight="800" fill="white" text-anchor="middle" font-family="Pretendard, sans-serif">!</text>',
-      angel:  '<circle cx="15" cy="15" r="11" fill="' + hexColor + '"/><path d="M11 13.5c-2.6 0-3.6 2-3.6 4M19 13.5c2.6 0 3.6 2 3.6 4" stroke="white" stroke-width="1.6" fill="none" stroke-linecap="round" transform="translate(0,-1)"/><circle cx="15" cy="12.5" r="2.6" fill="white"/>',
-      factory:'<circle cx="15" cy="15" r="11" fill="' + hexColor + '"/><path d="M10 18v-5l2.5 1.7v-3.4L15 13v-3.4l2.5 1.7V18H10Z" fill="white"/>',
-      dot:    '<circle cx="15" cy="15" r="7" fill="' + hexColor + '"/><circle cx="15" cy="15" r="2.6" fill="white"/>'
-    };
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">' + glyphs[glyph] + '</svg>';
-    const src = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
-    return new kakao.maps.MarkerImage(src, new kakao.maps.Size(30, 30), { offset: new kakao.maps.Point(15, 15) });
-  }
-
-  function addKakaoMarker(latlngArr, color, glyph, label){
-    const pos = new kakao.maps.LatLng(latlngArr[0], latlngArr[1]);
-    const marker = new kakao.maps.Marker({
-      map: map,
-      position: pos,
-      image: makeMarkerImage(color, glyph),
-      title: label
-    });
-    const infowindow = new kakao.maps.InfoWindow({
-      content: '<div style="padding:4px 8px;font-size:12px;">' + label + '</div>'
-    });
-    kakao.maps.event.addListener(marker, 'click', function(){ infowindow.open(map, marker); });
-    return pos;
-  }
-
-  async function drawRouteOnMap(currentStart) {
-    const startLL   = new kakao.maps.LatLng(currentStart[0], currentStart[1]);
-    const noguroLL  = new kakao.maps.LatLng(NOLGURO[0], NOLGURO[1]);
-    const dangerLL  = new kakao.maps.LatLng(DANGER_SPOT[0], DANGER_SPOT[1]);
-    const angelLL   = new kakao.maps.LatLng(ANGEL_SPOT[0], ANGEL_SPOT[1]);
-    const discoverLL= new kakao.maps.LatLng(DISCOVER_SPOT[0], DISCOVER_SPOT[1]);
-
-    // 실제 도보 경로(도로를 따라가는 선)를 먼저 시도합니다.
-    const realPath = await fetchWalkingRoute(currentStart, NOLGURO);
-
-    if (realPath && realPath.length > 1) {
-      // 실제 도로를 따라가는 경로 (파란 실선)
-      new kakao.maps.Polyline({
-        map: map,
-        path: realPath,
-        strokeWeight: 5,
-        strokeColor: '#5BB8DB',
-        strokeOpacity: 0.9,
-        strokeStyle: 'solid'
-      });
-      setMapStatus('');
+  function superZoom(dir){
+    const map = window._map;
+    if(!map) return;
+    const lv = map.getLevel();
+    if(dir > 0){
+      if(lv > 1) map.setLevel(lv - 1, {animate:true});
     } else {
-      // 실패 시 기존 더미 직선 경로로 폴백 (파란 점선)
-      new kakao.maps.Polyline({
-        map: map,
-        path: [startLL, dangerLL, angelLL, discoverLL, noguroLL],
-        strokeWeight: 5,
-        strokeColor: '#5BB8DB',
-        strokeOpacity: 0.9,
-        strokeStyle: 'shortdash'
-      });
-      setMapStatus('실제 도보 경로를 불러오지 못해 임시 경로로 표시합니다. (콘솔 확인)', true);
+      map.setLevel(lv + 1, {animate:true});
     }
-
-    // 위험 구간 표시 (빨간 실선) — 참고용 더미 구간, 위 실경로 위에 겹쳐 표시
-    new kakao.maps.Polyline({
-      map: map,
-      path: [dangerLL, angelLL],
-      strokeWeight: 6,
-      strokeColor: '#E53E3E',
-      strokeOpacity: 0.9,
-      strokeStyle: 'solid'
-    });
-
-    // 마커 추가
-    addKakaoMarker(currentStart, '#5BB8DB', 'dot', '출발지');
-    addKakaoMarker(NOLGURO, '#5BB8DB', 'dot', '놀구로');
-    addKakaoMarker(DANGER_SPOT, '#E53E3E', 'danger', '위험 요소');
-    addKakaoMarker(ANGEL_SPOT, '#F4B942', 'angel', '구로엔젤');
-    addKakaoMarker(DISCOVER_SPOT, '#B5714A', 'factory', '삼대발견');
-
-    // 모든 지점이 보이도록 범위 조정
-    const bounds = new kakao.maps.LatLngBounds();
-    [startLL, noguroLL, dangerLL, angelLL, discoverLL].forEach(p => bounds.extend(p));
-    map.setBounds(bounds);
-
-    document.getElementById('navi-btn').href = `https://map.kakao.com/link/to/신도림놀구로,${NOLGURO[0]},${NOLGURO[1]}`;
   }
 
-  function initMap(){
-    // SDK 로드 자체가 실패한 경우 (appkey 오류/도메인 미등록/네트워크 404 등)
-    if (typeof kakao === 'undefined' || !kakao.maps) {
-      setMapStatus('카카오맵을 불러오지 못했습니다. appkey 또는 등록 도메인을 확인하세요.', true);
+  function toggleSheet(){
+    const sheet = document.getElementById('mapSheet');
+    const fab = document.querySelector('.locate-fab');
+    const sz = document.querySelector('.superzoom');
+    sheet.classList.toggle('collapsed');
+    const down = sheet.classList.contains('collapsed');
+    fab.style.bottom = down ? '110px' : '';
+    if(sz) sz.style.bottom = down ? '110px' : '';
+  }
+
+  function initKakaoMap(){
+    // 신도림놀구로 (서울 구로구 신도림로13길 51)
+    const end = [37.51037, 126.88001];
+
+    const LL = p => new kakao.maps.LatLng(p[0], p[1]);
+    const map = new kakao.maps.Map(document.getElementById('kakaoMap'), {
+      center: LL(end), level: 1
+    });
+    map.setMinLevel(1);   // 1 = 카카오맵이 제공하는 최대 확대
+    map.setMaxLevel(14);
+    map.setZoomable(true);
+    map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.BOTTOMRIGHT);
+    window._map = map;
+    window._LL = LL;
+    window._dest = end;
+
+    new kakao.maps.CustomOverlay({
+      position: LL(end),
+      content: '<div class="label-pill">🎈 신도림놀구로</div>',
+      yAnchor: 0.5
+    }).setMap(map);
+  }
+
+  // 길찾기 프록시 주소 (Cloudflare Worker 배포 후 여기에 입력)
+  const ROUTE_API = 'https://nolguro-route.YOUR-NAME.workers.dev/route';
+
+  // ===== 현재 위치에서 길찾기 =====
+  function findMyRoute(){
+    const box = document.getElementById('routeResult');
+    const btnText = document.getElementById('findBtnText');
+
+    const show = (isErr, title, body) => {
+      box.style.display = 'block';
+      box.className = 'route-result' + (isErr ? ' err' : '');
+      box.innerHTML = '<h5>' + title + '</h5>' + body;
+    };
+
+    if(!window._map){
+      show(true, '⚠️ 지도를 먼저 불러와 주세요', '<p>잠시 후 다시 눌러주세요.</p>');
+      return;
+    }
+    if(!navigator.geolocation){
+      show(true, '⚠️ 위치 기능을 쓸 수 없어요',
+        '<p>이 브라우저는 위치 확인을 지원하지 않아요. 지도에 표시된 신도림놀구로 위치를 참고해 주세요.</p>');
       return;
     }
 
-    kakao.maps.load(function () {
-      const container = document.getElementById('kmap');
-      const center = new kakao.maps.LatLng(NOLGURO[0], NOLGURO[1]);
-      map = new kakao.maps.Map(container, { center: center, level: 4 });
+    btnText.textContent = '📍 내 위치를 찾는 중...';
 
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            startPos = [pos.coords.latitude, pos.coords.longitude];
-            setMapStatus('');
-            drawRouteOnMap(startPos);
-          },
-          (err) => {
-            setMapStatus('현재 위치를 가져오지 못해 기본 출발지로 표시합니다.', false);
-            drawRouteOnMap(startPos);
-          },
-          { enableHighAccuracy: true, timeout: 3000 }
-        );
-      } else {
-        setMapStatus('이 브라우저는 위치 정보를 지원하지 않아 기본 출발지로 표시합니다.', false);
-        drawRouteOnMap(startPos);
-      }
-    });
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        const me = [pos.coords.latitude, pos.coords.longitude];
+        const map = window._map, LL = window._LL, dest = window._dest;
+
+        // 이전 경로 지우기
+        if(window._myLine) window._myLine.setMap(null);
+        if(window._myMark) window._myMark.setMap(null);
+
+        // 내 위치 마커
+        window._myMark = new kakao.maps.CustomOverlay({
+          position: LL(me), content: '<div class="my-loc"></div>', yAnchor: 0.5
+        });
+        window._myMark.setMap(map);
+
+        btnText.textContent = '🚶 걸어가는 길을 찾는 중...';
+
+        try {
+          const q = new URLSearchParams({
+            sx: me[1], sy: me[0], ex: dest[1], ey: dest[0]
+          });
+          const res = await fetch(ROUTE_API + '?' + q);
+          const data = await res.json();
+          if(!data.ok || !data.path || !data.path.length) throw new Error('no path');
+
+          btnText.textContent = '📍 현재 위치에서 길찾기';
+
+          // 실제 도로를 따라가는 경로선
+          window._myLine = new kakao.maps.Polyline({
+            path: data.path.map(LL),
+            strokeWeight: 6, strokeColor: '#4A90E2',
+            strokeOpacity: 0.95, strokeStyle: 'solid'
+          });
+          window._myLine.setMap(map);
+
+          // 경로 전체가 보이게 화면 맞추기
+          const bounds = new kakao.maps.LatLngBounds();
+          data.path.forEach(p => bounds.extend(LL(p)));
+          map.setBounds(bounds, 60, 40, 60, 40);
+
+          const dist = data.distance;
+          const distText = dist >= 1000 ? (dist/1000).toFixed(1) + 'km' : dist + 'm';
+          const mins = Math.max(1, Math.round((data.time || dist/1.1) / 60));
+          const modeText = data.mode === 'walk' ? '도보' : '차량 기준';
+
+          show(false, '🍀 신도림놀구로까지 길을 찾았어요',
+            '<div class="route-stats">' +
+              '<div class="route-stat"><div class="num">' + distText + '</div><div class="lbl">거리</div></div>' +
+              '<div class="route-stat"><div class="num">' + mins + '분</div><div class="lbl">' + modeText + '</div></div>' +
+              '<div class="route-stat"><div class="num">14개</div><div class="lbl">가로등</div></div>' +
+            '</div>' +
+            '<p style="margin-top:10px;">파란 선을 따라가면 신도림놀구로에 도착해요. 실제 길을 따라 안내하고 있어요.</p>');
+
+        } catch(e) {
+          btnText.textContent = '📍 현재 위치에서 길찾기';
+          // 경로 서버 실패 시: 카카오맵 길찾기로 연결
+          const url = 'https://map.kakao.com/link/to/신도림놀구로,' + dest[0] + ',' + dest[1];
+          map.setCenter(LL(me));
+          show(true, '⚠️ 경로를 불러오지 못했어요',
+            '<p>지금은 길 안내를 받지 못했어요. 아래 버튼으로 카카오맵에서 길을 확인할 수 있어요.</p>' +
+            '<a class="btn primary" style="width:100%;margin-top:10px;text-decoration:none;" ' +
+            'href="' + url + '" target="_blank">🗺️ 카카오맵으로 길찾기</a>');
+        }
+      },
+      err => {
+        btnText.textContent = '📍 현재 위치에서 길찾기';
+        let msg = '위치를 확인하지 못했어요.';
+        if(err.code === 1) msg = '위치 권한이 꺼져 있어요. 브라우저 주소창 옆 자물쇠 아이콘에서 위치를 허용해 주세요.';
+        else if(err.code === 2) msg = '지금은 위치 신호를 잡지 못했어요. 실외에서 다시 시도해 주세요.';
+        else if(err.code === 3) msg = '위치 확인이 오래 걸려요. 잠시 후 다시 눌러주세요.';
+        show(true, '⚠️ 위치를 못 찾았어요',
+          '<p>' + msg + '<br>대신 지도에 표시된 신도림놀구로 위치를 확인할 수 있어요.</p>');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   }
 </script>
 </body>
