@@ -6,21 +6,7 @@
 <title>놀구로오는길</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
-<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=fdf609543f391b19f0295840c6173357&autoload=false">
-
-  function openPrivacy(){
-    document.getElementById('privacyModal').classList.add('open');
-  }
-
-  function closePrivacy(){
-    document.getElementById('privacyModal').classList.remove('open');
-  }
-
-  document.getElementById('privacyModal').addEventListener('click', function(e){
-    if(e.target === this) closePrivacy();
-  });
-
-</script>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=fdf609543f391b19f0295840c6173357&autoload=false"></script>
 <style>
   :root{
     --bg-mint:#F2FAE7;
@@ -1185,6 +1171,8 @@
   }
 
 
+
+
   // 개인정보처리방침 모달
   function openPrivacy(){
     const modal = document.getElementById('privacyModal');
@@ -1200,19 +1188,14 @@
     document.body.style.overflow = '';
   }
 
-  // 모달 바깥 영역 클릭으로 닫기
   document.addEventListener('click', function(event){
     const modal = document.getElementById('privacyModal');
-    if (modal && event.target === modal) {
-      closePrivacy();
-    }
+    if (modal && event.target === modal) closePrivacy();
   });
 
-  // ESC로 닫기
   document.addEventListener('keydown', function(event){
     if (event.key === 'Escape') closePrivacy();
   });
-
 </script>
 </body>
 </html>
