@@ -46,17 +46,8 @@
     display:flex;
     flex-direction:column;
   }
-  .status{
-    display:flex;
-    justify-content:space-between;
-    padding:14px 26px 4px;
-    font-size:13px;
-    font-weight:700;
-    color:var(--leaf-text);
-    flex-shrink:0;
-  }
   .header{
-    padding:6px 22px 14px;
+    padding:18px 22px 14px;
     display:flex;
     align-items:center;
     gap:10px;
@@ -520,6 +511,70 @@
   }
   .switch input:checked + .slider{background:var(--leaf);}
   .switch input:checked + .slider::before{transform:translateX(18px);}
+  /* -------- 보호자 연락처 관리 -------- */
+  .guardian-head{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:10px;margin:14px 2px 8px;
+  }
+  .guardian-head .section-label{margin:0;}
+  .guardian-add-btn{
+    border:none;background:var(--leaf);color:white;
+    border-radius:999px;padding:8px 12px;
+    font-family:'Jua', sans-serif;font-size:11px;
+    cursor:pointer;box-shadow:0 6px 12px rgba(95,174,58,0.22);
+  }
+  .guardian-form{
+    display:none;background:var(--white);border-radius:20px;
+    padding:14px;box-shadow:var(--shadow);margin-bottom:10px;
+  }
+  .guardian-form.open{display:block;}
+  .guardian-input{
+    width:100%;border:1px solid #DCE9D0;background:#FAFDF7;
+    border-radius:12px;padding:11px 12px;margin-bottom:8px;
+    font-family:'Gowun Dodum', sans-serif;font-size:12px;color:var(--ink);
+    outline:none;
+  }
+  .guardian-input:focus{border-color:var(--leaf);}
+  .guardian-actions{display:flex;gap:8px;}
+  .guardian-actions .btn{padding:10px 0;font-size:12px;}
+  .guardian-empty{
+    background:var(--white);border-radius:20px;padding:16px 14px;
+    box-shadow:var(--shadow);text-align:center;color:var(--muted);
+    font-size:11px;margin-bottom:10px;
+  }
+  .guardian-item{
+    display:flex;align-items:center;gap:10px;
+    background:var(--white);border-radius:18px;padding:12px 14px;
+    box-shadow:var(--shadow);margin-bottom:10px;
+  }
+  .guardian-avatar{
+    width:40px;height:40px;border-radius:14px;background:var(--safe-bg);
+    display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;
+  }
+  .guardian-info{min-width:0;flex:1;}
+  .guardian-info h5{margin:0;font-family:'Jua', sans-serif;font-size:12.5px;color:var(--ink);}
+  .guardian-info p{margin:2px 0 0;font-size:10.5px;color:var(--muted);}
+  .guardian-call{
+    border:none;background:var(--safe-bg);color:var(--leaf-deep);
+    border-radius:999px;padding:8px 10px;font-family:'Jua', sans-serif;font-size:10px;
+    text-decoration:none;white-space:nowrap;
+  }
+  .guardian-delete{
+    border:none;background:#FFF0F0;color:#E14545;border-radius:999px;
+    padding:8px 9px;font-size:10px;cursor:pointer;
+  }
+
+  /* -------- 보호자 연락처 관리 모달 -------- */
+  .guardian-modal{position:fixed;inset:0;background:rgba(39,55,31,0.42);display:none;align-items:center;justify-content:center;padding:18px;z-index:1000;}
+  .guardian-modal.open{display:flex;}
+  .guardian-modal-card{width:min(100%,370px);max-height:88vh;overflow:hidden;background:var(--bg-mint);border-radius:24px;box-shadow:0 18px 45px rgba(0,0,0,0.22);display:flex;flex-direction:column;}
+  .guardian-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;background:var(--white);border-bottom:1px solid #E7F1DC;flex-shrink:0;}
+  .guardian-modal-head h3{margin:0;font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);}
+  .guardian-modal-body{overflow-y:auto;padding:16px;}
+  .guardian-modal-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .guardian-modal-top strong{font-family:'Jua',sans-serif;font-size:13px;color:var(--ink);}
+  .guardian-modal-top p{margin:3px 0 0;font-size:10.5px;color:var(--muted);}
+
   .app-version{
     text-align:center;font-size:10.5px;color:#A7B89A;
     margin:18px 0 6px;
@@ -809,43 +864,21 @@
 
     <!-- ============ 설정 ============ -->
     <section class="screen" id="screen-settings">
-      <div class="section-label">⚙️ 알림</div>
-      <div class="setting-row">
-        <div class="setting-label">
-          <span class="fic">🔔</span>
-          <div>
-            <h5>위험구간 알림</h5>
-            <p>위험한 구간에 들어서면 알려줘요</p>
-          </div>
-        </div>
-        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-      </div>
-      <div class="setting-row">
-        <div class="setting-label">
-          <span class="fic">🌙</span>
-          <div>
-            <h5>밤길 안심 모드</h5>
-            <p>해진 뒤에는 더 밝은 경로로 추천해요</p>
-          </div>
-        </div>
-        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-      </div>
-
       <div class="section-label">👤 계정 · 정보</div>
-      <button class="quicklink">
+
+      <button class="quicklink" onclick="openGuardianModal()">
         <div class="qicon">🧸</div>
         <div><h5>보호자 연락처 관리</h5><p>비상 연락처를 등록해요</p></div>
         <div class="arrow">›</div>
       </button>
+
       <button class="quicklink" onclick="openPrivacy()">
         <div class="qicon">📄</div>
         <div><h5>이용약관 · 개인정보처리방침</h5><p>안전하게 관리되고 있어요</p></div>
         <div class="arrow">›</div>
       </button>
       <button class="quicklink">
-        <div class="qicon">💌</div>
-        <div><h5>문의하기</h5><p>불편하거나 궁금한 점을 남겨주세요</p></div>
-        <div class="arrow">›</div>
+        <div class="qicon">💌</div><div><h5>문의하기</h5><p>불편하거나 궁금한 점을 남겨주세요</p></div><div class="arrow">›</div>
       </button>
 
       <div class="app-version">놀구로오는길 v1.0.0</div>
@@ -853,6 +886,32 @@
 
   </div>
 
+
+  <!-- ============ 보호자 연락처 관리 ============ -->
+  <div class="guardian-modal" id="guardianModal" role="dialog" aria-modal="true" aria-labelledby="guardianTitle">
+    <div class="guardian-modal-card">
+      <div class="guardian-modal-head">
+        <h3 id="guardianTitle">보호자 연락처 관리</h3>
+        <button class="privacy-close" type="button" onclick="closeGuardianModal()">닫기</button>
+      </div>
+      <div class="guardian-modal-body">
+        <div class="guardian-modal-top">
+          <div><strong>보호자 목록</strong><p>비상시에 연락할 보호자를 등록할 수 있어요.</p></div>
+          <button class="guardian-add-btn" type="button" onclick="toggleGuardianForm()">＋ 보호자 추가</button>
+        </div>
+        <div class="guardian-form" id="guardianForm">
+          <input class="guardian-input" id="guardianName" type="text" maxlength="30" placeholder="보호자 이름">
+          <input class="guardian-input" id="guardianRelation" type="text" maxlength="20" placeholder="관계 (예: 엄마, 아빠, 선생님)">
+          <input class="guardian-input" id="guardianPhone" type="tel" maxlength="20" placeholder="전화번호">
+          <div class="guardian-actions">
+            <button class="btn primary" type="button" onclick="saveGuardian()">저장</button>
+            <button class="btn ghost" type="button" onclick="toggleGuardianForm(false)">취소</button>
+          </div>
+        </div>
+        <div id="guardianList"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ============ 개인정보처리방침 ============ -->
   <div class="privacy-modal" id="privacyModal" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
@@ -1167,6 +1226,57 @@
 
 
 
+
+  // ===== 보호자 연락처 관리 =====
+  function getGuardians(){
+    try { return JSON.parse(localStorage.getItem('nolmap_guardians') || '[]'); }
+    catch(e) { return []; }
+  }
+  function saveGuardians(list){ localStorage.setItem('nolmap_guardians', JSON.stringify(list)); }
+  function openGuardianModal(){
+    const modal=document.getElementById('guardianModal'); if(!modal)return;
+    modal.classList.add('open'); document.body.style.overflow='hidden'; renderGuardians();
+  }
+  function closeGuardianModal(){
+    const modal=document.getElementById('guardianModal'); if(!modal)return;
+    modal.classList.remove('open'); document.body.style.overflow=''; toggleGuardianForm(false);
+  }
+  function toggleGuardianForm(force){
+    const form=document.getElementById('guardianForm'); if(!form)return;
+    const open=typeof force==='boolean'?force:!form.classList.contains('open');
+    form.classList.toggle('open',open);
+    if(open){const input=document.getElementById('guardianName'); if(input)setTimeout(()=>input.focus(),50);}
+  }
+  function saveGuardian(){
+    const name=document.getElementById('guardianName').value.trim();
+    const relation=document.getElementById('guardianRelation').value.trim();
+    const phone=document.getElementById('guardianPhone').value.trim();
+    if(!name||!relation||!phone){alert('보호자 이름, 관계, 전화번호를 모두 입력해 주세요.');return;}
+    const list=getGuardians(); list.push({id:Date.now(),name,relation,phone}); saveGuardians(list);
+    document.getElementById('guardianName').value=''; document.getElementById('guardianRelation').value=''; document.getElementById('guardianPhone').value='';
+    toggleGuardianForm(false); renderGuardians();
+  }
+  function deleteGuardian(id){
+    const list=getGuardians(), targetId=String(id), next=list.filter(g=>String(g.id)!==targetId);
+    if(next.length===list.length)return; saveGuardians(next); renderGuardians();
+  }
+  function renderGuardians(){
+    const box=document.getElementById('guardianList'); if(!box)return; const list=getGuardians();
+    if(!list.length){box.innerHTML='<div class="guardian-empty">등록된 보호자가 없어요.<br>오른쪽 위 <strong>＋ 보호자 추가</strong>를 눌러 등록해 주세요.</div>';return;}
+    box.innerHTML=list.map(g=>{
+      const safePhone=String(g.phone).replace(/[^0-9+]/g,'');
+      return '<div class="guardian-item"><div class="guardian-avatar">🧸</div><div class="guardian-info"><h5>'+escapeHtml(g.name)+' · '+escapeHtml(g.relation)+'</h5><p>'+escapeHtml(g.phone)+'</p></div><a class="guardian-call" href="tel:'+safePhone+'">전화</a><button class="guardian-delete" type="button" data-guardian-id="'+String(g.id)+'">삭제</button></div>';
+    }).join('');
+  }
+  function escapeHtml(value){return String(value).replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
+  document.addEventListener('click',function(event){
+    const btn=event.target.closest('.guardian-delete');
+    if(btn){const id=btn.getAttribute('data-guardian-id');if(id)deleteGuardian(id);return;}
+    const modal=document.getElementById('guardianModal'); if(modal&&event.target===modal)closeGuardianModal();
+  });
+  document.addEventListener('keydown',function(event){
+    if(event.key==='Escape'){const modal=document.getElementById('guardianModal');if(modal&&modal.classList.contains('open')){closeGuardianModal();return;}}
+  });
 
   // 개인정보처리방침 모달
   function openPrivacy(){
