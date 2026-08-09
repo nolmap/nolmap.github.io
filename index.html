@@ -564,6 +564,15 @@
     padding:8px 9px;font-size:10px;cursor:pointer;
   }
 
+  /* -------- 구로엔젤 가게 목록 모달 -------- */
+  .angel-shop-modal{position:fixed;inset:0;background:rgba(39,55,31,0.42);display:none;align-items:center;justify-content:center;padding:18px;z-index:1001;}
+  .angel-shop-modal.open{display:flex;}
+  .angel-shop-card{width:min(100%,370px);max-height:88vh;overflow:hidden;background:var(--bg-mint);border-radius:24px;box-shadow:0 18px 45px rgba(0,0,0,0.22);display:flex;flex-direction:column;}
+  .angel-shop-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;background:var(--white);border-bottom:1px solid #E7F1DC;flex-shrink:0;}
+  .angel-shop-head h3{margin:0;font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);}
+  .angel-shop-body{overflow-y:auto;padding:16px;}
+  .angel-shop-empty{padding:28px 14px;text-align:center;color:var(--muted);font-size:11px;line-height:1.6;background:var(--white);border-radius:18px;}
+
   /* -------- 보호자 연락처 관리 모달 -------- */
   .guardian-modal{position:fixed;inset:0;background:rgba(39,55,31,0.42);display:none;align-items:center;justify-content:center;padding:18px;z-index:1000;}
   .guardian-modal.open{display:flex;}
@@ -753,32 +762,10 @@
           <circle cx="66" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
         </svg>
         <h3>구로엔젤이 함께 걸어요</h3>
-        <p>경로 곳곳을 살피고 위험 구간을 미리 알려주는 우리 동네 안전 도우미예요.</p>
+        <p>놀구로에 오고 가는 길을 안전하게 지켜주는 가게들이에요!</p>
       </div>
 
-      <div class="section-label">🧚 구로엔젤이 하는 일</div>
-      <div class="feature-item">
-        <div class="fic">🔔</div>
-        <div>
-          <h5>안전벨</h5>
-          <p>위급할 때 누르면 도움을 요청할 수 있어요</p>
-        </div>
-      </div>
-      <div class="feature-item">
-        <div class="fic">📍</div>
-        <div>
-          <h5>실시간 위치 안내</h5>
-          <p>지금 걷는 구간의 위험 요소를 바로 알려줘요</p>
-        </div>
-      </div>
-      <div class="feature-item">
-        <div class="fic">☎️</div>
-        <div>
-          <h5>도움 요청</h5>
-          <p>가까운 지킴이집과 어른에게 빠르게 연결돼요</p>
-        </div>
-      </div>
-      <button class="btn primary" style="width:100%;margin-top:4px;">📢 위험 신고하기</button>
+      <button class="btn primary" style="width:100%;margin-top:12px;" type="button" onclick="openAngelShops()">🏪 구로엔젤 가게 목록</button>
     </section>
 
     <!-- ============ 삼대발견 ============ -->
@@ -886,6 +873,21 @@
 
   </div>
 
+
+  <!-- ============ 구로엔젤 가게 목록 ============ -->
+  <div class="angel-shop-modal" id="angelShopModal" role="dialog" aria-modal="true" aria-labelledby="angelShopTitle">
+    <div class="angel-shop-card">
+      <div class="angel-shop-head">
+        <h3 id="angelShopTitle">구로엔젤 가게 목록</h3>
+        <button class="privacy-close" type="button" onclick="closeAngelShops()">닫기</button>
+      </div>
+      <div class="angel-shop-body">
+        <div id="angelShopList" class="angel-shop-empty">
+          나중에 등록할 구로엔젤 가게 목록이 여기에 표시돼요.
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ============ 보호자 연락처 관리 ============ -->
   <div class="guardian-modal" id="guardianModal" role="dialog" aria-modal="true" aria-labelledby="guardianTitle">
@@ -1227,6 +1229,20 @@
 
 
 
+  // ===== 구로엔젤 가게 목록 =====
+  function openAngelShops(){
+    const modal=document.getElementById('angelShopModal');
+    if(!modal)return;
+    modal.classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function closeAngelShops(){
+    const modal=document.getElementById('angelShopModal');
+    if(!modal)return;
+    modal.classList.remove('open');
+    document.body.style.overflow='';
+  }
+
   // ===== 보호자 연락처 관리 =====
   function getGuardians(){
     try { return JSON.parse(localStorage.getItem('nolmap_guardians') || '[]'); }
@@ -1272,10 +1288,17 @@
   document.addEventListener('click',function(event){
     const btn=event.target.closest('.guardian-delete');
     if(btn){const id=btn.getAttribute('data-guardian-id');if(id)deleteGuardian(id);return;}
+    const shopModal=document.getElementById('angelShopModal');
+    if(shopModal&&event.target===shopModal){closeAngelShops();return;}
     const modal=document.getElementById('guardianModal'); if(modal&&event.target===modal)closeGuardianModal();
   });
   document.addEventListener('keydown',function(event){
-    if(event.key==='Escape'){const modal=document.getElementById('guardianModal');if(modal&&modal.classList.contains('open')){closeGuardianModal();return;}}
+    if(event.key==='Escape'){
+      const shopModal=document.getElementById('angelShopModal');
+      if(shopModal&&shopModal.classList.contains('open')){closeAngelShops();return;}
+      const modal=document.getElementById('guardianModal');
+      if(modal&&modal.classList.contains('open')){closeGuardianModal();return;}
+    }
   });
 
   // 개인정보처리방침 모달
