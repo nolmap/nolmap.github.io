@@ -1183,6 +1183,36 @@
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }
+
+
+  // 개인정보처리방침 모달
+  function openPrivacy(){
+    const modal = document.getElementById('privacyModal');
+    if (!modal) return;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePrivacy(){
+    const modal = document.getElementById('privacyModal');
+    if (!modal) return;
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // 모달 바깥 영역 클릭으로 닫기
+  document.addEventListener('click', function(event){
+    const modal = document.getElementById('privacyModal');
+    if (modal && event.target === modal) {
+      closePrivacy();
+    }
+  });
+
+  // ESC로 닫기
+  document.addEventListener('keydown', function(event){
+    if (event.key === 'Escape') closePrivacy();
+  });
+
 </script>
 </body>
 </html>
