@@ -564,6 +564,25 @@
     padding:8px 9px;font-size:10px;cursor:pointer;
   }
 
+
+  /* -------- 문의하기 모달 -------- */
+  .contact-modal{position:fixed;inset:0;background:rgba(39,55,31,0.42);display:none;align-items:center;justify-content:center;padding:18px;z-index:1002;}
+  .contact-modal.open{display:flex;}
+  .contact-card{width:min(100%,370px);max-height:88vh;overflow:hidden;background:var(--bg-mint);border-radius:24px;box-shadow:0 18px 45px rgba(0,0,0,0.22);display:flex;flex-direction:column;}
+  .contact-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;background:var(--white);border-bottom:1px solid #E7F1DC;flex-shrink:0;}
+  .contact-head h3{margin:0;font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);}
+  .contact-body{overflow-y:auto;padding:16px;}
+  .contact-input{width:100%;border:1px solid #DCE9D0;background:#FAFDF7;border-radius:12px;padding:11px 12px;margin-bottom:9px;font-family:'Gowun Dodum',sans-serif;font-size:12px;color:var(--ink);outline:none;}
+  .contact-input:focus{border-color:var(--leaf);}
+  .contact-textarea{min-height:150px;resize:vertical;}
+  .contact-label{display:block;font-family:'Jua',sans-serif;font-size:11px;color:var(--leaf-text);margin:2px 2px 5px;}
+  .contact-note{font-size:10px;color:var(--muted);line-height:1.5;margin:2px 2px 10px;}
+  .contact-status{display:none;border-radius:14px;padding:11px 12px;margin-bottom:10px;font-size:11px;line-height:1.5;}
+  .contact-status.show{display:block;}
+  .contact-status.success{background:var(--safe-bg);color:var(--leaf-deep);}
+  .contact-status.error{background:var(--danger-bg);color:#E14545;}
+  .contact-submit:disabled{opacity:.65;cursor:wait;}
+
   /* -------- 구로엔젤 가게 목록 모달 -------- */
   .angel-shop-modal{position:fixed;inset:0;background:rgba(39,55,31,0.42);display:none;align-items:center;justify-content:center;padding:18px;z-index:1001;}
   .angel-shop-modal.open{display:flex;}
@@ -864,7 +883,7 @@
         <div><h5>이용약관 · 개인정보처리방침</h5><p>안전하게 관리되고 있어요</p></div>
         <div class="arrow">›</div>
       </button>
-      <button class="quicklink">
+      <button class="quicklink" type="button" onclick="openContactModal()">
         <div class="qicon">💌</div><div><h5>문의하기</h5><p>불편하거나 궁금한 점을 남겨주세요</p></div><div class="arrow">›</div>
       </button>
 
@@ -886,6 +905,30 @@
           나중에 등록할 구로엔젤 가게 목록이 여기에 표시돼요.
         </div>
       </div>
+    </div>
+  </div>
+
+
+  <!-- ============ 문의하기 ============ -->
+  <div class="contact-modal" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+    <div class="contact-card">
+      <div class="contact-head">
+        <h3 id="contactTitle">문의하기</h3>
+        <button class="privacy-close" type="button" onclick="closeContactModal()">닫기</button>
+      </div>
+      <form class="contact-body" id="contactForm">
+        <label class="contact-label" for="contactSubject">제목</label>
+        <input class="contact-input" id="contactSubject" type="text" maxlength="100" placeholder="문의 제목을 입력해 주세요.">
+        <label class="contact-label" for="contactMessage">문의 내용</label>
+        <textarea class="contact-input contact-textarea" id="contactMessage" maxlength="3000" placeholder="궁금한 점이나 불편한 점을 적어 주세요." required></textarea>
+        <label class="contact-label" for="contactName">이름 <span style="font-weight:normal;color:var(--muted);">(선택)</span></label>
+        <input class="contact-input" id="contactName" type="text" maxlength="30" placeholder="이름을 입력해 주세요.">
+        <label class="contact-label" for="contactPhone">연락처 <span style="font-weight:normal;color:var(--muted);">(선택)</span></label>
+        <input class="contact-input" id="contactPhone" type="tel" maxlength="20" placeholder="답변을 원하면 연락처를 남겨 주세요.">
+        <p class="contact-note">이메일 주소는 입력하지 않아도 돼요. 이름과 연락처도 선택사항이에요.</p>
+        <div class="contact-status" id="contactStatus"></div>
+        <button class="btn primary contact-submit" id="contactSubmit" type="submit" style="width:100%;">💌 문의 보내기</button>
+      </form>
     </div>
   </div>
 
@@ -1288,18 +1331,89 @@
   document.addEventListener('click',function(event){
     const btn=event.target.closest('.guardian-delete');
     if(btn){const id=btn.getAttribute('data-guardian-id');if(id)deleteGuardian(id);return;}
+    const contactModal=document.getElementById('contactModal');
+    if(contactModal&&event.target===contactModal){closeContactModal();return;}
     const shopModal=document.getElementById('angelShopModal');
     if(shopModal&&event.target===shopModal){closeAngelShops();return;}
     const modal=document.getElementById('guardianModal'); if(modal&&event.target===modal)closeGuardianModal();
   });
   document.addEventListener('keydown',function(event){
     if(event.key==='Escape'){
+      const contactModal=document.getElementById('contactModal');
+      if(contactModal&&contactModal.classList.contains('open')){closeContactModal();return;}
       const shopModal=document.getElementById('angelShopModal');
       if(shopModal&&shopModal.classList.contains('open')){closeAngelShops();return;}
       const modal=document.getElementById('guardianModal');
       if(modal&&modal.classList.contains('open')){closeGuardianModal();return;}
     }
   });
+
+
+  // ===== 문의하기 =====
+  const CONTACT_API = 'https://susaporkxqgfjhettlqv.supabase.co/functions/v1/contact';
+
+  function openContactModal(){
+    const modal=document.getElementById('contactModal');
+    if(!modal)return;
+    modal.classList.add('open');
+    document.body.style.overflow='hidden';
+    const status=document.getElementById('contactStatus');
+    if(status){status.className='contact-status';status.textContent='';}
+    setTimeout(()=>{const input=document.getElementById('contactSubject');if(input)input.focus();},50);
+  }
+
+  function closeContactModal(){
+    const modal=document.getElementById('contactModal');
+    if(!modal)return;
+    modal.classList.remove('open');
+    document.body.style.overflow='';
+  }
+
+  async function submitContact(event){
+    event.preventDefault();
+    const subject=document.getElementById('contactSubject').value.trim();
+    const message=document.getElementById('contactMessage').value.trim();
+    const name=document.getElementById('contactName').value.trim();
+    const phone=document.getElementById('contactPhone').value.trim();
+    const status=document.getElementById('contactStatus');
+    const submit=document.getElementById('contactSubmit');
+
+    if(!message){
+      status.className='contact-status show error';
+      status.textContent='문의 내용을 입력해 주세요.';
+      return;
+    }
+
+    submit.disabled=true;
+    submit.textContent='📨 보내는 중...';
+    status.className='contact-status';
+    status.textContent='';
+
+    try{
+      const res=await fetch(CONTACT_API,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({subject,message,name,phone})
+      });
+      let data={};
+      try{data=await res.json();}catch(_){}
+      if(!res.ok || !data.ok) throw new Error(data.error || '문의 전송에 실패했습니다.');
+
+      status.className='contact-status show success';
+      status.textContent='문의가 정상적으로 전송되었어요. 감사합니다!';
+      document.getElementById('contactForm').reset();
+      setTimeout(()=>closeContactModal(),1400);
+    }catch(error){
+      console.error('문의 전송 오류:',error);
+      status.className='contact-status show error';
+      status.textContent='문의 전송에 실패했어요. 잠시 후 다시 시도해 주세요.';
+    }finally{
+      submit.disabled=false;
+      submit.textContent='💌 문의 보내기';
+    }
+  }
+
+  document.getElementById('contactForm')?.addEventListener('submit',submitContact);
 
   // 개인정보처리방침 모달
   function openPrivacy(){
