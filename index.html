@@ -638,9 +638,43 @@
   .tab.active{color:var(--leaf-deep);}
   .tab.active .ticon{background:var(--safe-bg);}
   .homebar{width:120px;height:5px;background:#C9DABB;border-radius:999px;margin:8px auto 0;flex-shrink:0;}
+
+  /* -------- 임시 접근 화면 -------- */
+  body.access-locked .phone{visibility:hidden;}
+  .access-gate{
+    position:fixed;inset:0;z-index:2000;
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;background:var(--bg-mint);
+  }
+  body:not(.access-locked) .access-gate{display:none;}
+  .access-card{
+    width:min(100%,360px);padding:28px 24px;
+    border-radius:26px;background:var(--white);
+    box-shadow:0 18px 45px rgba(39,55,31,0.18);text-align:center;
+  }
+  .access-card .access-icon{font-size:38px;margin-bottom:8px;}
+  .access-card h1{margin:0 0 7px;font-family:'Jua',sans-serif;font-size:22px;color:var(--leaf-text);}
+  .access-card p{margin:0 0 18px;font-size:12px;color:var(--muted);line-height:1.55;}
+  .access-input{
+    width:100%;border:1px solid #DCE9D0;background:#FAFDF7;border-radius:12px;
+    padding:12px;font-family:'Gowun Dodum',sans-serif;font-size:14px;color:var(--ink);outline:none;
+  }
+  .access-input:focus{border-color:var(--leaf);}
+  .access-submit{width:100%;margin-top:10px;}
+  .access-error{min-height:18px;margin:9px 0 0;font-size:11px;color:#E14545;}
 </style>
 </head>
-<body>
+<body class="access-locked">
+<div class="access-gate" id="accessGate">
+  <form class="access-card" onsubmit="unlockSite(event)">
+    <div class="access-icon">🔒</div>
+    <h1>놀맵_beta</h1>
+    <p>임시 접근 비밀번호를 입력해 주세요.</p>
+    <input class="access-input" id="accessPassword" type="password" autocomplete="current-password" placeholder="비밀번호" aria-label="비밀번호" required>
+    <button class="btn primary access-submit" type="submit">입장하기</button>
+    <div class="access-error" id="accessError" role="alert"></div>
+  </form>
+</div>
 <div class="phone">
 
   <div class="header">
@@ -1085,6 +1119,27 @@
 </div>
 
 <script>
+  const ACCESS_PASSWORD = 'nolmap';
+
+  function grantAccess(){
+    sessionStorage.setItem('nolmap_access', 'granted');
+    document.body.classList.remove('access-locked');
+  }
+
+  function unlockSite(event){
+    event.preventDefault();
+    const input = document.getElementById('accessPassword');
+    const error = document.getElementById('accessError');
+    if(input.value === ACCESS_PASSWORD){
+      grantAccess();
+      return;
+    }
+    error.textContent = '비밀번호가 올바르지 않아요.';
+    input.select();
+  }
+
+  if(sessionStorage.getItem('nolmap_access') === 'granted') grantAccess();
+
   const titles = {
     home:  ['놀구로오는길', '신도림놀구로 가는 가장 안전한 길'],
     map:   ['최적의 길', '길찾기와 위치를 한눈에'],
