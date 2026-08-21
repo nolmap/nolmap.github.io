@@ -665,9 +665,9 @@
     <!-- ============ 홈 ============ -->
     <section class="screen active" id="screen-home">
       <div class="hero-card">
-        <div class="status-pill">🟢 지금 통행 가능해요</div>
+        <div class="status-pill">🟡 안전 정보 준비 중</div>
         <h3>오늘도 안전하게, 신도림놀구로!</h3>
-        <p>추천 경로로 걸으면 도보 12분, 가로등 14개가 함께해요.</p>
+        <p>안전 정보 준비 중</p>
         <div class="btnrow">
           <button class="btn on-hero" onclick="go('map'); setTimeout(findMyRoute, 600);">🍀 경로 보기</button>
         </div>
@@ -678,7 +678,7 @@
         <div class="qicon">🗺️</div>
         <div>
           <h5>최적의 길 · 지도</h5>
-          <p>안전 경로와 위험 구간을 한눈에</p>
+          <p>길찾기와 위치를 한눈에</p>
         </div>
         <div class="arrow">›</div>
       </button>
@@ -714,7 +714,7 @@
 
       <div class="map-top-bar">
         <div class="map-title">🗺️ 최적의 길</div>
-        <div class="badge-pill">🟢 통행 가능</div>
+        <div class="badge-pill">🟡 안전 정보 준비 중</div>
       </div>
 
       <button class="locate-fab" onclick="findMyRoute()" title="현재 위치에서 길찾기">📍</button>
@@ -739,29 +739,27 @@
         <div class="grid2" style="margin:12px 0;">
           <div class="card">
             <div class="icon-circle yellow">💡</div>
-            <div class="stat">14개</div>
-            <h4>가로등 개수</h4>
-            <p>경로 전체에 밝은 가로등이 이어져 있어요</p>
+            <div class="stat">준비 중</div>
+            <h4>가로등 정보</h4>
+            <p>안전 정보 준비 중</p>
           </div>
           <div class="card">
             <div class="icon-circle">🚗</div>
-            <div class="stat">보통</div>
-            <h4>차량 통행량</h4>
-            <p>등하원 시간대엔 통행이 조금 늘어나요</p>
+            <div class="stat">준비 중</div>
+            <h4>차량 통행 정보</h4>
+            <p>안전 정보 준비 중</p>
           </div>
         </div>
 
         <div class="risk-card">
-          <div class="rtitle">🚧 위험요소, 이런 점을 조심하세요</div>
-          <span class="risk-tag">🚸 좁은 골목</span>
-          <span class="risk-tag">🌙 가로등 부족 구간</span>
-          <span class="risk-tag">🚗 급커브 도로</span>
+          <div class="rtitle">⚠️ 안전 정보 준비 중</div>
+          <p>경로별 안전 정보는 준비 중이에요.</p>
         </div>
 
         <div class="card">
           <div class="icon-circle">✅</div>
-          <h4>지금 통행하기 충분해요</h4>
-          <p>도로 폭과 인도가 넉넉해서 여러 명이 함께 걸어도 편안해요.</p>
+          <h4>안전 정보 준비 중</h4>
+          <p>길을 이용할 때 주변을 살펴주세요.</p>
         </div>
       </div>
     </section>
@@ -1089,7 +1087,7 @@
 <script>
   const titles = {
     home:  ['놀구로오는길', '신도림놀구로 가는 가장 안전한 길'],
-    map:   ['최적의 길', '안전 경로와 위험 구간을 한눈에'],
+    map:   ['최적의 길', '길찾기와 위치를 한눈에'],
     angel: ['구로엔젤', '우리 동네 안전 도우미'],
     discover: ['삼대발견', '가는 길에 들러볼 안심 명소 3곳'],
     place: ['신도림놀구로', '우리가 놀러가는 그곳'],
@@ -1240,7 +1238,6 @@
             '<div class="route-stats">' +
               '<div class="route-stat"><div class="num">' + distText + '</div><div class="lbl">거리</div></div>' +
               '<div class="route-stat"><div class="num">' + mins + '분</div><div class="lbl">' + modeText + '</div></div>' +
-              '<div class="route-stat"><div class="num">14개</div><div class="lbl">가로등</div></div>' +
             '</div>' +
             '<p style="margin-top:10px;">파란 선을 따라가면 신도림놀구로에 도착해요. 실제 길을 따라 안내하고 있어요.</p>');
 
