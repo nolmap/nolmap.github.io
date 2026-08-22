@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#8FD14F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="놀구로오는길">
+<title>놀구로오는길</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=72a17c082364ffa07650f46c5870c1f7&autoload=false"></script>
+<style>
+  :root{
+    --bg-mint:#F2FAE7;
+    --leaf:#8FD14F;
+    --leaf-deep:#5FAE3A;
+    --leaf-text:#3E7A2C;
+    --white:#FFFFFF;
+    --danger:#FF6B6B;
+    --danger-bg:#FFEAEA;
+    --safe:#63C24A;
+    --safe-bg:#E9F8E1;
+    --lamp:#FFC94A;
+    --ink:#3A4A2E;
+    --muted:#8B9C7E;
+    --shadow: 0 8px 20px rgba(95,174,58,0.18);
+  }
+  *{box-sizing:border-box;}
+  html, body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg-mint);
+    font-family:'Gowun Dodum', sans-serif;
+    color:var(--ink);
+    overscroll-behavior:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .phone{
+    width:100%;
+    height:100dvh;
+    background:var(--bg-mint);
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    /* 노치 · 홈 인디케이터 영역 확보 */
+    padding-top:env(safe-area-inset-top);
+  }
+  /* 넓은 화면(PC)에서는 가운데로 모아서 보기 좋게 */
+  @media (min-width: 600px){
+    body{background:#DCE9D0; display:flex; justify-content:center;}
+    .phone{max-width:430px; box-shadow:0 0 40px rgba(0,0,0,0.12);}
+  }
+  .status{display:none;}
+  .header{
+    padding:6px 22px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
+  }
+  .mascot-sm{width:38px;height:38px;flex-shrink:0;}
+  .title{
+    font-family:'Jua', sans-serif;
+    font-size:19px;
+    color:var(--leaf-text);
+    line-height:1.15;
+  }
+  .subtitle{
+    font-size:11px;
+    color:#79936A;
+    margin-top:1px;
+  }
+
+  .screens{
+    flex:1;
+    overflow-y:auto;
+    padding:0 18px 18px;
+    position:relative;
+  }
+  .screen{display:none;}
+  .screen.active{display:block; animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  /* 지도 전체화면 모드 */
+  .screens.fullmap{padding:0; overflow:hidden;}
+  .map-screen{position:relative; width:100%; height:100%;}
+  .map-screen.active{display:block;}
+  .map-top-bar{
+    position:absolute; top:12px; left:12px; right:12px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:8px; z-index:5; pointer-events:none;
+  }
+  .map-top-bar .map-title{
+    background:var(--white);
+    padding:8px 14px; border-radius:999px;
+    box-shadow:var(--shadow);
+    font-family:'Jua', sans-serif; font-size:14px; color:var(--leaf-text);
+  }
+  .map-top-bar .badge-pill{
+    background:var(--white); box-shadow:var(--shadow);
+    padding:8px 13px;
+  }
+  .map-ctrl{
+    position:absolute; right:14px; z-index:6;
+    bottom:20px;
+    display:flex; flex-direction:column; gap:8px;
+    transition:bottom .28s ease;
+  }
+  .map-ctrl.up{bottom:calc(var(--panel-h, 170px) + 16px);}
+  .map-ctrl button{
+    width:46px; height:46px; border-radius:16px;
+    border:none; background:var(--white);
+    box-shadow:0 4px 12px rgba(0,0,0,0.18);
+    font-size:16px; cursor:pointer;
+  }
+  .angel-btn{
+    border:none; cursor:pointer; pointer-events:auto;
+    font-family:'Jua', sans-serif;
+  }
+  .angel-btn.off{color:#A7B89A;}
+
+  /* 하단 장소 정보 패널 */
+  .info-panel{
+    position:absolute; left:0; right:0; bottom:0; z-index:7;
+    background:var(--white);
+    border-radius:24px 24px 0 0;
+    box-shadow:0 -8px 24px rgba(0,0,0,0.18);
+    padding:16px 18px 20px;
+    transform:translateY(105%);
+    transition:transform .28s ease;
+    max-height:52%;
+    overflow-y:auto;
+  }
+  .info-panel.open{transform:translateY(0);}
+  .info-close{
+    position:absolute; top:12px; right:14px;
+    width:30px; height:30px; border-radius:50%;
+    border:none; background:var(--bg-mint); color:var(--muted);
+    font-size:15px; cursor:pointer; line-height:1;
+  }
+  .info-head{display:flex; align-items:center; gap:12px; margin-bottom:10px; padding-right:34px;}
+  .info-emoji{
+    width:44px; height:44px; border-radius:15px;
+    background:var(--safe-bg);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; flex-shrink:0;
+  }
+  .info-head h4{font-family:'Jua', sans-serif; font-size:15px; margin:0; color:var(--ink);}
+  .info-head .sub{font-size:10.5px; color:var(--leaf-deep); margin-top:3px;}
+  .info-body{font-size:11.5px; color:var(--muted); line-height:1.55; margin:0 0 10px;}
+  .info-rows{background:var(--bg-mint); border-radius:14px; padding:10px 12px;}
+  .info-rows .info-row{
+    display:flex; gap:8px; font-size:11px; color:#5E7150;
+    line-height:1.5; padding:3px 0;
+  }
+  .info-acts{display:flex; gap:8px; margin-top:12px;}
+  .info-acts a, .info-acts button{
+    flex:1; border:none; border-radius:999px; padding:12px 0;
+    font-family:'Jua', sans-serif; font-size:12.5px;
+    text-align:center; text-decoration:none; cursor:pointer;
+  }
+  .info-acts .go{background:var(--leaf); color:white;}
+  .info-acts .call{background:var(--bg-mint); color:var(--leaf-text);}
+  .phone.mapmode .header{display:none;}
+
+  /* 놀구로 소개 카드 */
+  .place-card{
+    background:var(--white);
+    border-radius:22px;
+    padding:16px;
+    box-shadow:var(--shadow);
+    margin-bottom:6px;
+  }
+  .place-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .place-emoji{
+    width:46px;height:46px;border-radius:16px;
+    background:var(--safe-bg);
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;flex-shrink:0;
+  }
+  .place-head h4{
+    font-family:'Jua', sans-serif;font-size:15px;margin:0;color:var(--ink);
+  }
+  .place-tag{
+    font-size:10.5px;color:var(--leaf-deep);margin:3px 0 0;
+    background:var(--safe-bg);display:inline-block;
+    padding:3px 9px;border-radius:999px;
+  }
+  .place-desc{
+    font-size:11.5px;color:var(--muted);line-height:1.55;margin:0 0 12px;
+  }
+  .place-info{
+    background:var(--bg-mint);border-radius:14px;padding:10px 12px;
+  }
+  .info-row{
+    display:flex;gap:8px;align-items:flex-start;
+    font-size:11px;color:#5E7150;line-height:1.5;
+    padding:3px 0;
+  }
+  .info-row .ic{flex-shrink:0;}
+  .place-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .ptag{
+    background:var(--safe-bg);color:var(--leaf-deep);
+    font-size:10.5px;font-weight:700;
+    padding:5px 10px;border-radius:999px;
+  }
+
+  /* 카드 공통 */
+  .card{
+    background:var(--white);
+    border-radius:22px;
+    padding:14px 14px 12px;
+    box-shadow:var(--shadow);
+  }
+  .card .icon-circle{
+    width:36px;height:36px;
+    border-radius:50%;
+    background:var(--leaf);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:7px;
+    font-size:16px;
+  }
+  .card .icon-circle.red{background:var(--danger-bg);}
+  .card .icon-circle.yellow{background:#FFF3D6;}
+  .card h4{
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+  .card p{
+    font-size:11px;
+    margin:0;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .card .stat{
+    font-family:'Jua', sans-serif;
+    font-size:18px;
+    color:var(--leaf-deep);
+  }
+  .grid2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .section-label{
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    color:var(--leaf-text);
+    margin:14px 2px 8px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .section-label:first-child{margin-top:2px;}
+
+  /* -------- 홈 화면 -------- */
+  .hero-card{
+    background:linear-gradient(135deg,var(--leaf),var(--leaf-deep));
+    border-radius:26px;
+    padding:18px;
+    color:white;
+    box-shadow:var(--shadow);
+    margin-bottom:14px;
+  }
+  .hero-card .status-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,0.25);
+    font-size:11px;font-weight:700;
+    padding:5px 12px;border-radius:999px;
+    margin-bottom:10px;
+  }
+  .hero-card h3{
+    font-family:'Jua', sans-serif;
+    font-size:17px;
+    margin:0 0 4px;
+  }
+  .hero-card p{
+    font-size:11.5px;
+    margin:0;
+    opacity:0.92;
+  }
+  .btnrow{display:flex;gap:8px;margin-top:16px;}
+  .btn{
+    flex:1;
+    border:none;
+    border-radius:999px;
+    padding:13px 0;
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:5px;
+  }
+  .btn.primary{background:var(--leaf);color:white;box-shadow:0 10px 18px rgba(95,174,58,0.35);}
+  .btn.ghost{background:var(--white);color:var(--leaf-text);border:2px solid var(--leaf);}
+  .btn.on-hero{background:white;color:var(--leaf-deep);}
+  .btn.on-hero.outline{background:rgba(255,255,255,0.18);color:white;border:2px solid rgba(255,255,255,0.6);}
+
+  .quicklink{
+    background:var(--white);
+    border-radius:20px;
+    padding:12px 14px;
+    box-shadow:var(--shadow);
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:10px;
+    cursor:pointer;
+    border:none;width:100%;text-align:left;
+  }
+  .quicklink .qicon{
+    width:42px;height:42px;border-radius:14px;
+    background:var(--bg-mint);
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;flex-shrink:0;
+  }
+  .quicklink h5{font-family:'Jua', sans-serif;font-size:13px;margin:0 0 2px;color:var(--ink);}
+  .quicklink p{font-size:11px;margin:0;color:var(--muted);}
+  .quicklink .arrow{margin-left:auto;color:var(--leaf-deep);font-size:16px;}
+
+  /* -------- 지도 화면 -------- */
+  .map-card{
+    background:var(--white);
+    border-radius:24px;
+    box-shadow:var(--shadow);
+    padding:12px;
+    margin-bottom:12px;
+  }
+  .map-title-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:2px 4px 8px;
+  }
+  .map-title{font-family:'Jua', sans-serif;font-size:15px;color:var(--leaf-text);}
+  .badge-pill{
+    background:var(--safe-bg);color:var(--leaf-deep);
+    font-size:10.5px;font-weight:700;
+    padding:4px 11px;border-radius:999px;
+    display:flex;align-items:center;gap:4px;
+  }
+  svg.mapimg{width:100%;display:block;border-radius:18px;background:#EAF7DC;}
+  #kakaoMap{
+    width:100%;height:100%;
+    background:#EAF7DC;
+  }
+  .pin-icon, .lamp-icon, .danger-icon{
+    display:flex;align-items:center;justify-content:center;
+    border-radius:50%;
+    box-shadow:0 3px 8px rgba(0,0,0,0.25);
+    border:2px solid white;
+  }
+  .pin-icon{width:28px;height:28px;background:var(--leaf-deep);color:white;font-size:14px;}
+  .lamp-icon{width:20px;height:20px;background:var(--lamp);font-size:11px;}
+  .danger-icon{width:22px;height:22px;background:var(--danger);color:white;font-size:12px;font-family:'Jua',sans-serif;}
+  .label-pill{
+    background:var(--leaf-deep);color:white;
+    font-family:'Jua', sans-serif;font-size:11px;
+    padding:5px 10px;border-radius:999px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.25);
+    border:2px solid white;white-space:nowrap;
+    text-align:center;
+  }
+  .legend{display:flex;gap:12px;padding:9px 4px 0;font-size:10.5px;color:#6E8461;flex-wrap:wrap;}
+  .route-stats{display:flex;gap:8px;margin-top:10px;}
+  .route-stat{
+    flex:1;background:var(--safe-bg);border-radius:14px;padding:9px 6px;text-align:center;
+  }
+  .route-stat .num{font-family:'Jua', sans-serif;font-size:16px;color:var(--leaf-deep);}
+  .route-stat .lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+  .my-loc{
+    width:18px;height:18px;border-radius:50%;
+    background:#4A90E2;border:3px solid white;
+    box-shadow:0 0 0 4px rgba(74,144,226,0.25), 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .discover-card.tappable{cursor:pointer; position:relative; padding-right:26px;}
+  .discover-card.tappable::after{
+    content:'›'; position:absolute; right:14px; top:50%;
+    transform:translateY(-50%); color:var(--leaf-deep); font-size:17px;
+  }
+  .feature-item.tappable{cursor:pointer; position:relative; padding-right:26px;}
+  .feature-item.tappable:active{transform:scale(0.985);}
+  .feature-item.tappable::after{
+    content:'›'; position:absolute; right:14px; top:50%;
+    transform:translateY(-50%); color:var(--leaf-deep); font-size:17px;
+  }
+  .dist-tag{
+    display:inline-block;
+    background:var(--safe-bg);color:var(--leaf-deep);
+    font-size:9.5px;font-weight:700;
+    padding:2px 7px;border-radius:999px;
+    margin-left:5px;vertical-align:middle;
+  }
+  .angel-pin{
+    width:32px;height:32px;border-radius:50%;
+    background:#FFF3D6;border:3px solid var(--leaf);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.22);
+    cursor:pointer;
+  }
+  .legend span{display:flex;align-items:center;gap:5px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  /* -------- 구로엔젤 화면 -------- */
+  .angel-hero{
+    background:var(--white);
+    border-radius:26px;
+    padding:20px;
+    box-shadow:var(--shadow);
+    text-align:center;
+    margin-bottom:14px;
+  }
+  .angel-big{width:90px;height:90px;margin-bottom:8px;}
+  .angel-hero h3{font-family:'Jua', sans-serif;font-size:16px;margin:0 0 6px;color:var(--ink);}
+  .angel-hero p{font-size:12px;color:var(--muted);line-height:1.5;margin:0;}
+  .feature-item{
+    display:flex;gap:12px;align-items:flex-start;
+    background:var(--white);border-radius:18px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .feature-item .fic{font-size:20px;}
+  .feature-item h5{font-family:'Jua', sans-serif;font-size:12.5px;margin:0 0 3px;color:var(--ink);}
+  .feature-item p{font-size:11px;margin:0;color:var(--muted);line-height:1.4;}
+
+  /* -------- 삼대발견 화면 -------- */
+  .discover-card{
+    display:flex;align-items:center;gap:12px;
+    background:var(--white);border-radius:20px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .discover-num{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--leaf);color:white;
+    font-family:'Jua', sans-serif;font-size:14px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .discover-card h5{margin:0;font-family:'Jua', sans-serif;font-size:13px;color:var(--ink);}
+  .discover-card p{margin:2px 0 0;font-size:11px;color:var(--muted);}
+
+  /* -------- 설정 화면 -------- */
+  .setting-row{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--white);border-radius:18px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .setting-label{display:flex;align-items:center;gap:10px;}
+  .setting-label .fic{font-size:18px;}
+  .setting-label h5{margin:0;font-family:'Jua', sans-serif;font-size:12.5px;color:var(--ink);}
+  .setting-label p{margin:2px 0 0;font-size:10.5px;color:var(--muted);}
+  .switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{
+    position:absolute;cursor:pointer;inset:0;
+    background:#DCE6D2;border-radius:999px;
+    transition:.2s;
+  }
+  .slider::before{
+    content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;
+    background:white;border-radius:50%;transition:.2s;
+    box-shadow:0 1px 3px rgba(0,0,0,0.25);
+  }
+  .switch input:checked + .slider{background:var(--leaf);}
+  .switch input:checked + .slider::before{transform:translateX(18px);}
+  .app-version{
+    text-align:center;font-size:10.5px;color:#A7B89A;
+    margin:18px 0 6px;
+  }
+
+  /* -------- 하단 탭바 -------- */
+  .tabbar{
+    flex-shrink:0;
+    display:flex;
+    background:var(--white);
+    border-top:1px solid #E7F1DC;
+    padding:8px 6px calc(6px + env(safe-area-inset-bottom));
+    box-shadow:0 -6px 16px rgba(95,174,58,0.10);
+  }
+  .tab{
+    flex:1;
+    border:none;background:none;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:6px 0 4px;
+    cursor:pointer;
+    color:#A7B89A;
+    font-family:'Jua', sans-serif;
+    font-size:9.5px;
+    white-space:nowrap;
+  }
+  .tab .ticon{
+    font-size:17px;
+    width:30px;height:30px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:12px;
+    transition:all .2s ease;
+  }
+  .tab.active{color:var(--leaf-deep);}
+  .tab.active .ticon{background:var(--safe-bg);}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <div class="header">
+    <svg class="mascot-sm" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="48" fill="#FFF3D6"/>
+      <path d="M20 40 Q50 15 80 40 L74 46 Q50 28 26 46 Z" fill="#8FD14F"/>
+      <circle cx="50" cy="55" r="22" fill="#FFFFFF" stroke="#8FD14F" stroke-width="3"/>
+      <circle cx="43" cy="53" r="3" fill="#3E7A2C"/>
+      <circle cx="57" cy="53" r="3" fill="#3E7A2C"/>
+      <path d="M42 62 Q50 68 58 62" stroke="#3E7A2C" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle cx="34" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+      <circle cx="66" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+    </svg>
+    <div>
+      <div class="title" id="screenTitle">놀구로오는길</div>
+      <div class="subtitle" id="screenSubtitle">신도림놀구로 가는 가장 안전한 길</div>
+    </div>
+  </div>
+
+  <div class="screens">
+
+    <!-- ============ 홈 ============ -->
+    <section class="screen active" id="screen-home">
+      <div class="hero-card">
+        <div class="status-pill">🟢 지금 통행 가능해요</div>
+        <h3>오늘도 안전하게, 신도림놀구로!</h3>
+        <p>추천 경로로 걸으면 도보 12분, 가로등 14개가 함께해요.</p>
+        <div class="btnrow">
+          <button class="btn on-hero" onclick="go('map'); setTimeout(findMyRoute, 600);">🍀 경로 보기</button>
+          <button class="btn on-hero outline" onclick="go('place')">🎈 놀구로 소개</button>
+        </div>
+      </div>
+
+      <div class="section-label">👀 바로가기</div>
+      <button class="quicklink" onclick="go('map')">
+        <div class="qicon">🗺️</div>
+        <div>
+          <h5>최적의 길 · 지도</h5>
+          <p>안전 경로와 위험 구간을 한눈에</p>
+        </div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink" onclick="go('angel')">
+        <div class="qicon">🧚</div>
+        <div>
+          <h5>구로엔젤</h5>
+          <p>우리 동네 안전 도우미 소개</p>
+        </div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink" onclick="go('discover')">
+        <div class="qicon">✨</div>
+        <div>
+          <h5>삼대발견</h5>
+          <p>가는 길에 들러볼 안심 명소 3곳</p>
+        </div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink" onclick="go('place')">
+        <div class="qicon">🎈</div>
+        <div>
+          <h5>신도림놀구로</h5>
+          <p>어떤 곳인지 알아보기</p>
+        </div>
+        <div class="arrow">›</div>
+      </button>
+    </section>
+
+    <!-- ============ 지도 ============ -->
+    <section class="screen map-screen" id="screen-map">
+      <div id="kakaoMap"></div>
+
+      <div class="map-top-bar">
+        <div class="map-title">🗺️ 최적의 길</div>
+        <button class="badge-pill angel-btn" id="angelToggle" onclick="toggleAngels()">🧚 구로엔젤</button>
+      </div>
+
+      <div class="map-ctrl">
+        <button onclick="superZoom(1)" title="더 크게">🔍➕</button>
+        <button onclick="superZoom(-1)" title="작게">🔍➖</button>
+        <button onclick="findMyRoute()" title="현재 위치에서 길찾기" id="findBtn">📍</button>
+      </div>
+
+      <div class="info-panel" id="infoPanel"></div>
+    </section>
+
+    <!-- ============ 구로엔젤 ============ -->
+    <section class="screen" id="screen-angel">
+      <div class="angel-hero">
+        <svg class="angel-big" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="48" fill="#FFF3D6"/>
+          <path d="M20 40 Q50 15 80 40 L74 46 Q50 28 26 46 Z" fill="#8FD14F"/>
+          <circle cx="50" cy="55" r="22" fill="#FFFFFF" stroke="#8FD14F" stroke-width="3"/>
+          <circle cx="43" cy="53" r="3" fill="#3E7A2C"/>
+          <circle cx="57" cy="53" r="3" fill="#3E7A2C"/>
+          <path d="M42 62 Q50 68 58 62" stroke="#3E7A2C" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <circle cx="34" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+          <circle cx="66" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+        </svg>
+        <h3>구로엔젤이 함께 걸어요</h3>
+        <p>경로 곳곳을 살피고 위험 구간을 미리 알려주는 우리 동네 안전 도우미예요.</p>
+      </div>
+
+      <div class="section-label">🏪 구로엔젤 가게 목록</div>
+      <p style="font-size:11px;color:var(--muted);margin:0 4px 10px;">신도림놀구로에서 가까운 순이에요.</p>
+
+      <div class="feature-item tappable" onclick="openPlace('a1')">
+        <div class="fic">🍚</div>
+        <div>
+          <h5>고가네 며느리 <span class="dist-tag">약 60m</span></h5>
+          <p>신도림동 296-61 · 02-2676-1241</p>
+        </div>
+      </div>
+      <div class="feature-item tappable" onclick="openPlace('a2')">
+        <div class="fic">🛒</div>
+        <div>
+          <h5>진흥슈퍼 <span class="dist-tag">약 120m</span></h5>
+          <p>신도림동 296-45 · 02-2068-9795</p>
+        </div>
+      </div>
+      <div class="feature-item tappable" onclick="openPlace('a3')">
+        <div class="fic">⛪</div>
+        <div>
+          <h5>예수비전교회 <span class="dist-tag">약 140m</span></h5>
+          <p>신도림로15길 22 · 02-2678-5553</p>
+        </div>
+      </div>
+      <div class="feature-item tappable" onclick="openPlace('a4')">
+        <div class="fic">🏪</div>
+        <div>
+          <h5>세븐일레븐 <span class="dist-tag">약 165m</span></h5>
+          <p>신도림로11길 38 · 24시간</p>
+        </div>
+      </div>
+      <div class="feature-item tappable" onclick="openPlace('a5')">
+        <div class="fic">⛪</div>
+        <div>
+          <h5>신도림제일교회 <span class="dist-tag">약 170m</span></h5>
+          <p>신도림동 390-25 · 02-2677-4755</p>
+        </div>
+      </div>
+      <div class="feature-item tappable" onclick="openPlace('a6')">
+        <div class="fic">🍚</div>
+        <div>
+          <h5>협동밥집 <span class="dist-tag">약 250m</span></h5>
+          <p>신도림동 396-38 · 02-2636-4750</p>
+        </div>
+      </div>
+
+      <button class="btn ghost" style="width:100%;" onclick="go('map')">
+        🗺️ 지도에서 구로엔젤 보기
+      </button>
+    </section>
+
+    <!-- ============ 삼대발견 ============ -->
+    <section class="screen" id="screen-discover">
+      <div class="section-label">✨ 가는 길에 만나는 안심 명소</div>
+      <div class="discover-card tappable" onclick="openPlace('d1')">
+        <div class="discover-num">1</div>
+        <div>
+          <h5>구로엔젤 안전벨</h5>
+          <p>위급할 때 누르면 도움을 요청할 수 있어요</p>
+        </div>
+      </div>
+      <div class="discover-card tappable" onclick="openPlace('d2')">
+        <div class="discover-num">2</div>
+        <div>
+          <h5>초록 우체통 쉼터</h5>
+          <p>잠깐 쉬어가기 좋은 작은 쉼터예요</p>
+        </div>
+      </div>
+      <div class="discover-card tappable" onclick="openPlace('d3')">
+        <div class="discover-num">3</div>
+        <div>
+          <h5>동네 지킴이집</h5>
+          <p>도움이 필요할 때 들를 수 있는 안심 장소</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 놀구로 소개 ============ -->
+    <section class="screen" id="screen-place">
+      <div class="place-card">
+        <div class="place-head">
+          <div class="place-emoji">🎈</div>
+          <div>
+            <h4>신도림놀구로</h4>
+            <p class="place-tag">청소년활동시설 · 청소년입장지대</p>
+          </div>
+        </div>
+        <p class="place-desc">
+          PLAY YOUR DREAM! 문화 · 여가 · 진로 활동을 마음껏 즐길 수 있는
+          청소년 전용 공간이에요. 친구들과 놀고, 쉬고, 하고 싶은 걸 찾아볼 수 있어요.
+        </p>
+        <div class="place-info">
+          <div class="info-row"><span class="ic">📍</span>서울 구로구 신도림로13길 51 (지하1층, 1~2층)</div>
+          <div class="info-row"><span class="ic">🕗</span>운영 중 · 20:00 운영 종료</div>
+          <div class="info-row"><span class="ic">☎️</span>02-2068-2511</div>
+          <div class="info-row"><span class="ic">🎫</span>이용료 무료</div>
+        </div>
+        <div class="place-tags">
+          <span class="ptag">🎮 놀이공간</span>
+          <span class="ptag">📚 진로활동</span>
+          <span class="ptag">🛋️ 휴식공간</span>
+        </div>
+      </div>
+
+      <div class="section-label">🎯 이런 걸 할 수 있어요</div>
+      <div class="feature-item">
+        <div class="fic">🎮</div>
+        <div>
+          <h5>놀이 공간</h5>
+          <p>보드게임, 콘솔게임 등 친구들과 즐길 거리가 가득해요</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fic">📚</div>
+        <div>
+          <h5>진로 · 문화 프로그램</h5>
+          <p>하고 싶은 걸 찾고 배워볼 수 있는 활동이 열려요</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fic">🛋️</div>
+        <div>
+          <h5>편히 쉬는 공간</h5>
+          <p>학교 끝나고 부담 없이 들러 쉬어갈 수 있어요</p>
+        </div>
+      </div>
+
+      <a class="btn ghost" style="width:100%;margin-top:6px;text-decoration:none;"
+         href="https://www.playguro.or.kr/" target="_blank" rel="noopener">
+        🔎 놀구로 더 자세히 보기
+      </a>
+      <button class="btn primary" style="width:100%;margin-top:10px;" onclick="go('map'); setTimeout(findMyRoute, 600);">
+        🗺️ 놀구로 가는 길 보기
+      </button>
+    </section>
+
+    <!-- ============ 설정 ============ -->
+    <section class="screen" id="screen-settings">
+      <div class="section-label">⚙️ 알림</div>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="fic">🔔</span>
+          <div>
+            <h5>위험구간 알림</h5>
+            <p>위험한 구간에 들어서면 알려줘요</p>
+          </div>
+        </div>
+        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="fic">🌙</span>
+          <div>
+            <h5>밤길 안심 모드</h5>
+            <p>해진 뒤에는 더 밝은 경로로 추천해요</p>
+          </div>
+        </div>
+        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+      </div>
+
+      <div class="section-label">👤 계정 · 정보</div>
+      <button class="quicklink">
+        <div class="qicon">🧸</div>
+        <div><h5>보호자 연락처 관리</h5><p>비상 연락처를 등록해요</p></div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink">
+        <div class="qicon">📄</div>
+        <div><h5>이용약관 · 개인정보처리방침</h5><p>안전하게 관리되고 있어요</p></div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink">
+        <div class="qicon">💌</div>
+        <div><h5>문의하기</h5><p>불편하거나 궁금한 점을 남겨주세요</p></div>
+        <div class="arrow">›</div>
+      </button>
+
+      <div class="app-version">놀구로오는길 v1.0.0</div>
+    </section>
+
+  </div>
+
+  <div class="tabbar">
+    <button class="tab" data-tab="map" onclick="go('map')">
+      <span class="ticon">🗺️</span>지도
+    </button>
+    <button class="tab" data-tab="angel" onclick="go('angel')">
+      <span class="ticon">🧚</span>구로엔젤
+    </button>
+    <button class="tab active" data-tab="home" onclick="go('home')">
+      <span class="ticon">🏠</span>홈
+    </button>
+    <button class="tab" data-tab="discover" onclick="go('discover')">
+      <span class="ticon">✨</span>삼대발견
+    </button>
+    <button class="tab" data-tab="place" onclick="go('place')">
+      <span class="ticon">🎈</span>놀구로
+    </button>
+    <button class="tab" data-tab="settings" onclick="go('settings')">
+      <span class="ticon">⚙️</span>설정
+    </button>
+  </div>
+</div>
+
+<script>
+  const titles = {
+    home:  ['놀구로오는길', '신도림놀구로 가는 가장 안전한 길'],
+    map:   ['최적의 길', '안전 경로와 위험 구간을 한눈에'],
+    angel: ['구로엔젤', '우리 동네 안전 도우미'],
+    discover: ['삼대발견', '가는 길에 들러볼 안심 명소 3곳'],
+    place: ['신도림놀구로', '우리가 놀러가는 그곳'],
+    settings: ['설정', '알림과 계정 정보를 관리해요']
+  };
+
+  function go(name){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab[data-tab="' + name + '"]').classList.add('active');
+
+    document.getElementById('screenTitle').textContent = titles[name][0];
+    document.getElementById('screenSubtitle').textContent = titles[name][1];
+
+    document.querySelector('.screens').scrollTop = 0;
+    document.querySelector('.screens').classList.toggle('fullmap', name === 'map');
+    document.querySelector('.phone').classList.toggle('mapmode', name === 'map');
+
+    if(name === 'map' && !window._mapInited){
+      window._mapInited = true;
+      if(window.kakao && window.kakao.maps){
+        kakao.maps.load(initKakaoMap);
+      }
+    }
+    if(name === 'map' && window._map){
+      setTimeout(() => window._map.relayout(), 200);
+    }
+  }
+
+  function superZoom(dir){
+    const map = window._map;
+    if(!map) return;
+    const lv = map.getLevel();
+    if(dir > 0){
+      if(lv > 1) map.setLevel(lv - 1, {animate:true});
+    } else {
+      map.setLevel(lv + 1, {animate:true});
+    }
+  }
+
+  // ===== 모든 장소 데이터 (지도 · 목록 공통) =====
+  const PLACES = {
+    nolguro: { emoji:'🎈', name:'신도림놀구로', sub:'청소년활동시설 · 목적지',
+      pos:[37.51037, 126.88001],
+      body:'문화 · 여가 · 진로 활동을 즐길 수 있는 청소년 전용 공간이에요.',
+      rows:[['📍','신도림로13길 51 (지하1층, 1~2층)'],['🕗','~20:00 운영'],['☎️','02-2068-2511'],['🎫','이용료 무료']],
+      tel:'02-2068-2511' },
+
+    // ---- 구로엔젤 (놀구로에서 가까운 순) ----
+    a1: { emoji:'🍚', name:'고가네 며느리', sub:'🧚 구로엔젤 · 약 60m',
+      pos:[37.5108293, 126.8803841],
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','신도림동 296-61'],['☎️','02-2676-1241']], tel:'02-2676-1241' },
+    a2: { emoji:'🛒', name:'진흥슈퍼', sub:'🧚 구로엔젤 · 약 120m',
+      pos:[37.5113906, 126.8804797],
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','신도림동 296-45'],['☎️','02-2068-9795']], tel:'02-2068-9795' },
+    a3: { emoji:'⛪', name:'예수비전교회', sub:'🧚 구로엔젤 · 약 140m',
+      pos:[37.5100072, 126.8814935],
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','신도림로15길 22'],['☎️','02-2678-5553']], tel:'02-2678-5553' },
+    a4: { emoji:'🏪', name:'세븐일레븐', sub:'🧚 구로엔젤 · 약 165m',
+      pos:[37.5093337, 126.8786729],
+      body:'24시간 열려 있어요. 밤에도 들어갈 수 있어요.',
+      rows:[['📍','신도림로11길 38'],['🕗','24시간']] },
+    a5: { emoji:'⛪', name:'신도림제일교회', sub:'🧚 구로엔젤 · 약 170m',
+      pos:[37.5089290, 126.8806751],
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','신도림동 390-25'],['☎️','02-2677-4755']], tel:'02-2677-4755' },
+    a6: { emoji:'🍚', name:'협동밥집', sub:'🧚 구로엔젤 · 약 250m',
+      pos:[37.5081452, 126.8798258],
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','신도림동 396-38'],['☎️','02-2636-4750']], tel:'02-2636-4750' },
+
+    // ---- 삼대발견 (실제 장소 정해지면 pos 좌표 넣기) ----
+    d1: { emoji:'🔔', name:'구로엔젤 안전벨', sub:'✨ 삼대발견',
+      body:'위급할 때 누르면 도움을 요청할 수 있어요.',
+      rows:[['📍','위치 등록 준비 중']] },
+    d2: { emoji:'💚', name:'초록 우체통 쉼터', sub:'✨ 삼대발견',
+      body:'잠깐 쉬어가기 좋은 작은 쉼터예요.',
+      rows:[['📍','위치 등록 준비 중']] },
+    d3: { emoji:'🏠', name:'동네 지킴이집', sub:'✨ 삼대발견',
+      body:'도움이 필요할 때 들를 수 있는 안심 장소예요.',
+      rows:[['📍','위치 등록 준비 중']] }
+  };
+
+  // ===== 하단 정보 패널 =====
+  function openPlace(id){
+    const p = PLACES[id];
+    if(!p) return;
+
+    go('map');
+
+    setTimeout(() => {
+      if(window._map && p.pos){
+        window._map.setLevel(2);
+        window._map.setCenter(window._LL(p.pos));
+      }
+      showPanel(p);
+    }, 350);
+  }
+
+  function showPanel(p){
+    const el = document.getElementById('infoPanel');
+    if(!el) return;
+
+    const rows = (p.rows || [])
+      .map(r => '<div class="info-row"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>')
+      .join('');
+
+    el.innerHTML =
+      '<button class="info-close" onclick="closePanel()">✕</button>' +
+      '<div class="info-head">' +
+        '<div class="info-emoji">' + p.emoji + '</div>' +
+        '<div><h4>' + p.name + '</h4><div class="sub">' + (p.sub || '') + '</div></div>' +
+      '</div>' +
+      (p.body ? '<p class="info-body">' + p.body + '</p>' : '') +
+      (rows ? '<div class="info-rows">' + rows + '</div>' : '') +
+      '<div class="info-acts">' +
+        (p.tel ? '<a class="call" href="tel:' + p.tel.replace(/-/g,'') + '">☎️ 전화</a>' : '') +
+        '<button class="go" onclick="findMyRoute()">📍 길찾기</button>' +
+      '</div>';
+
+    el.classList.add('open');
+    document.querySelector('.map-ctrl').classList.add('up');
+  }
+
+  function showHTML(title, html, isErr){
+    const el = document.getElementById('infoPanel');
+    if(!el) return;
+    el.innerHTML =
+      '<button class="info-close" onclick="closePanel()">✕</button>' +
+      '<div class="info-head" style="margin-bottom:6px;"><div><h4' +
+      (isErr ? ' style="color:#E14545;"' : '') + '>' + title + '</h4></div></div>' + html;
+    el.classList.add('open');
+    document.querySelector('.map-ctrl').classList.add('up');
+  }
+
+  function closePanel(){
+    const el = document.getElementById('infoPanel');
+    if(el) el.classList.remove('open');
+    document.querySelector('.map-ctrl').classList.remove('up');
+  }
+
+  function initKakaoMap(){
+    const end = PLACES.nolguro.pos;
+
+    const LL = p => new kakao.maps.LatLng(p[0], p[1]);
+    const map = new kakao.maps.Map(document.getElementById('kakaoMap'), {
+      center: LL(end), level: 1
+    });
+    map.setMinLevel(1);
+    map.setMaxLevel(14);
+    map.setZoomable(true);
+
+    kakao.maps.event.addListener(map, 'click', closePanel);
+
+    window._map = map;
+    window._LL = LL;
+    window._dest = end;
+
+    // 목적지 라벨
+    new kakao.maps.CustomOverlay({
+      position: LL(end),
+      content: '<div class="label-pill" onclick="showPanel(PLACES.nolguro)">🎈 신도림놀구로</div>',
+      yAnchor: 0.5
+    }).setMap(map);
+
+    // 구로엔젤 핀
+    const angelIds = ['a1','a2','a3','a4','a5','a6'];
+    window._angelMarks = angelIds.map(id => {
+      const ov = new kakao.maps.CustomOverlay({
+        position: LL(PLACES[id].pos),
+        content: '<div class="angel-pin" onclick="showPanel(PLACES.' + id + ')">🧚</div>',
+        yAnchor: 0.5
+      });
+      ov.setMap(map);
+      return ov;
+    });
+    window._angelsOn = true;
+  }
+
+  // 구로엔젤 표시 켜기/끄기
+  function toggleAngels(){
+    if(!window._angelMarks) return;
+    window._angelsOn = !window._angelsOn;
+    window._angelMarks.forEach(m => m.setMap(window._angelsOn ? window._map : null));
+    const btn = document.getElementById('angelToggle');
+    if(btn) btn.classList.toggle('off', !window._angelsOn);
+  }
+
+  // 길찾기 프록시 주소 (Cloudflare Worker 배포 후 여기에 입력)
+  const ROUTE_API = 'https://nolguro-route.YOUR-NAME.workers.dev/route';
+
+  // ===== 현재 위치에서 길찾기 =====
+  function findMyRoute(){
+    const btn = document.getElementById('findBtn');
+    const show = (isErr, title, body) => showHTML(title, body, isErr);
+
+    if(!window._map){
+      show(true, '⚠️ 지도를 먼저 불러와 주세요', '<p class="info-body">잠시 후 다시 눌러주세요.</p>');
+      return;
+    }
+    if(!navigator.geolocation){
+      show(true, '⚠️ 위치 기능을 쓸 수 없어요',
+        '<p class="info-body">이 브라우저는 위치 확인을 지원하지 않아요.</p>');
+      return;
+    }
+
+    if(btn) btn.textContent = '⏳';
+
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        const me = [pos.coords.latitude, pos.coords.longitude];
+        const map = window._map, LL = window._LL, dest = window._dest;
+
+        // 이전 경로 지우기
+        if(window._myLine) window._myLine.setMap(null);
+        if(window._myMark) window._myMark.setMap(null);
+
+        // 내 위치 마커
+        window._myMark = new kakao.maps.CustomOverlay({
+          position: LL(me), content: '<div class="my-loc"></div>', yAnchor: 0.5
+        });
+        window._myMark.setMap(map);
+
+        if(btn) btn.textContent = '🚶';
+
+        try {
+          const q = new URLSearchParams({
+            sx: me[1], sy: me[0], ex: dest[1], ey: dest[0]
+          });
+          const res = await fetch(ROUTE_API + '?' + q);
+          const data = await res.json();
+          if(!data.ok || !data.path || !data.path.length) throw new Error('no path');
+
+          if(btn) btn.textContent = '📍';
+
+          // 실제 도로를 따라가는 경로선
+          window._myLine = new kakao.maps.Polyline({
+            path: data.path.map(LL),
+            strokeWeight: 6, strokeColor: '#4A90E2',
+            strokeOpacity: 0.95, strokeStyle: 'solid'
+          });
+          window._myLine.setMap(map);
+
+          // 경로 전체가 보이게 화면 맞추기
+          const bounds = new kakao.maps.LatLngBounds();
+          data.path.forEach(p => bounds.extend(LL(p)));
+          map.setBounds(bounds, 60, 40, 60, 40);
+
+          const dist = data.distance;
+          const distText = dist >= 1000 ? (dist/1000).toFixed(1) + 'km' : dist + 'm';
+          const mins = Math.max(1, Math.round((data.time || dist/1.1) / 60));
+          const modeText = data.mode === 'walk' ? '도보' : '차량 기준';
+
+          show(false, '🍀 신도림놀구로까지 길을 찾았어요',
+            '<div class="route-stats">' +
+              '<div class="route-stat"><div class="num">' + distText + '</div><div class="lbl">거리</div></div>' +
+              '<div class="route-stat"><div class="num">' + mins + '분</div><div class="lbl">' + modeText + '</div></div>' +
+            '</div>' +
+            '<p class="info-body" style="margin-top:10px;">파란 선을 따라가면 신도림놀구로에 도착해요.</p>');
+
+        } catch(e) {
+          if(btn) btn.textContent = '📍';
+          // 경로 서버 실패 시: 카카오맵 길찾기로 연결
+          const url = 'https://map.kakao.com/link/to/신도림놀구로,' + dest[0] + ',' + dest[1];
+          map.setCenter(LL(me));
+          show(true, '⚠️ 경로를 불러오지 못했어요',
+            '<p class="info-body">지금은 길 안내를 받지 못했어요. 카카오맵에서 길을 확인할 수 있어요.</p>' +
+            '<div class="info-acts"><a class="go" href="' + url + '" target="_blank">🗺️ 카카오맵으로 길찾기</a></div>');
+        }
+      },
+      err => {
+        if(btn) btn.textContent = '📍';
+        let msg = '위치를 확인하지 못했어요.';
+        if(err.code === 1) msg = '위치 권한이 꺼져 있어요. 브라우저 주소창 옆 자물쇠 아이콘에서 위치를 허용해 주세요.';
+        else if(err.code === 2) msg = '지금은 위치 신호를 잡지 못했어요. 실외에서 다시 시도해 주세요.';
+        else if(err.code === 3) msg = '위치 확인이 오래 걸려요. 잠시 후 다시 눌러주세요.';
+        show(true, '⚠️ 위치를 못 찾았어요', '<p class="info-body">' + msg + '</p>');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+</script>
+</body>
+</html>
