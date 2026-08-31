@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta charset="UTF-8">
+<title>놀맵_beta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=fdf609543f391b19f0295840c6173357&autoload=false"></script>
+<style>
+  :root{
+    --bg-mint:#F2FAE7;
+    --leaf:#8FD14F;
+    --leaf-deep:#5FAE3A;
+    --leaf-text:#3E7A2C;
+    --white:#FFFFFF;
+    --danger:#FF6B6B;
+    --danger-bg:#FFEAEA;
+    --safe:#63C24A;
+    --safe-bg:#E9F8E1;
+    --lamp:#FFC94A;
+    --ink:#3A4A2E;
+    --muted:#8B9C7E;
+    --shadow: 0 8px 20px rgba(95,174,58,0.18);
+  }
+  *{box-sizing:border-box;}
+  html, body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg-mint);
+    font-family:'Gowun Dodum', sans-serif;
+    color:var(--ink);
+    overscroll-behavior:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .phone{
+    width:100%;
+    height:100dvh;
+    background:var(--bg-mint);
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    padding-top:env(safe-area-inset-top);
+  }
+  @media (min-width: 600px){
+    body{background:#DCE9D0; display:flex; justify-content:center;}
+    .phone{max-width:430px; box-shadow:0 0 40px rgba(0,0,0,0.12);}
+  }
+  .status{display:none;}
+  .header{
+    padding:18px 22px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
+  }
+  .mascot-sm{width:38px;height:38px;flex-shrink:0;}
+  .title{
+    font-family:'Jua', sans-serif;
+    font-size:19px;
+    color:var(--leaf-text);
+    line-height:1.15;
+  }
+  .subtitle{
+    font-size:11px;
+    color:#79936A;
+    margin-top:1px;
+  }
+
+  .screens{
+    flex:1;
+    overflow-y:auto;
+    padding:0 18px 18px;
+    position:relative;
+  }
+  .screen{display:none;}
+  .screen.active{display:block; animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  /* 지도 전체화면 모드 */
+  .screens.fullmap{padding:0; overflow:hidden;}
+  .map-screen{position:relative; width:100%; height:100%;}
+  .map-screen.active{display:block;}
+  .map-top-bar{
+    position:absolute; top:12px; left:12px; right:12px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:8px; z-index:5; pointer-events:none;
+  }
+  .map-top-bar .map-title{
+    background:var(--white);
+    padding:8px 14px; border-radius:999px;
+    box-shadow:var(--shadow);
+    font-family:'Jua', sans-serif; font-size:14px; color:var(--leaf-text);
+  }
+  .map-top-bar .badge-pill{
+    background:var(--white); box-shadow:var(--shadow);
+    padding:8px 13px;
+  }
+  .map-ctrl{
+    position:absolute; right:14px; z-index:6;
+    bottom:20px;
+    display:flex; flex-direction:column; gap:8px;
+    transition:bottom .28s ease;
+  }
+  .map-ctrl.up{bottom:calc(var(--panel-h, 180px) + 16px);}
+  .map-ctrl button{
+    width:46px; height:46px; border-radius:16px;
+    border:none; background:var(--white);
+    box-shadow:0 4px 12px rgba(0,0,0,0.18);
+    font-size:16px; cursor:pointer;
+  }
+  .angel-btn{border:none; cursor:pointer; pointer-events:auto; font-family:'Jua', sans-serif;}
+  .angel-btn.off{color:#A7B89A;}
+
+  /* 하단 장소 정보 패널 */
+  .info-panel{
+    position:absolute; left:0; right:0; bottom:0; z-index:7;
+    background:var(--white);
+    border-radius:24px 24px 0 0;
+    box-shadow:0 -8px 24px rgba(0,0,0,0.18);
+    padding:16px 18px 20px;
+    transform:translateY(105%);
+    transition:transform .28s ease;
+    max-height:52%; overflow-y:auto;
+  }
+  .info-panel.open{transform:translateY(0);}
+  .info-close{
+    position:absolute; top:12px; right:14px;
+    width:30px; height:30px; border-radius:50%;
+    border:none; background:var(--bg-mint); color:var(--muted);
+    font-size:15px; cursor:pointer; line-height:1;
+  }
+  .info-head{display:flex; align-items:center; gap:12px; margin-bottom:10px; padding-right:34px;}
+  .info-emoji{
+    width:44px; height:44px; border-radius:15px; background:var(--safe-bg);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; flex-shrink:0;
+  }
+  .info-head h4{font-family:'Jua', sans-serif; font-size:15px; margin:0; color:var(--ink);}
+  .info-head .sub{font-size:10.5px; color:var(--leaf-deep); margin-top:3px;}
+  .info-body{font-size:11.5px; color:var(--muted); line-height:1.55; margin:0 0 10px;}
+  .info-rows{background:var(--bg-mint); border-radius:14px; padding:10px 12px;}
+  .info-rows .info-row{display:flex; gap:8px; font-size:11px; color:#5E7150; line-height:1.5; padding:3px 0;}
+  .info-acts{display:flex; gap:8px; margin-top:12px;}
+  .info-acts a, .info-acts button{
+    flex:1; border:none; border-radius:999px; padding:12px 0;
+    font-family:'Jua', sans-serif; font-size:12.5px;
+    text-align:center; text-decoration:none; cursor:pointer;
+  }
+  .info-acts .go{background:var(--leaf); color:white;}
+  .info-acts .pic{background:#FFF3D6; color:#B07E12;}
+  .photo-view{
+    position:fixed; inset:0; z-index:2000;
+    background:rgba(20,30,15,0.88);
+    display:none; align-items:center; justify-content:center;
+    flex-direction:column; gap:12px; padding:24px;
+  }
+  .photo-view.open{display:flex;}
+  .photo-view img{
+    max-width:100%; max-height:78vh;
+    border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,0.5);
+  }
+  .photo-cap{
+    color:#fff; font-family:'Jua',sans-serif; font-size:14px;
+    text-align:center;
+  }
+  .photo-close{
+    position:absolute; top:18px; right:18px;
+    width:38px; height:38px; border-radius:50%;
+    border:none; background:rgba(255,255,255,0.9);
+    font-size:16px; cursor:pointer;
+  }
+  .info-acts .call{background:var(--bg-mint); color:var(--leaf-text);}
+  .discover-pin{
+    width:32px;height:32px;border-radius:50%;
+    background:#F3E8FF;border:3px solid #A96BE0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px; box-shadow:0 3px 8px rgba(0,0,0,0.22); cursor:pointer;
+  }
+  .angel-pin{
+    width:32px;height:32px;border-radius:50%;
+    background:#FFF3D6;border:3px solid var(--leaf);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px; box-shadow:0 3px 8px rgba(0,0,0,0.22); cursor:pointer;
+  }
+  .dist-tag{
+    display:inline-block; background:var(--safe-bg); color:var(--leaf-deep);
+    font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:999px;
+    margin-left:5px; vertical-align:middle;
+  }
+  .shop-item{
+    display:flex; align-items:center; gap:10px;
+    background:var(--white); border:1px solid #EAF3E0;
+    border-radius:16px; padding:11px 12px; margin-bottom:8px;
+    cursor:pointer;
+  }
+  .shop-item:active{background:var(--bg-mint);}
+  .shop-no{
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    background:var(--leaf); color:#fff;
+    font-family:'Jua',sans-serif; font-size:11px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .shop-ic{font-size:19px; flex-shrink:0; width:38px; text-align:center;}
+  .shop-thumb{
+    width:38px; height:38px; border-radius:10px;
+    object-fit:cover; flex-shrink:0; background:var(--bg-mint);
+  }
+  .shop-txt{flex:1; min-width:0;}
+  .shop-txt h5{font-family:'Jua',sans-serif;font-size:12.5px;margin:0 0 2px;color:var(--ink);}
+  .shop-txt p{font-size:10.5px;margin:0;color:var(--muted);line-height:1.45;}
+  .shop-txt .shop-meta{color:var(--leaf-deep);margin-top:2px;}
+  .shop-go{color:var(--leaf-deep); font-size:17px; flex-shrink:0;}
+  .tappable{cursor:pointer; position:relative; padding-right:26px;}
+  .tappable::after{
+    content:'›'; position:absolute; right:14px; top:50%;
+    transform:translateY(-50%); color:var(--leaf-deep); font-size:17px;
+  }
+  .phone.mapmode .header{display:none;}
+
+  /* 놀구로 소개 카드 */
+  .place-card{
+    background:var(--white);
+    border-radius:22px;
+    padding:16px;
+    box-shadow:var(--shadow);
+    margin-bottom:6px;
+  }
+  .place-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .place-emoji{
+    width:46px;height:46px;border-radius:16px;
+    background:var(--safe-bg);
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;flex-shrink:0;
+  }
+  .place-head h4{
+    font-family:'Jua', sans-serif;font-size:15px;margin:0;color:var(--ink);
+  }
+  .place-tag{
+    font-size:10.5px;color:var(--leaf-deep);margin:3px 0 0;
+    background:var(--safe-bg);display:inline-block;
+    padding:3px 9px;border-radius:999px;
+  }
+  .place-desc{
+    font-size:11.5px;color:var(--muted);line-height:1.55;margin:0 0 12px;
+  }
+  .place-info{
+    background:var(--bg-mint);border-radius:14px;padding:10px 12px;
+  }
+  .info-row{
+    display:flex;gap:8px;align-items:flex-start;
+    font-size:11px;color:#5E7150;line-height:1.5;
+    padding:3px 0;
+  }
+  .info-row .ic{flex-shrink:0;}
+  .place-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .ptag{
+    background:var(--safe-bg);color:var(--leaf-deep);
+    font-size:10.5px;font-weight:700;
+    padding:5px 10px;border-radius:999px;
+  }
+
+  /* 카드 공통 */
+  .card{
+    background:var(--white);
+    border-radius:22px;
+    padding:14px 14px 12px;
+    box-shadow:var(--shadow);
+  }
+  .card .icon-circle{
+    width:36px;height:36px;
+    border-radius:50%;
+    background:var(--leaf);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:7px;
+    font-size:16px;
+  }
+  .card .icon-circle.red{background:var(--danger-bg);}
+  .card .icon-circle.yellow{background:#FFF3D6;}
+  .card h4{
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+  .card p{
+    font-size:11px;
+    margin:0;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .card .stat{
+    font-family:'Jua', sans-serif;
+    font-size:18px;
+    color:var(--leaf-deep);
+  }
+  .grid2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .section-label{
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    color:var(--leaf-text);
+    margin:14px 2px 8px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .section-label:first-child{margin-top:2px;}
+
+  /* -------- 홈 화면 -------- */
+  .hero-card{
+    background:linear-gradient(135deg,var(--leaf),var(--leaf-deep));
+    border-radius:26px;
+    padding:18px;
+    color:white;
+    box-shadow:var(--shadow);
+    margin-bottom:14px;
+  }
+  .hero-card .status-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,0.25);
+    font-size:11px;font-weight:700;
+    padding:5px 12px;border-radius:999px;
+    margin-bottom:10px;
+  }
+  .hero-card h3{
+    font-family:'Jua', sans-serif;
+    font-size:17px;
+    margin:0 0 4px;
+  }
+  .hero-card p{
+    font-size:11.5px;
+    margin:0;
+    opacity:0.92;
+  }
+  .btnrow{display:flex;gap:8px;margin-top:16px;}
+  .btn{
+    flex:1;
+    border:none;
+    border-radius:999px;
+    padding:13px 0;
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:5px;
+  }
+  .btn.primary{background:var(--leaf);color:white;box-shadow:0 10px 18px rgba(95,174,58,0.35);}
+  .btn.ghost{background:var(--white);color:var(--leaf-text);border:2px solid var(--leaf);}
+  .btn.on-hero{background:white;color:var(--leaf-deep);}
+  .btn.on-hero.outline{background:rgba(255,255,255,0.18);color:white;border:2px solid rgba(255,255,255,0.6);}
+
+  .quicklink{
+    background:var(--white);
+    border-radius:20px;
+    padding:12px 14px;
+    box-shadow:var(--shadow);
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:10px;
+    cursor:pointer;
+    border:none;width:100%;text-align:left;
+  }
+  .quicklink .qicon{
+    width:42px;height:42px;border-radius:14px;
+    background:var(--bg-mint);
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;flex-shrink:0;
+  }
+  .quicklink h5{font-family:'Jua', sans-serif;font-size:13px;margin:0 0 2px;color:var(--ink);}
+  .quicklink p{font-size:11px;margin:0;color:var(--muted);}
+  .quicklink .arrow{margin-left:auto;color:var(--leaf-deep);font-size:16px;}
+
+
+  /* -------- 개인정보처리방침 모달 -------- */
+  .privacy-modal{
+    position:absolute;
+    inset:0;
+    z-index:100;
+    display:none;
+    background:rgba(0,0,0,0.42);
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+  }
+  .privacy-modal.open{display:flex;}
+  .privacy-card{
+    width:100%;
+    max-height:calc(100% - 12px);
+    background:var(--white);
+    border-radius:24px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.25);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .privacy-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:16px 18px 12px;
+    border-bottom:1px solid #E7F1DC;
+    flex-shrink:0;
+  }
+  .privacy-head h3{
+    margin:0;
+    font-family:'Jua', sans-serif;
+    font-size:18px;
+    color:var(--leaf-text);
+  }
+  .privacy-close{
+    border:none;
+    background:#EEF6E8;
+    color:var(--leaf-deep);
+    border-radius:999px;
+    padding:8px 12px;
+    font-family:'Jua', sans-serif;
+    font-size:12px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .privacy-body{
+    overflow-y:auto;
+    padding:16px 18px 20px;
+    font-size:11px;
+    line-height:1.65;
+    color:var(--ink);
+  }
+  .privacy-body h4{
+    margin:18px 0 7px;
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    color:var(--leaf-text);
+  }
+  .privacy-body h4:first-child{margin-top:0;}
+  .privacy-body p{margin:0 0 8px;}
+  .privacy-body .privacy-list{margin:5px 0 8px 18px; padding:0;}
+  .privacy-body .privacy-list li{margin-bottom:3px;}
+  .privacy-body .contact-box{
+    background:var(--bg-mint);
+    border-radius:14px;
+    padding:10px 12px;
+    margin:8px 0;
+  }
+
+  /* -------- 지도 화면 -------- */
+  .map-card{
+    background:var(--white);
+    border-radius:24px;
+    box-shadow:var(--shadow);
+    padding:12px;
+    margin-bottom:12px;
+  }
+  .map-title-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:2px 4px 8px;
+  }
+  .map-title{font-family:'Jua', sans-serif;font-size:15px;color:var(--leaf-text);}
+  .badge-pill{
+    background:var(--safe-bg);color:var(--leaf-deep);
+    font-size:10.5px;font-weight:700;
+    padding:4px 11px;border-radius:999px;
+    display:flex;align-items:center;gap:4px;
+  }
+  svg.mapimg{width:100%;display:block;border-radius:18px;background:#EAF7DC;}
+  #kakaoMap{
+    width:100%;height:100%;
+    background:#EAF7DC;
+  }
+  .pin-icon, .lamp-icon, .danger-icon{
+    display:flex;align-items:center;justify-content:center;
+    border-radius:50%;
+    box-shadow:0 3px 8px rgba(0,0,0,0.25);
+    border:2px solid white;
+  }
+  .pin-icon{width:28px;height:28px;background:var(--leaf-deep);color:white;font-size:14px;}
+  .lamp-icon{width:20px;height:20px;background:var(--lamp);font-size:11px;}
+  .danger-icon{width:22px;height:22px;background:var(--danger);color:white;font-size:12px;font-family:'Jua',sans-serif;}
+  .label-pill{
+    background:var(--leaf-deep);color:white;
+    font-family:'Jua', sans-serif;font-size:11px;
+    padding:5px 10px;border-radius:999px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.25);
+    border:2px solid white;white-space:nowrap;
+    text-align:center;
+  }
+  .legend{display:flex;gap:12px;padding:9px 4px 0;font-size:10.5px;color:#6E8461;flex-wrap:wrap;}
+  .route-stats{display:flex;gap:8px;margin-top:10px;}
+  .route-stat{
+    flex:1;background:var(--safe-bg);border-radius:14px;padding:9px 6px;text-align:center;
+  }
+  .route-stat .num{font-family:'Jua', sans-serif;font-size:16px;color:var(--leaf-deep);}
+  .route-stat .lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+  .my-loc{
+    width:18px;height:18px;border-radius:50%;
+    background:#4A90E2;border:3px solid white;
+    box-shadow:0 0 0 4px rgba(74,144,226,0.25), 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .legend span{display:flex;align-items:center;gap:5px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  /* -------- 위험요소 -------- */
+  .risk-card{
+    background:var(--danger-bg);
+    border-radius:20px;
+    padding:12px 14px;
+    box-shadow:0 6px 16px rgba(255,107,107,0.18);
+    margin-bottom:12px;
+  }
+  .risk-card .rtitle{
+    font-family:'Jua', sans-serif;font-size:12.5px;color:#E14545;
+    display:flex;align-items:center;gap:6px;margin-bottom:7px;
+  }
+  .risk-tag{
+    display:inline-flex;align-items:center;gap:5px;
+    background:#FFFFFF;color:#E14545;font-size:10.5px;font-weight:700;
+    padding:5px 9px;border-radius:999px;margin:0 5px 5px 0;
+  }
+
+  /* -------- 구로엔젤 화면 -------- */
+  .angel-hero{
+    background:var(--white);
+    border-radius:26px;
+    padding:20px;
+    box-shadow:var(--shadow);
+    text-align:center;
+    margin-bottom:14px;
+  }
+  .angel-big{width:90px;height:90px;margin-bottom:8px;}
+  .angel-hero h3{font-family:'Jua', sans-serif;font-size:16px;margin:0 0 6px;color:var(--ink);}
+  .angel-hero p{font-size:12px;color:var(--muted);line-height:1.5;margin:0;}
+  .feature-item{
+    display:flex;gap:12px;align-items:flex-start;
+    background:var(--white);border-radius:18px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .feature-item .fic{font-size:20px;}
+  .feature-item h5{font-family:'Jua', sans-serif;font-size:12.5px;margin:0 0 3px;color:var(--ink);}
+  .feature-item p{font-size:11px;margin:0;color:var(--muted);line-height:1.4;}
+
+  /* -------- 삼대발견 화면 -------- */
+  .discover-card{
+    display:flex;align-items:center;gap:12px;
+    background:var(--white);border-radius:20px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .discover-num{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--leaf);color:white;
+    font-family:'Jua', sans-serif;font-size:14px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .discover-card h5{margin:0;font-family:'Jua', sans-serif;font-size:13px;color:var(--ink);}
+  .discover-card p{margin:2px 0 0;font-size:11px;color:var(--muted);}
+
+  /* -------- 설정 화면 -------- */
+  .setting-row{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--white);border-radius:18px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .setting-label{display:flex;align-items:center;gap:10px;}
+  .setting-label .fic{font-size:18px;}
+  .setting-label h5{margin:0;font-family:'Jua', sans-serif;font-size:12.5px;color:var(--ink);}
+  .setting-label p{margin:2px 0 0;font-size:10.5px;color:var(--muted);}
+  .switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{
+    position:absolute;cursor:pointer;inset:0;
+    background:#DCE6D2;border-radius:999px;
+    transition:.2s;
+  }
+  .slider::before{
+    content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;
+    background:white;border-radius:50%;transition:.2s;
+    box-shadow:0 1px 3px rgba(0,0,0,0.25);
+  }
+  .switch input:checked + .slider{background:var(--leaf);}
+  .switch input:checked + .slider::before{transform:translateX(18px);}
+  /* -------- 보호자 연락처 관리 -------- */
+  .guardian-head{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:10px;margin:14px 2px 8px;
+  }
+  .guardian-head .section-label{margin:0;}
+  .guardian-add-btn{
+    border:none;background:var(--leaf);color:white;
+    border-radius:999px;padding:8px 12px;
+    font-family:'Jua', sans-serif;font-size:11px;
+    cursor:pointer;box-shadow:0 6px 12px rgba(95,174,58,0.22);
+  }
+  .guardian-form{
+    display:none;background:var(--white);border-radius:20px;
+    padding:14px;box-shadow:var(--shadow);margin-bottom:10px;
+  }
+  .guardian-form.open{display:block;}
+  .guardian-input{
+    width:100%;border:1px solid #DCE9D0;background:#FAFDF7;
+    border-radius:12px;padding:11px 12px;margin-bottom:8px;
+    font-family:'Gowun Dodum', sans-serif;font-size:12px;color:var(--ink);
+    outline:none;
+  }
+  .guardian-input:focus{border-color:var(--leaf);}
+  .guardian-actions{display:flex;gap:8px;}
+  .guardian-actions .btn{padding:10px 0;font-size:12px;}
+  .guardian-empty{
+    background:var(--white);border-radius:20px;padding:16px 14px;
+    box-shadow:var(--shadow);text-align:center;color:var(--muted);
+    font-size:11px;margin-bottom:10px;
+  }
+  .guardian-item{
+    display:flex;align-items:center;gap:10px;
+    background:var(--white);border-radius:18px;padding:12px 14px;
+    box-shadow:var(--shadow);margin-bottom:10px;
+  }
+  .guardian-avatar{
+    width:40px;height:40px;border-radius:14px;background:var(--safe-bg);
+    display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;
+  }
+  .guardian-info{min-width:0;flex:1;}
+  .guardian-info h5{margin:0;font-family:'Jua', sans-serif;font-size:12.5px;color:var(--ink);}
+  .guardian-info p{margin:2px 0 0;font-size:10.5px;color:var(--muted);}
+  .guardian-call{
+    border:none;background:var(--safe-bg);color:var(--leaf-deep);
+    border-radius:999px;padding:8px 10px;font-family:'Jua', sans-serif;font-size:10px;
+    text-decoration:none;white-space:nowrap;
+  }
+  .guardian-delete{
+    border:none;background:#FFF0F0;color:#E14545;border-radius:999px;
+    padding:8px 9px;font-size:10px;cursor:pointer;
+  }
+
+
+  /* -------- 문의하기 모달 -------- */
+  .contact-modal{position:fixed;inset:0;background:rgba(39,55,31,0.42);display:none;align-items:center;justify-content:center;padding:18px;z-index:1002;}
+  .contact-modal.open{display:flex;}
+  .contact-card{width:min(100%,370px);max-height:88vh;overflow:hidden;background:var(--bg-mint);border-radius:24px;box-shadow:0 18px 45px rgba(0,0,0,0.22);display:flex;flex-direction:column;}
+  .contact-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;background:var(--white);border-bottom:1px solid #E7F1DC;flex-shrink:0;}
+  .contact-head h3{margin:0;font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);}
+  .contact-body{overflow-y:auto;padding:16px;}
+  .contact-input{width:100%;border:1px solid #DCE9D0;background:#FAFDF7;border-radius:12px;padding:11px 12px;margin-bottom:9px;font-family:'Gowun Dodum',sans-serif;font-size:12px;color:var(--ink);outline:none;}
+  .contact-input:focus{border-color:var(--leaf);}
+  .contact-textarea{min-height:150px;resize:vertical;}
+  .contact-label{display:block;font-family:'Jua',sans-serif;font-size:11px;color:var(--leaf-text);margin:2px 2px 5px;}
+  .contact-note{font-size:10px;color:var(--muted);line-height:1.5;margin:2px 2px 10px;}
+  .contact-status{display:none;border-radius:14px;padding:11px 12px;margin-bottom:10px;font-size:11px;line-height:1.5;}
+  .contact-status.show{display:block;}
+  .contact-status.success{background:var(--safe-bg);color:var(--leaf-deep);}
+  .contact-status.error{background:var(--danger-bg);color:#E14545;}
+  .contact-submit:disabled{opacity:.65;cursor:wait;}
+
+  /* -------- 구로엔젤 가게 목록 모달 -------- */
+  .angel-shop-modal{position:fixed;inset:0;background:rgba(39,55,31,0.42);display:none;align-items:center;justify-content:center;padding:18px;z-index:1001;}
+  .angel-shop-modal.open{display:flex;}
+  .angel-shop-card{width:min(100%,370px);max-height:88vh;overflow:hidden;background:var(--bg-mint);border-radius:24px;box-shadow:0 18px 45px rgba(0,0,0,0.22);display:flex;flex-direction:column;}
+  .angel-shop-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;background:var(--white);border-bottom:1px solid #E7F1DC;flex-shrink:0;}
+  .angel-shop-head h3{margin:0;font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);}
+  .angel-shop-body{overflow-y:auto;padding:16px;}
+  .angel-shop-empty{padding:28px 14px;text-align:center;color:var(--muted);font-size:11px;line-height:1.6;background:var(--white);border-radius:18px;}
+
+  /* -------- 보호자 연락처 관리 모달 -------- */
+  .guardian-modal{position:fixed;inset:0;background:rgba(39,55,31,0.42);display:none;align-items:center;justify-content:center;padding:18px;z-index:1000;}
+  .guardian-modal.open{display:flex;}
+  .guardian-modal-card{width:min(100%,370px);max-height:88vh;overflow:hidden;background:var(--bg-mint);border-radius:24px;box-shadow:0 18px 45px rgba(0,0,0,0.22);display:flex;flex-direction:column;}
+  .guardian-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;background:var(--white);border-bottom:1px solid #E7F1DC;flex-shrink:0;}
+  .guardian-modal-head h3{margin:0;font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);}
+  .guardian-modal-body{overflow-y:auto;padding:16px;}
+  .guardian-modal-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .guardian-modal-top strong{font-family:'Jua',sans-serif;font-size:13px;color:var(--ink);}
+  .guardian-modal-top p{margin:3px 0 0;font-size:10.5px;color:var(--muted);}
+
+  .app-version{
+    text-align:center;font-size:10.5px;color:#A7B89A;
+    margin:18px 0 6px;
+  }
+
+  /* -------- 하단 탭바 -------- */
+  .tabbar{
+    flex-shrink:0;
+    display:flex;
+    background:var(--white);
+    border-top:1px solid #E7F1DC;
+    padding:8px 6px 4px;
+    box-shadow:0 -6px 16px rgba(95,174,58,0.10);
+  }
+  .tab{
+    flex:1;
+    border:none;background:none;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:6px 0 4px;
+    cursor:pointer;
+    color:#A7B89A;
+    font-family:'Jua', sans-serif;
+    font-size:9.5px;
+    white-space:nowrap;
+  }
+  .tab .ticon{
+    font-size:17px;
+    width:30px;height:30px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:12px;
+    transition:all .2s ease;
+  }
+  .tab.active{color:var(--leaf-deep);}
+  .tab.active .ticon{background:var(--safe-bg);}
+
+  /* -------- 로그인 -------- */
+  .login-btn{margin-left:auto;flex:0 0 auto;border:none;background:var(--white);color:var(--leaf-deep);border:1px solid #DCE9D0;border-radius:999px;padding:7px 11px;font-family:'Jua',sans-serif;font-size:10.5px;cursor:pointer;box-shadow:0 4px 10px rgba(95,174,58,0.12);}
+  .login-btn.logged{background:var(--safe-bg);border-color:#CFE8C2;}
+  .login-modal{position:fixed;inset:0;background:rgba(39,55,31,0.42);display:none;align-items:center;justify-content:center;padding:18px;z-index:1100;}
+  .login-modal.open{display:flex;}
+  .login-card{width:min(100%,370px);background:var(--bg-mint);border-radius:24px;box-shadow:0 18px 45px rgba(0,0,0,0.22);overflow:hidden;}
+  .login-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;background:var(--white);border-bottom:1px solid #E7F1DC;}
+  .login-head h3{margin:0;font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);}
+  .login-body{padding:18px;}
+  .login-input{width:100%;border:1px solid #DCE9D0;background:#FAFDF7;border-radius:12px;padding:12px;margin-bottom:9px;font-family:'Gowun Dodum',sans-serif;font-size:12px;color:var(--ink);outline:none;}
+  .login-input:focus{border-color:var(--leaf);}
+  .login-error{display:none;background:var(--danger-bg);color:#E14545;border-radius:12px;padding:9px 11px;margin-bottom:9px;font-size:11px;}
+  .login-error.show{display:block;}
+  .account-panel{display:none;background:var(--white);border-radius:18px;padding:15px;margin-top:12px;box-shadow:var(--shadow);}
+  .account-panel.show{display:block;}
+  .account-name{font-family:'Jua',sans-serif;font-size:18px;color:var(--leaf-deep);margin-bottom:4px;}
+  .account-id{font-size:10.5px;color:var(--muted);}
+
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <div class="header">
+    <svg class="mascot-sm" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="48" fill="#FFF3D6"/>
+      <path d="M20 40 Q50 15 80 40 L74 46 Q50 28 26 46 Z" fill="#8FD14F"/>
+      <circle cx="50" cy="55" r="22" fill="#FFFFFF" stroke="#8FD14F" stroke-width="3"/>
+      <circle cx="43" cy="53" r="3" fill="#3E7A2C"/>
+      <circle cx="57" cy="53" r="3" fill="#3E7A2C"/>
+      <path d="M42 62 Q50 68 58 62" stroke="#3E7A2C" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle cx="34" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+      <circle cx="66" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+    </svg>
+    <div>
+      <div class="title" id="screenTitle">❤️놀맵❤️</div>
+      <div class="subtitle" id="screenSubtitle">⭐신도림놀구로를 가는 가장 안전한 길⭐</div>
+    </div>
+    <button class="login-btn" id="loginBtn" type="button" onclick="openLoginModal()">로그인</button>
+  </div>
+
+  <div class="screens">
+
+    <!-- ============ 홈 ============ -->
+    <section class="screen active" id="screen-home">
+      <div class="hero-card">
+        <div class="status-pill">🟢 지금 통행 가능해요</div>
+        <h3>오늘도 안전하게, 신도림놀구로!</h3>
+        <p>추천 경로로 걸으면 도보 12분, 가로등 14개가 함께해요.</p>
+        <div class="btnrow">
+          <button class="btn on-hero" onclick="go('map'); setTimeout(findMyRoute, 600);">🍀 경로 보기</button>
+          <button class="btn on-hero outline" onclick="go('place')">🎈 놀구로 소개</button>
+        </div>
+      </div>
+
+      <div class="section-label">👀 바로가기</div>
+      <button class="quicklink" onclick="go('map')">
+        <div class="qicon">🗺️</div>
+        <div>
+          <h5>최적의 길 · 지도</h5>
+          <p>안전 경로와 위험 구간을 한눈에</p>
+        </div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink" onclick="go('angel')">
+        <div class="qicon">🧚</div>
+        <div>
+          <h5>구로엔젤</h5>
+          <p>우리 동네 안전 도우미 소개</p>
+        </div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink" onclick="go('discover')">
+        <div class="qicon">✨</div>
+        <div>
+          <h5>삼대발견</h5>
+          <p>가는 길에 들러볼 안심 명소 3곳</p>
+        </div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink" onclick="go('place')">
+        <div class="qicon">🎈</div>
+        <div>
+          <h5>신도림놀구로</h5>
+          <p>어떤 곳인지 알아보기</p>
+        </div>
+        <div class="arrow">›</div>
+      </button>
+    </section>
+
+    <!-- ============ 지도 ============ -->
+    <section class="screen map-screen" id="screen-map">
+      <div id="kakaoMap"></div>
+
+      <div class="map-top-bar">
+        <div class="map-title">🗺️ 최적의 길</div>
+        <button class="badge-pill angel-btn" id="angelToggle" type="button" onclick="toggleAngels()">🧚 구로엔젤</button>
+      </div>
+
+      <div class="map-ctrl" id="mapCtrl">
+        <button type="button" onclick="superZoom(1)" title="더 크게">🔍➕</button>
+        <button type="button" onclick="superZoom(-1)" title="작게">🔍➖</button>
+        <button type="button" onclick="findMyRoute()" title="현재 위치에서 길찾기" id="findBtn">📍</button>
+      </div>
+
+      <div class="info-panel" id="infoPanel"></div>
+    </section>
+
+    <!-- ============ 구로엔젤 ============ -->
+    <section class="screen" id="screen-angel">
+      <div class="angel-hero">
+        <svg class="angel-big" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="48" fill="#FFF3D6"/>
+          <path d="M20 40 Q50 15 80 40 L74 46 Q50 28 26 46 Z" fill="#8FD14F"/>
+          <circle cx="50" cy="55" r="22" fill="#FFFFFF" stroke="#8FD14F" stroke-width="3"/>
+          <circle cx="43" cy="53" r="3" fill="#3E7A2C"/>
+          <circle cx="57" cy="53" r="3" fill="#3E7A2C"/>
+          <path d="M42 62 Q50 68 58 62" stroke="#3E7A2C" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <circle cx="34" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+          <circle cx="66" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+        </svg>
+        <h3>구로엔젤이 함께 걸어요</h3>
+        <p>놀구로에 오고 가는 길을 안전하게 지켜주는 가게들이에요!</p>
+      </div>
+
+      <button class="btn primary" style="width:100%;margin-top:12px;" type="button" onclick="openAngelShops()">🏪 구로엔젤 가게 목록</button>
+    </section>
+
+    <!-- ============ 삼대발견 ============ -->
+    <section class="screen" id="screen-discover">
+      <div class="section-label">✨ 놀구로 가는 길에 만나는 곳</div>
+      <div id="discoverList"></div>
+    </section>
+
+    <!-- ============ 놀구로 소개 ============ -->
+    <section class="screen" id="screen-place">
+      <div class="place-card">
+        <div class="place-head">
+          <div class="place-emoji">🎈</div>
+          <div>
+            <h4>신도림놀구로</h4>
+            <p class="place-tag">청소년활동시설 · 청소년입장지대</p>
+          </div>
+        </div>
+        <p class="place-desc">
+          PLAY YOUR DREAM! 문화 · 여가 · 진로 활동을 마음껏 즐길 수 있는
+          청소년 전용 공간이에요. 친구들과 놀고, 쉬고, 하고 싶은 걸 찾아볼 수 있어요.
+        </p>
+        <div class="place-info">
+          <div class="info-row"><span class="ic">📍</span>서울 구로구 신도림로13길 51 (지하1층, 1~2층)</div>
+          <div class="info-row"><span class="ic">🕗</span>운영 중 · 20:00 운영 종료</div>
+          <div class="info-row"><span class="ic">☎️</span>02-2068-2511</div>
+          <div class="info-row"><span class="ic">🎫</span>이용료 무료</div>
+        </div>
+        <div class="place-tags">
+          <span class="ptag">🎮 놀이공간</span>
+          <span class="ptag">📚 진로활동</span>
+          <span class="ptag">🛋️ 휴식공간</span>
+        </div>
+      </div>
+
+      <div class="section-label">🎯 이런 걸 할 수 있어요</div>
+      <div class="feature-item">
+        <div class="fic">🎮</div>
+        <div>
+          <h5>놀이 공간</h5>
+          <p>보드게임, 콘솔게임 등 친구들과 즐길 거리가 가득해요</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fic">📚</div>
+        <div>
+          <h5>진로 · 문화 프로그램</h5>
+          <p>하고 싶은 걸 찾고 배워볼 수 있는 활동이 열려요</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fic">🛋️</div>
+        <div>
+          <h5>편히 쉬는 공간</h5>
+          <p>학교 끝나고 부담 없이 들러 쉬어갈 수 있어요</p>
+        </div>
+      </div>
+
+      <a class="btn ghost" style="width:100%;margin-top:6px;text-decoration:none;"
+         href="https://www.playguro.or.kr/" target="_blank" rel="noopener">🔎 놀구로 더 자세히 보기</a>
+      <button class="btn primary" style="width:100%;margin-top:10px;" type="button" onclick="openPlace('nolguro')">
+        🗺️ 놀구로 가는 길 보기
+      </button>
+    </section>
+
+    <!-- ============ 설정 ============ -->
+    <section class="screen" id="screen-settings">
+      <div class="section-label">👤 계정 · 정보</div>
+
+      <button class="quicklink" onclick="openGuardianModal()">
+        <div class="qicon">🧸</div>
+        <div><h5>보호자 연락처 관리</h5><p>비상 연락처를 등록해요</p></div>
+        <div class="arrow">›</div>
+      </button>
+
+      <button class="quicklink" onclick="openPrivacy()">
+        <div class="qicon">📄</div>
+        <div><h5>이용약관 · 개인정보처리방침</h5><p>안전하게 관리되고 있어요</p></div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink" type="button" onclick="openContactModal()">
+        <div class="qicon">💌</div><div><h5>문의하기</h5><p>불편하거나 궁금한 점을 남겨주세요</p></div><div class="arrow">›</div>
+      </button>
+
+      <div class="app-version">놀구로오는길 v1.0.0</div>
+    </section>
+
+  </div>
+
+
+  <!-- ============ 구로엔젤 가게 목록 ============ -->
+  <div class="angel-shop-modal" id="angelShopModal" role="dialog" aria-modal="true" aria-labelledby="angelShopTitle">
+    <div class="angel-shop-card">
+      <div class="angel-shop-head">
+        <h3 id="angelShopTitle">구로엔젤 가게 목록</h3>
+        <button class="privacy-close" type="button" onclick="closeAngelShops()">닫기</button>
+      </div>
+      <div class="angel-shop-body">
+        <div id="angelShopList"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============ 문의하기 ============ -->
+  <div class="contact-modal" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+    <div class="contact-card">
+      <div class="contact-head">
+        <h3 id="contactTitle">문의하기</h3>
+        <button class="privacy-close" type="button" onclick="closeContactModal()">닫기</button>
+      </div>
+      <form class="contact-body" id="contactForm">
+        <label class="contact-label" for="contactSubject">제목</label>
+        <input class="contact-input" id="contactSubject" type="text" maxlength="100" placeholder="문의 제목을 입력해 주세요.">
+        <label class="contact-label" for="contactMessage">문의 내용</label>
+        <textarea class="contact-input contact-textarea" id="contactMessage" maxlength="3000" placeholder="궁금한 점이나 불편한 점을 적어 주세요." required></textarea>
+        <label class="contact-label" for="contactName">이름 <span style="font-weight:normal;color:var(--muted);">(선택)</span></label>
+        <input class="contact-input" id="contactName" type="text" maxlength="30" placeholder="이름을 입력해 주세요.">
+        <label class="contact-label" for="contactPhone">연락처 <span style="font-weight:normal;color:var(--muted);">(선택)</span></label>
+        <input class="contact-input" id="contactPhone" type="tel" maxlength="20" placeholder="답변을 원하면 연락처를 남겨 주세요.">
+        <p class="contact-note">이메일 주소는 입력하지 않아도 돼요. 이름과 연락처도 선택사항이에요.</p>
+        <div class="contact-status" id="contactStatus"></div>
+        <button class="btn primary contact-submit" id="contactSubmit" type="submit" style="width:100%;">💌 문의 보내기</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ 보호자 연락처 관리 ============ -->
+  <div class="guardian-modal" id="guardianModal" role="dialog" aria-modal="true" aria-labelledby="guardianTitle">
+    <div class="guardian-modal-card">
+      <div class="guardian-modal-head">
+        <h3 id="guardianTitle">보호자 연락처 관리</h3>
+        <button class="privacy-close" type="button" onclick="closeGuardianModal()">닫기</button>
+      </div>
+      <div class="guardian-modal-body">
+        <div class="guardian-modal-top">
+          <div><strong>보호자 목록</strong><p>비상시에 연락할 보호자를 등록할 수 있어요.</p></div>
+          <button class="guardian-add-btn" type="button" onclick="toggleGuardianForm()">＋ 보호자 추가</button>
+        </div>
+        <div class="guardian-form" id="guardianForm">
+          <input class="guardian-input" id="guardianName" type="text" maxlength="30" placeholder="보호자 이름">
+          <input class="guardian-input" id="guardianRelation" type="text" maxlength="20" placeholder="관계 (예: 엄마, 아빠, 선생님)">
+          <input class="guardian-input" id="guardianPhone" type="tel" maxlength="20" placeholder="전화번호">
+          <div class="guardian-actions">
+            <button class="btn primary" type="button" onclick="saveGuardian()">저장</button>
+            <button class="btn ghost" type="button" onclick="toggleGuardianForm(false)">취소</button>
+          </div>
+        </div>
+        <div id="guardianList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 개인정보처리방침 ============ -->
+  <div class="privacy-modal" id="privacyModal" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
+    <div class="privacy-card">
+      <div class="privacy-head">
+        <h3 id="privacyTitle">개인정보처리방침</h3>
+        <button class="privacy-close" onclick="closePrivacy()">닫기</button>
+      </div>
+      <div class="privacy-body">
+        <p><strong>청소년입장지대 신도림놀구로</strong>(이하 ‘회사’라 한다)는 개인정보 보호법 제30조에 따라 정보 주체의 개인정보를 보호하고 이와 관련한 고충을 신속하고 원활하게 처리할 수 있도록 하기 위하여 다음과 같이 개인정보 처리지침을 수립, 공개합니다.</p>
+
+        <h4>제1조 (개인정보의 처리목적)</h4>
+        <p>회사는 다음의 목적을 위하여 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 개인정보보호법 제18조에 따라 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.</p>
+        <p><strong>1. 홈페이지 회원 가입 및 관리</strong><br>회원 가입 의사 확인, 회원제 서비스 제공에 따른 본인 식별․인증, 회원자격 유지․관리, 제한적 본인확인제 시행에 따른 본인확인, 서비스 부정 이용 방지, 만 14세 미만 아동의 개인정보처리 시 법정대리인의 동의 여부 확인, 각종 고지․통지, 고충 처리 등을 목적으로 개인정보를 처리합니다.</p>
+        <p><strong>2. 재화 또는 서비스 제공</strong><br>물품 배송, 서비스 제공, 계약서 및 청구서 발송, 콘텐츠 제공, 맞춤서비스 제공, 본인인증, 연령인증, 요금 결제 및 정산, 채권추심 등을 목적으로 개인정보를 처리합니다.</p>
+        <p><strong>3. 고충 처리</strong><br>민원인의 신원 확인, 민원사항 확인, 사실조사를 위한 연락․통지, 처리 결과 통보 등의 목적으로 개인정보를 처리합니다.</p>
+
+        <h4>제2조 (개인정보의 처리 및 보유기간)</h4>
+        <p>① 회사는 법령에 따른 개인정보 보유, 이용 기간 또는 정보주체로부터 개인정보를 수집 시에 동의 받은 개인정보 보유, 이용 기간 내에서 개인정보를 처리, 보유합니다.</p>
+        <p>② 각각의 개인정보 처리 및 보유 기간은 다음과 같습니다.</p>
+        <p><strong>1. 홈페이지 회원 가입 및 관리 : 홈페이지 탈퇴 시까지</strong><br>다만, 다음의 사유에 해당하는 경우에는 해당 사유 종료 시까지</p>
+        <ol class="privacy-list">
+          <li>관계 법령 위반에 따른 수사, 조사 등이 진행 중인 경우에는 해당 수사, 조사 종료 시까지</li>
+          <li>홈페이지 이용에 따른 채권 및 채무관계 잔존 시에는 해당 채권, 채무 관계 정산 시까지</li>
+        </ol>
+
+        <h4>제3조 (개인정보의 제3자 제공)</h4>
+        <p>① 회사는 정보주체의 개인정보를 제1조(개인정보의 처리목적)에서 명시한 범위 내에서만 처리하며, 정보주체의 동의, 법률의 특별한 규정 등 개인정보 보호법 제17조 및 제 18조에 해당하는 경우에만 개인정보를 제3자에게 제공하고 그 외에는 정보주체의 개인정보를 제3자에게 제공하지 않습니다.</p>
+        <p>② 회사는 원활한 서비스 제공을 위해 다음의 경우 개인정보보호법 제17조 제1항 제1호에 따라 정보주체의 동의를 얻어 필요 최소한의 범위로만 개인정보를 제3자에게 제공할 수 있습니다.</p>
+        <div class="contact-box">
+          개인정보를 제공받는 자 : &lt;청소년입장지대 신도림놀구로&gt;<br>
+          제공받는 자의 개인정보 이용목적 : &lt;프로그램 진행을 위한 참여자 관리, 프로그램 홍보, 안전관리 등&gt;<br>
+          제공하는 개인정보 항목 : &lt;성명, 주소, 연락처&gt;<br>
+          제공받는 자의 보유, 이용기간 : &lt;개인정보 제3자 제공 철회 시까지&gt;
+        </div>
+
+        <h4>제5조(정보주체 및 법정대리인의 권리와 그 행사 방법)</h4>
+        <p>① 정보주체는 회사에 대해 언제든지 다음 각 호의 개인정보 보호 관련 권리를 행사할 수 있습니다.</p>
+        <ol class="privacy-list">
+          <li>개인정보 열람 요구</li>
+          <li>오류 등이 있을 경우 정정 요구</li>
+          <li>삭제요구</li>
+          <li>처리정지 요구</li>
+        </ol>
+        <p>② 제1항에 따른 권리 행사는 회사에 대해 서면, 전화, 전자우편, 모사전송(FAX) 등을 통하여 하실 수 있으며 회사는 이에 대해 지체없이 조치하겠습니다.</p>
+        <p>③ 정보주체가 개인정보의 오류 등에 대한 정정 또는 삭제를 요구한 경우에는 회사는 정정 또는 삭제를 완료할 때까지 당해 개인정보를 이용하거나 제공하지 않습니다.</p>
+        <p>④ 제1항에 따른 권리 행사는 정보주체의 법정대리인이나 위임을 받은 자 등 대리인을 통하여 하실 수 있습니다. 이 경우 개인정보 보호법 시행규칙 별지 제11호 서식에 따른 위임장을 제출하셔야 합니다.</p>
+        <p>⑤ 정보주체는 개인정보 보호법 등 관계 법령을 위반하여 회사가 처리하고 있는 정보주체 본인이나 타인의 개인정보 및 사생활을 침해하여서는 아니 됩니다.</p>
+
+        <h4>제6조(처리하는 개인정보 항목)</h4>
+        <p>회사는 다음의 개인정보 항목을 처리하고 있습니다.</p>
+        <p><strong>1. 프로그램 신청자 개인정보</strong><br>필수항목 : &lt;예) 이름, 학교, 나이, 성별, 연락처&gt;</p>
+
+        <h4>제7조(개인정보의 파기)</h4>
+        <p>① 회사는 개인정보 보유 기간의 경과, 처리목적 달성 등 개인정보가 불필요하게 되었을 때에는 지체없이 해당 개인정보를 파기합니다.</p>
+        <p>② 정보주체로부터 동의받은 개인정보 보유 기간이 경과하거나 처리목적이 달성되었음에도 불구하고 다른 법령에 따라 개인정보를 계속 보존하여야 하는 경우에는, 해당 개인정보를 별도의 데이터베이스(DB)로 옮기거나 보관장소를 달리하여 보존합니다.</p>
+        <p>③ 개인정보 파기의 절차 및 방법은 다음과 같습니다.</p>
+        <p><strong>1. 파기 절차</strong><br>회사는 파기 사유가 발생한 개인정보를 선정하고, 개인정보 보호책임자의 승인을 받아 개인정보를 파기합니다.</p>
+        <p><strong>2. 파기 방법</strong><br>회사는 전자적 파일 형태로 기록․저장된 개인정보는 기록을 재생할 수 없도록 파기하며, 종이 문서에 기록․저장된 개인정보는 분쇄기로 분쇄하거나 소각하여 파기합니다.</p>
+
+        <h4>제8조(개인정보의 안전성 확보조치)</h4>
+        <p>회사는 개인정보의 안전성 확보를 위해 다음과 같은 조치를 하고 있습니다.</p>
+        <ol class="privacy-list">
+          <li>관리적 조치 : 내부관리계획 수립 및 시행, 정기적 직원 교육 등</li>
+          <li>기술적 조치 : 개인정보처리시스템 등의 접근 권한 관리, 접근통제시스템 설치, 고유 식별정보 등의 암호화, 보안프로그램 설치</li>
+          <li>물리적 조치 : 전산실, 자료보관실 등의 접근통제</li>
+        </ol>
+
+        <h4>제9조(개인정보 자동 수집 장치의 설치∙운영 및 거부에 관한 사항)</h4>
+        <p>① 회사는 이용자에게 개별적인 맞춤 서비스를 제공하기 위해 이용정보를 저장하고 수시로 불러오는 ‘쿠키(cookie)’를 사용합니다.</p>
+        <p>② 쿠키는 웹사이트를 운영하는데 이용되는 서버(http)가 이용자의 컴퓨터 브라우저에 보내는 소량의 정보이며 이용자들의 PC 또는 모바일에 저장됩니다.</p>
+        <p>③ 정보주체는 웹 브라우저 옵션 설정을 통해 쿠키 허용, 차단 등의 설정을 할 수 있습니다. 다만, 쿠키 저장을 거부할 경우 맞춤형 서비스 이용에 어려움이 발생할 수 있습니다.</p>
+        <p><strong>▶ 웹 브라우저에서 쿠키 허용/차단</strong><br>크롬(Chrome) : 웹 브라우저 설정 &gt; 개인정보 보호 및 보안 &gt; 인터넷 사용기록 삭제<br>엣지(Edge) : 웹 브라우저 설정 &gt; 쿠키 및 사이트 권한 &gt; 쿠키 및 사이트 데이터 관리 및 삭제</p>
+        <p><strong>▶ 모바일 브라우저에서 쿠키 허용/차단</strong><br>크롬(Chrome) : 모바일 브라우저 설정 &gt; 개인정보 보호 및 보안 &gt; 인터넷 사용기록 삭제<br>사파리(Safari) : 모바일 기기 설정 &gt; 사파리(Safari) &gt; 고급 &gt; 모든 쿠키 차단<br>삼성 인터넷 : 인터넷 사용 기록 &gt; 인터넷 사용 기록 삭제</p>
+        <p>④ 회사는 서비스 이용과정에서 사용자가 방문한 각 서비스와 웹 사이트들에 대한 방문 및 이용형태, 인기 검색어, 보안접속 여부 등을 파악하여 이용자에게 최적화된 정보 제공을 위해 수집・이용하고 있습니다.</p>
+
+        <h4>제10조(개인정보 보호책임자)</h4>
+        <div class="contact-box">
+          개인정보 보호책임자<br>
+          성명 : 박선숙<br>
+          직책 : 관장<br>
+          연락처 : &lt;02-2068-2511&gt;<br>
+          ※ 개인정보 보호 담당부서로 연결됩니다.<br><br>
+          개인정보 보호 담당부서<br>
+          부서명 : 운영지원팀<br>
+          연락처 : &lt;02-2068-2511&gt;
+        </div>
+        <p>② 정보주체께서는 회사의 서비스(또는 사업)을 이용하시면서 발생한 모든 개인정보 보호 관련 문의, 불만 처리, 피해구제 등에 관한 사항을 개인정보 보호책임자 및 담당부서로 문의하실 수 있습니다. 회사는 정보주체의 문의에 대해 지체없이 답변 및 처리해드릴 것입니다.</p>
+
+        <h4>제11조(개인정보 열람청구)</h4>
+        <p>정보주체는 개인정보 보호법 제35조에 따른 개인정보의 열람 청구를 아래의 부서에 할 수 있습니다. 회사는 개인정보 열람 청구가 신속하게 처리되도록 노력하겠습니다.</p>
+        <div class="contact-box">개인정보 열람청구 접수․처리 부서<br>부서명 : 운영지원팀<br>연락처 : &lt;02-2068-2511&gt;</div>
+
+        <h4>제12조(권익침해 구제 방법)</h4>
+        <ol class="privacy-list">
+          <li>개인정보 분쟁조정위원회 : (국번없이) 1833-6972 (www.kopico.go.kr)</li>
+          <li>개인정보침해신고센터 : (국번없이) 118 (privacy.kisa.or.kr)</li>
+          <li>대검찰청 : (국번없이) 1301 (www.spo.go.kr)</li>
+          <li>경찰청 : (국번없이) 182 (ecrm.police.go.kr/minwon/main)</li>
+        </ol>
+
+        <h4>제13조(개인정보 처리방침 시행 및 변경)</h4>
+        <p>이 개인정보 처리방침은 <strong>2026. 1. 30.</strong> 부터 적용됩니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 로그인 ============ -->
+  <div class="login-modal" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <div class="login-card">
+      <div class="login-head"><h3 id="loginTitle">놀맵 로그인</h3><button class="privacy-close" type="button" onclick="closeLoginModal()">닫기</button></div>
+      <div class="login-body">
+        <div id="loginError" class="login-error"></div>
+        <form id="loginForm">
+          <input class="login-input" id="loginId" type="text" autocomplete="username" placeholder="아이디" required>
+          <input class="login-input" id="loginPassword" type="password" autocomplete="current-password" placeholder="비밀번호" required>
+          <button class="btn primary" type="submit" style="width:100%;">🔐 로그인</button>
+        </form>
+        <div class="account-panel" id="accountPanel">
+          <div class="account-name" id="accountName">놀맵</div>
+          <div class="account-id" id="accountId">@nolmap</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <button class="tab" data-tab="map" onclick="go('map')">
+      <span class="ticon">🗺️</span>지도
+    </button>
+    <button class="tab" data-tab="angel" onclick="go('angel')">
+      <span class="ticon">🧚</span>구로엔젤
+    </button>
+    <button class="tab active" data-tab="home" onclick="go('home')">
+      <span class="ticon">🏠</span>홈
+    </button>
+    <button class="tab" data-tab="discover" onclick="go('discover')">
+      <span class="ticon">✨</span>삼대발견
+    </button>
+    <button class="tab" data-tab="place" onclick="go('place')">
+      <span class="ticon">🎈</span>놀구로
+    </button>
+    <button class="tab" data-tab="settings" onclick="go('settings')">
+      <span class="ticon">⚙️</span>설정
+    </button>
+  </div>
+</div>
+
+<script>
+  const titles = {
+    home:  ['놀구로오는길', '신도림놀구로 가는 가장 안전한 길'],
+    map:   ['최적의 길', '안전 경로와 위험 구간을 한눈에'],
+    angel: ['구로엔젤', '우리 동네 안전 도우미'],
+    discover: ['삼대발견', '놀구로 가는 길에 만나는 곳'],
+    place: ['신도림놀구로', '우리가 놀러가는 그곳'],
+    settings: ['설정', '알림과 계정 정보를 관리해요']
+  };
+
+  function go(name){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab[data-tab="' + name + '"]').classList.add('active');
+
+    document.getElementById('screenTitle').textContent = titles[name][0];
+    document.getElementById('screenSubtitle').textContent = titles[name][1];
+
+    if(name === 'discover') renderDiscover();
+    document.querySelector('.screens').scrollTop = 0;
+    document.querySelector('.screens').classList.toggle('fullmap', name === 'map');
+    document.querySelector('.phone').classList.toggle('mapmode', name === 'map');
+
+    if(name === 'map' && !window._mapInited){
+      window._mapInited = true;
+      if(window.kakao && window.kakao.maps){
+        kakao.maps.load(initKakaoMap);
+      }
+    }
+    if(name === 'map' && window._map){
+      setTimeout(() => window._map.relayout(), 200);
+    }
+  }
+
+  function superZoom(dir){
+    const map = window._map;
+    if(!map) return;
+    const lv = map.getLevel();
+    if(dir > 0){
+      if(lv > 1) map.setLevel(lv - 1, {animate:true});
+    } else {
+      map.setLevel(lv + 1, {animate:true});
+    }
+  }
+
+  // ===== 모든 장소 데이터 (지도 · 목록 공통) =====
+  const PLACES = {
+    nolguro: { emoji:'🎈', name:'신도림놀구로', sub:'청소년활동시설 · 목적지',
+      pos:[37.51037, 126.88001],
+      body:'문화 · 여가 · 진로 활동을 즐길 수 있는 청소년 전용 공간이에요.',
+      rows:[['📍','신도림로13길 51 (지하1층, 1~2층)'],['🕗','~20:00 운영'],['☎️','02-2068-2511'],['🎫','이용료 무료']],
+      tel:'02-2068-2511' },
+
+    a1: { emoji:'🍚', name:'고가네 며느리', sub:'🧚 구로엔젤 · 약 60m',
+      photo:'images/a1.jpg',
+      pos:[37.5108293, 126.8803841], dist:'약 60m', addr:'신도림동 296-61',
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','신도림동 296-61'],['☎️','02-2676-1241']], tel:'02-2676-1241' },
+    a2: { emoji:'🏢', name:'흥왕', sub:'🧚 구로엔젤 · 약 95m',
+      pos:[37.5112289, 126.8800722], dist:'약 95m', addr:'신도림로11라길 45',
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','신도림로11라길 45'],['🕗','평일 09:00~18:00'],['☎️','02-2634-2587']], tel:'02-2634-2587' },
+    a3: { emoji:'🛒', name:'진흥슈퍼', sub:'🧚 구로엔젤 · 약 120m',
+      photo:'images/a3.jpg',
+      pos:[37.5113906, 126.8804797], dist:'약 120m', addr:'신도림동 296-45',
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','신도림동 296-45'],['☎️','02-2068-9795']], tel:'02-2068-9795' },
+    a4: { emoji:'⛪', name:'예수비전교회', sub:'🧚 구로엔젤 · 약 140m',
+      photo:'images/a4.jpg',
+      pos:[37.5100072, 126.8814935], dist:'약 140m', addr:'신도림로15길 22',
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','신도림로15길 22'],['☎️','02-2678-5553']], tel:'02-2678-5553' },
+    a5: { emoji:'🏘️', name:'서울부동산', sub:'🧚 구로엔젤 · 약 150m',
+      photo:'images/a5.jpg',
+      pos:[37.5117032, 126.8805200], dist:'약 150m', addr:'다정한 밥상 옆',
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','다정한 밥상 옆 (서울공인중개사사무소)'],['☎️','02-2637-7766'],['👤','대표 김승석']],
+      tel:'02-2637-7766' },
+    a6: { emoji:'🏪', name:'세븐일레븐', sub:'🧚 구로엔젤 · 약 165m',
+      photo:'images/a6.jpg',
+      pos:[37.5093337, 126.8786729], dist:'약 165m', addr:'신도림로11길 38',
+      body:'24시간 열려 있어요. 밤에도 들어갈 수 있어요.',
+      rows:[['📍','신도림로11길 38'],['🕗','24시간']] },
+    a7: { emoji:'⛪', name:'신도림제일교회', sub:'🧚 구로엔젤 · 약 170m',
+      photo:'images/a7.jpg',
+      pos:[37.5089290, 126.8806751], dist:'약 170m', addr:'신도림동 390-25',
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','신도림동 390-25'],['☎️','02-2677-4755']], tel:'02-2677-4755' },
+    a8: { emoji:'🏘️', name:'씨유부동산', sub:'🧚 구로엔젤 · 약 175m',
+      photo:'images/a8.jpg',
+      pos:[37.5089216, 126.8793800], dist:'약 175m', addr:'황해방아간 옆',
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','황해방아간 옆 (씨유공인중개사사무소)'],['☎️','010-6255-9348'],['👤','대표 이승도']],
+      tel:'010-6255-9348' },
+    a9: { emoji:'🍚', name:'협동백반', sub:'🧚 구로엔젤 · 약 250m',
+      photo:'images/a9.jpg',
+      pos:[37.5081452, 126.8798258], dist:'약 250m', addr:'신도림동 396-38',
+      body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
+      rows:[['📍','신도림동 396-38'],['🕗','11:00~21:00 (일요일 휴무)'],['☎️','02-2636-4750']], tel:'02-2636-4750' },
+
+    // ---- 삼대발견 ----
+    d1: { emoji:'🎯', name:'뱀병장 슈팅레인지', sub:'✨ 삼대발견 · 약 125m',
+      pos:[37.5106724, 126.8789543], dist:'약 125m',
+      addr:'신도림로11라길 25-10 1층',
+      body:'공장지대 속 숨겨진 비밀기지.',
+      rows:[
+        ['📍','신도림로11라길 25-10 1층'],
+        ['👤','대표 김승현'],
+        ['🗓️','2024년 10월 1일 설립 · 293번지에서 약 4년'],
+        ['🎯','에어소프트건 액세서리 · 3D 프린팅 · CNC 가공품'],
+        ['🕗','평일 14:00~23:00 / 주말 12:00~23:00'],
+        ['🚫','화요일 정기 휴무']
+      ] },
+    d2: { emoji:'🏭', name:'경동정밀', sub:'✨ 삼대발견 · 약 30m',
+      photo:'images/d1.jpg',
+      pos:[37.5106583, 126.8800684], dist:'약 30m',
+      addr:'놀구로 바로 옆',
+      body:'CNC가공과 부품가공을 하는 동네 공장이에요.',
+      rows:[
+        ['📍','놀구로 바로 옆'],
+        ['🔧','CNC가공 · 4축 머시닝 · 선반밀링 · 부품가공'],
+        ['☎️','02-2633-7616'],
+        ['📱','010-9077-2700']
+      ], tel:'02-2633-7616' }
+  };
+  const DISCOVER_IDS = ['d1','d2'];
+  const ANGEL_IDS = ['a1','a2','a3','a4','a5','a6','a7','a8','a9'];
+  const ANGEL_PINS = ANGEL_IDS.filter(id => PLACES[id].pos);
+
+  // ===== 하단 정보 패널 =====
+  function openPlace(id){
+    const pl = PLACES[id];
+    if(!pl) return;
+    if(typeof closeAngelShops === 'function') closeAngelShops();
+    go('map');
+    setTimeout(() => {
+      if(window._map && pl.pos){
+        window._map.setLevel(2);
+        window._map.setCenter(window._LL(pl.pos));
+      }
+      showPanel(pl);
+    }, 350);
+  }
+
+  function showPanel(pl){
+    const el = document.getElementById('infoPanel');
+    if(!el) return;
+    const rows = (pl.rows || [])
+      .map(r => '<div class="info-row"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>').join('');
+    el.innerHTML =
+      '<button class="info-close" type="button" onclick="closePanel()">✕</button>' +
+      '<div class="info-head"><div class="info-emoji">' + pl.emoji + '</div>' +
+      '<div><h4>' + pl.name + '</h4><div class="sub">' + (pl.sub||'') + '</div></div></div>' +
+      (pl.body ? '<p class="info-body">' + pl.body + '</p>' : '') +
+      (rows ? '<div class="info-rows">' + rows + '</div>' : '') +
+      '<div class="info-acts">' +
+        (pl.photo ? '<button class="pic" type="button" onclick="openPhoto(\''+pl.photo+'\',\''+pl.name+'\')">📷 사진</button>' : '') +
+        (pl.tel ? '<a class="call" href="tel:' + pl.tel.replace(/-/g,'') + '">☎️ 전화</a>' : '') +
+        '<button class="go" type="button" onclick="findMyRoute()">📍 길찾기</button>' +
+      '</div>';
+    el.classList.add('open');
+    document.getElementById('mapCtrl').classList.add('up');
+  }
+
+  function showHTML(title, html, isErr){
+    const el = document.getElementById('infoPanel');
+    if(!el) return;
+    el.innerHTML =
+      '<button class="info-close" type="button" onclick="closePanel()">✕</button>' +
+      '<div class="info-head" style="margin-bottom:6px;"><div><h4' +
+      (isErr ? ' style="color:#E14545;"' : '') + '>' + title + '</h4></div></div>' + html;
+    el.classList.add('open');
+    document.getElementById('mapCtrl').classList.add('up');
+  }
+
+  // ===== 사진 보기 =====
+  function openPhoto(src, name){
+    let box = document.getElementById('photoView');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'photoView';
+      box.className = 'photo-view';
+      box.onclick = closePhoto;
+      document.body.appendChild(box);
+    }
+    box.innerHTML =
+      '<button class="photo-close" type="button">✕</button>' +
+      '<img src="' + src + '" alt="' + name + '" onerror="this.style.display=\'none\';' +
+      'this.nextElementSibling.textContent=\'사진을 불러오지 못했어요.\';">' +
+      '<div class="photo-cap">' + name + '</div>';
+    box.classList.add('open');
+  }
+  function closePhoto(){
+    const box = document.getElementById('photoView');
+    if(box) box.classList.remove('open');
+  }
+
+  function closePanel(){
+    const el = document.getElementById('infoPanel');
+    if(el) el.classList.remove('open');
+    const c = document.getElementById('mapCtrl');
+    if(c) c.classList.remove('up');
+  }
+
+  function initKakaoMap(){
+    const end = PLACES.nolguro.pos;
+    const LL = p => new kakao.maps.LatLng(p[0], p[1]);
+    const map = new kakao.maps.Map(document.getElementById('kakaoMap'), {
+      center: LL(end), level: 1
+    });
+    map.setMinLevel(1);
+    map.setMaxLevel(14);
+    map.setZoomable(true);
+    kakao.maps.event.addListener(map, 'click', closePanel);
+
+    window._map = map;
+    window._LL = LL;
+    window._dest = end;
+
+    new kakao.maps.CustomOverlay({
+      position: LL(end),
+      content: '<div class="label-pill" onclick="showPanel(PLACES.nolguro)">🎈 신도림놀구로</div>',
+      yAnchor: 0.5
+    }).setMap(map);
+
+    window._angelMarks = ANGEL_PINS.map(id => {
+      const ov = new kakao.maps.CustomOverlay({
+        position: LL(PLACES[id].pos),
+        content: '<div class="angel-pin" onclick="showPanel(PLACES.' + id + ')">🧚</div>',
+        yAnchor: 0.5
+      });
+      ov.setMap(map);
+      return ov;
+    });
+    window._angelsOn = true;
+
+    // 삼대발견 핀
+    DISCOVER_IDS.filter(id => PLACES[id].pos).forEach(id => {
+      new kakao.maps.CustomOverlay({
+        position: LL(PLACES[id].pos),
+        content: '<div class="discover-pin" onclick="showPanel(PLACES.' + id + ')">✨</div>',
+        yAnchor: 0.5
+      }).setMap(map);
+    });
+  }
+
+  function toggleAngels(){
+    if(!window._angelMarks) return;
+    window._angelsOn = !window._angelsOn;
+    window._angelMarks.forEach(m => m.setMap(window._angelsOn ? window._map : null));
+    const btn = document.getElementById('angelToggle');
+    if(btn) btn.classList.toggle('off', !window._angelsOn);
+  }
+
+  // 길찾기 프록시 주소 26.8.9일자로 supabase 로 변경함...
+  const ROUTE_API = 'https://susaporkxqgfjhettlqv.supabase.co/functions/v1/route';
+
+  // ===== 현재 위치에서 길찾기 =====
+  // ===== 경로 캐시 =====
+const ROUTE_CACHE_TTL = 5 * 60 * 1000; // 5분
+const ROUTE_CACHE_KEY = 'nolmap_route_cache_v1';
+
+function getRouteCacheKey(sx, sy, ex, ey){
+  const r = n => Number(n).toFixed(4);
+  return `${r(sx)},${r(sy)}>${r(ex)},${r(ey)}`;
+}
+
+function getCachedRoute(key){
+  try{
+    const raw = localStorage.getItem(ROUTE_CACHE_KEY);
+    if(!raw) return null;
+
+    const cache = JSON.parse(raw);
+    const item = cache[key];
+
+    if(!item) return null;
+
+    if(Date.now() - item.savedAt > ROUTE_CACHE_TTL){
+      delete cache[key];
+      localStorage.setItem(ROUTE_CACHE_KEY, JSON.stringify(cache));
+      return null;
+    }
+
+    return item.data;
+  }catch(e){
+    return null;
+  }
+}
+
+function saveCachedRoute(key, data){
+  try{
+    let cache = {};
+
+    try{
+      cache = JSON.parse(
+        localStorage.getItem(ROUTE_CACHE_KEY) || '{}'
+      );
+    }catch(e){
+      cache = {};
+    }
+
+    cache[key] = {
+      savedAt: Date.now(),
+      data
+    };
+
+    localStorage.setItem(
+      ROUTE_CACHE_KEY,
+      JSON.stringify(cache)
+    );
+  }catch(e){
+    // 캐시 저장 실패는 길찾기 자체에 영향을 주지 않음
+  }
+}
+
+function findMyRoute(){
+  const btnEl = document.getElementById('findBtn');
+  const btnText = { set textContent(v){ if(btnEl) btnEl.textContent = v.indexOf('찾는') > -1 ? '⏳' : '📍'; } };
+
+  const show = (isErr, title, body) => showHTML(title, body, isErr);
+
+  if(!window._map){
+    show(
+      true,
+      '⚠️ 지도를 먼저 불러와 주세요',
+      '<p>잠시 후 다시 눌러주세요.</p>'
+    );
+    return;
+  }
+
+  if(!navigator.geolocation){
+    show(
+      true,
+      '⚠️ 위치 기능을 쓸 수 없어요',
+      '<p>이 브라우저는 위치 확인을 지원하지 않아요.</p>'
+    );
+    return;
+  }
+
+  btnText.textContent = '📍 내 위치를 찾는 중...';
+
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      try{
+        const me = [
+          pos.coords.latitude,
+          pos.coords.longitude
+        ];
+
+        const map = window._map;
+        const LL = window._LL;
+        const dest = window._dest;
+
+        const sx = me[1];
+        const sy = me[0];
+        const ex = dest[1];
+        const ey = dest[0];
+
+        const cacheKey =
+          getRouteCacheKey(sx, sy, ex, ey);
+
+        // 1. 먼저 기기 캐시 확인
+        let data = getCachedRoute(cacheKey);
+
+        if(data){
+          console.log('🚀 놀맵 경로 캐시 사용');
+        }else{
+          // 2. 캐시가 없을 때만 Supabase /route 호출
+          console.log('🌐 새로운 경로 요청');
+
+          const url =
+            ROUTE_API +
+            '?sx=' + encodeURIComponent(sx) +
+            '&sy=' + encodeURIComponent(sy) +
+            '&ex=' + encodeURIComponent(ex) +
+            '&ey=' + encodeURIComponent(ey);
+
+          const response = await fetch(url);
+
+          if(!response.ok){
+            throw new Error(
+              'Route API 오류: ' + response.status
+            );
+          }
+
+          data = await response.json();
+
+          if(
+            data &&
+            Array.isArray(data.path) &&
+            data.path.length > 0
+          ){
+            saveCachedRoute(cacheKey, data);
+          }
+        }
+
+        if(
+          !data ||
+          !Array.isArray(data.path) ||
+          data.path.length === 0
+        ){
+          throw new Error('경로 데이터가 없습니다.');
+        }
+
+        // 기존 경로 제거
+        if(window._routeLine){
+          window._routeLine.setMap(null);
+        }
+
+        // 새 경로 표시
+        const path = data.path.map(p => LL(p));
+
+        window._routeLine =
+          new kakao.maps.Polyline({
+            path,
+            strokeWeight: 6,
+            strokeColor: '#4285F4',
+            strokeOpacity: 0.9,
+            strokeStyle: 'solid'
+          });
+
+        window._routeLine.setMap(map);
+
+        // 경로 전체가 보이게
+        const bounds =
+          new kakao.maps.LatLngBounds();
+
+        data.path.forEach(p => {
+          bounds.extend(LL(p));
+        });
+
+        map.setBounds(
+          bounds,
+          60,
+          40,
+          60,
+          40
+        );
+
+        // 실제 API 거리
+        const dist = Number(
+          data.distance || 0
+        );
+
+        const distText =
+          dist >= 1000
+            ? (dist / 1000).toFixed(1) + 'km'
+            : Math.round(dist) + 'm';
+
+        // 실제 API 시간
+        const mins = Math.max(
+          1,
+          Math.round(
+            Number(data.time || dist / 1.1) / 60
+          )
+        );
+
+        show(
+          false,
+          '🍀 신도림놀구로까지 길을 찾았어요',
+          '<div class="route-stats">' +
+
+          '<div class="route-stat">' +
+          '<div class="num">' +
+          distText +
+          '</div>' +
+          '<div class="lbl">거리</div>' +
+          '</div>' +
+
+          '<div class="route-stat">' +
+          '<div class="num">' +
+          mins +
+          '분</div>' +
+          '<div class="lbl">도보</div>' +
+          '</div>' +
+
+          '</div>' +
+
+          '<p style="margin-top:10px;">' +
+          '파란 선을 따라 실제 경로를 따라가면 신도림놀구로에 도착할 수 있어요.' +
+          '</p>'
+        );
+
+        btnText.textContent =
+          '📍 현재 위치에서 길찾기';
+
+      }catch(e){
+        console.error(
+          '놀맵 경로 오류:',
+          e
+        );
+
+        btnText.textContent =
+          '📍 현재 위치에서 길찾기';
+
+        const dest = window._dest;
+
+        const url =
+          'https://map.kakao.com/link/to/신도림놀구로,' +
+          dest[0] + ',' +
+          dest[1];
+
+        show(
+          true,
+          '⚠️ 경로를 불러오지 못했어요',
+          '<p>' +
+          '지금은 길 안내를 받지 못했어요. 아래 버튼으로 카카오맵에서 길을 확인할 수 있어요.' +
+          '</p>' +
+
+          '<a class="btn primary"' +
+          ' style="width:100%;margin-top:10px;text-decoration:none;"' +
+          ' href="' + url + '"' +
+          ' target="_blank">' +
+          '🗺️ 카카오맵으로 길찾기' +
+          '</a>'
+        );
+      }
+    },
+
+    err => {
+      btnText.textContent =
+        '📍 현재 위치에서 길찾기';
+
+      let msg =
+        '위치를 확인하지 못했어요.';
+
+      if(err.code === 1){
+        msg =
+          '위치 권한이 꺼져 있어요. 브라우저 설정에서 위치를 허용해 주세요.';
+      }else if(err.code === 2){
+        msg =
+          '지금은 위치 신호를 잡지 못했어요. 실외에서 다시 시도해 주세요.';
+      }else if(err.code === 3){
+        msg =
+          '위치 확인이 오래 걸려요. 잠시 후 다시 눌러주세요.';
+      }
+
+      show(
+        true,
+        '📍 위치를 확인할 수 없어요',
+        '<p>' + msg + '</p>'
+      );
+    },
+
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 30000
+    }
+  );
+}
+
+
+
+
+  // ===== 구로엔젤 가게 목록 =====
+  function openAngelShops(){
+    renderAngelShops();
+    const modal=document.getElementById('angelShopModal');
+    if(!modal)return;
+    modal.classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+
+  function renderDiscover(){
+    const box = document.getElementById('discoverList');
+    if(!box) return;
+    box.innerHTML = DISCOVER_IDS.map((id, i) => {
+      const d = PLACES[id];
+      return '<div class="shop-item" onclick="openPlace(\''+id+'\')">' +
+        '<div class="shop-no">'+(i+1)+'</div>' +
+        (d.photo
+          ? '<img class="shop-thumb" src="'+d.photo+'" alt="'+d.name+'">'
+          : '<div class="shop-ic">'+d.emoji+'</div>') +
+        '<div class="shop-txt">' +
+          '<h5>'+d.name+' <span class="dist-tag">'+d.dist+'</span></h5>' +
+          '<p>'+d.body+'</p>' +
+          '<p class="shop-meta">'+d.addr+'</p>' +
+        '</div><div class="shop-go">›</div></div>';
+    }).join('');
+  }
+
+  function renderAngelShops(){
+    const box = document.getElementById('angelShopList');
+    if(!box) return;
+    box.className = '';
+    box.innerHTML =
+      '<p style="font-size:11px;color:var(--muted);margin:0 0 12px;line-height:1.5;">' +
+      '놀구로 오가는 길을 지켜주는 가게 ' + ANGEL_IDS.length + '곳이에요.<br>' +
+      '가까운 순이고, 누르면 지도에서 위치를 볼 수 있어요.</p>' +
+      ANGEL_IDS.map((id, i) => {
+        const a = PLACES[id];
+        const hour = (a.rows || []).find(r => r[0] === '🕗');
+        return '<div class="shop-item" onclick="openPlace(\''+id+'\')">' +
+          '<div class="shop-no">'+(i+1)+'</div>' +
+          (a.photo
+            ? '<img class="shop-thumb" src="'+a.photo+'" alt="'+a.name+'" onerror="this.outerHTML=\'<div class=&quot;shop-ic&quot;>'+a.emoji+'</div>\'">'
+            : '<div class="shop-ic">'+a.emoji+'</div>') +
+          '<div class="shop-txt">' +
+            '<h5>'+a.name+' <span class="dist-tag">'+a.dist+'</span></h5>' +
+            '<p>'+a.addr+'</p>' +
+            (a.tel || hour ? '<p class="shop-meta">' +
+              (a.tel ? '☎️ '+a.tel : '') +
+              (a.tel && hour ? ' · ' : '') +
+              (hour ? '🕗 '+hour[1] : '') + '</p>' : '') +
+          '</div><div class="shop-go">›</div></div>';
+      }).join('');
+  }
+  function closeAngelShops(){
+    const modal=document.getElementById('angelShopModal');
+    if(!modal)return;
+    modal.classList.remove('open');
+    document.body.style.overflow='';
+  }
+
+  // ===== 보호자 연락처 관리 =====
+  function getGuardians(){
+    try { return JSON.parse(localStorage.getItem('nolmap_guardians') || '[]'); }
+    catch(e) { return []; }
+  }
+  function saveGuardians(list){ localStorage.setItem('nolmap_guardians', JSON.stringify(list)); }
+  function openGuardianModal(){
+    const modal=document.getElementById('guardianModal'); if(!modal)return;
+    modal.classList.add('open'); document.body.style.overflow='hidden'; renderGuardians();
+  }
+  function closeGuardianModal(){
+    const modal=document.getElementById('guardianModal'); if(!modal)return;
+    modal.classList.remove('open'); document.body.style.overflow=''; toggleGuardianForm(false);
+  }
+  function toggleGuardianForm(force){
+    const form=document.getElementById('guardianForm'); if(!form)return;
+    const open=typeof force==='boolean'?force:!form.classList.contains('open');
+    form.classList.toggle('open',open);
+    if(open){const input=document.getElementById('guardianName'); if(input)setTimeout(()=>input.focus(),50);}
+  }
+  function saveGuardian(){
+    const name=document.getElementById('guardianName').value.trim();
+    const relation=document.getElementById('guardianRelation').value.trim();
+    const phone=document.getElementById('guardianPhone').value.trim();
+    if(!name||!relation||!phone){alert('보호자 이름, 관계, 전화번호를 모두 입력해 주세요.');return;}
+    const list=getGuardians(); list.push({id:Date.now(),name,relation,phone}); saveGuardians(list);
+    document.getElementById('guardianName').value=''; document.getElementById('guardianRelation').value=''; document.getElementById('guardianPhone').value='';
+    toggleGuardianForm(false); renderGuardians();
+  }
+  function deleteGuardian(id){
+    const list=getGuardians(), targetId=String(id), next=list.filter(g=>String(g.id)!==targetId);
+    if(next.length===list.length)return; saveGuardians(next); renderGuardians();
+  }
+  function renderGuardians(){
+    const box=document.getElementById('guardianList'); if(!box)return; const list=getGuardians();
+    if(!list.length){box.innerHTML='<div class="guardian-empty">등록된 보호자가 없어요.<br>오른쪽 위 <strong>＋ 보호자 추가</strong>를 눌러 등록해 주세요.</div>';return;}
+    box.innerHTML=list.map(g=>{
+      const safePhone=String(g.phone).replace(/[^0-9+]/g,'');
+      return '<div class="guardian-item"><div class="guardian-avatar">🧸</div><div class="guardian-info"><h5>'+escapeHtml(g.name)+' · '+escapeHtml(g.relation)+'</h5><p>'+escapeHtml(g.phone)+'</p></div><a class="guardian-call" href="tel:'+safePhone+'">전화</a><button class="guardian-delete" type="button" data-guardian-id="'+String(g.id)+'">삭제</button></div>';
+    }).join('');
+  }
+  function escapeHtml(value){return String(value).replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
+  document.addEventListener('click',function(event){
+    const btn=event.target.closest('.guardian-delete');
+    if(btn){const id=btn.getAttribute('data-guardian-id');if(id)deleteGuardian(id);return;}
+    const contactModal=document.getElementById('contactModal');
+    if(contactModal&&event.target===contactModal){closeContactModal();return;}
+    const shopModal=document.getElementById('angelShopModal');
+    if(shopModal&&event.target===shopModal){closeAngelShops();return;}
+    const modal=document.getElementById('guardianModal'); if(modal&&event.target===modal)closeGuardianModal();
+  });
+  document.addEventListener('keydown',function(event){
+    if(event.key==='Escape'){
+      const contactModal=document.getElementById('contactModal');
+      if(contactModal&&contactModal.classList.contains('open')){closeContactModal();return;}
+      const shopModal=document.getElementById('angelShopModal');
+      if(shopModal&&shopModal.classList.contains('open')){closeAngelShops();return;}
+      const modal=document.getElementById('guardianModal');
+      if(modal&&modal.classList.contains('open')){closeGuardianModal();return;}
+    }
+  });
+
+
+  // ===== 문의하기 =====
+  const CONTACT_API = 'https://susaporkxqgfjhettlqv.supabase.co/functions/v1/contact';
+  const CONTACT_TO  = 'playguro1@naver.com';
+
+  function openContactModal(){
+    const modal=document.getElementById('contactModal');
+    if(!modal)return;
+    modal.classList.add('open');
+    document.body.style.overflow='hidden';
+    const status=document.getElementById('contactStatus');
+    if(status){status.className='contact-status';status.textContent='';}
+    setTimeout(()=>{const input=document.getElementById('contactSubject');if(input)input.focus();},50);
+  }
+
+  function closeContactModal(){
+    const modal=document.getElementById('contactModal');
+    if(!modal)return;
+    modal.classList.remove('open');
+    document.body.style.overflow='';
+  }
+
+  async function submitContact(event){
+    event.preventDefault();
+    const subject=document.getElementById('contactSubject').value.trim();
+    const message=document.getElementById('contactMessage').value.trim();
+    const name=document.getElementById('contactName').value.trim();
+    const phone=document.getElementById('contactPhone').value.trim();
+    const status=document.getElementById('contactStatus');
+    const submit=document.getElementById('contactSubmit');
+
+    if(!message){
+      status.className='contact-status show error';
+      status.textContent='문의 내용을 입력해 주세요.';
+      return;
+    }
+
+    submit.disabled=true;
+    submit.textContent='📨 보내는 중...';
+    status.className='contact-status';
+    status.textContent='';
+
+    try{
+      const res=await fetch(CONTACT_API,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({subject,message,name,phone,to:CONTACT_TO})
+      });
+      let data={};
+      try{data=await res.json();}catch(_){}
+      if(!res.ok || !data.ok) throw new Error(data.error || '문의 전송에 실패했습니다.');
+
+      status.className='contact-status show success';
+      status.textContent='문의가 정상적으로 전송되었어요. 감사합니다!';
+      document.getElementById('contactForm').reset();
+      setTimeout(()=>closeContactModal(),1400);
+    }catch(error){
+      console.error('문의 전송 오류:',error);
+      const body =
+        (name  ? '이름: '+name+'\n' : '') +
+        (phone ? '연락처: '+phone+'\n' : '') +
+        '\n' + message;
+      const mailto = 'mailto:' + CONTACT_TO +
+        '?subject=' + encodeURIComponent('[놀맵 문의] ' + (subject || '문의')) +
+        '&body=' + encodeURIComponent(body);
+      status.className='contact-status show error';
+      status.innerHTML =
+        '문의 전송에 실패했어요.<br>' +
+        '<a href="' + mailto + '" style="color:#E14545;font-weight:700;text-decoration:underline;">' +
+        '메일 앱으로 보내기 (' + CONTACT_TO + ')</a>';
+    }finally{
+      submit.disabled=false;
+      submit.textContent='💌 문의 보내기';
+    }
+  }
+
+  document.getElementById('contactForm')?.addEventListener('submit',submitContact);
+
+
+  // ===== 놀맵 로그인 =====
+  const NOLMAP_ACCOUNT={id:'nolmap',password:'0905',name:'놀맵'};
+  function openLoginModal(){
+    const m=document.getElementById('loginModal');if(!m)return;
+    m.classList.add('open');document.body.style.overflow='hidden';
+    const logged=localStorage.getItem('nolmap_logged_in')==='true';
+    document.getElementById('loginForm').style.display=logged?'none':'block';
+    document.getElementById('accountPanel').classList.toggle('show',logged);
+    document.getElementById('accountName').textContent=NOLMAP_ACCOUNT.name;
+    document.getElementById('accountId').textContent='@'+NOLMAP_ACCOUNT.id;
+    if(!logged)setTimeout(()=>document.getElementById('loginId')?.focus(),50);
+  }
+  function closeLoginModal(){const m=document.getElementById('loginModal');if(m){m.classList.remove('open');document.body.style.overflow='';}}
+  function updateLoginButton(){const b=document.getElementById('loginBtn');if(b){const ok=localStorage.getItem('nolmap_logged_in')==='true';b.textContent=ok?'놀맵':'로그인';b.classList.toggle('logged',ok);}}
+  document.getElementById('loginForm')?.addEventListener('submit',function(e){
+    e.preventDefault();
+    const id=document.getElementById('loginId').value.trim(),pw=document.getElementById('loginPassword').value,er=document.getElementById('loginError');
+    if(id===NOLMAP_ACCOUNT.id&&pw===NOLMAP_ACCOUNT.password){
+      localStorage.setItem('nolmap_logged_in','true');updateLoginButton();
+      document.getElementById('loginForm').style.display='none';
+      document.getElementById('accountPanel').classList.add('show');
+      er.className='login-error';er.textContent='';
+    }else{er.className='login-error show';er.textContent='아이디 또는 비밀번호가 올바르지 않아요.';}
+  });
+  document.addEventListener('click',e=>{const m=document.getElementById('loginModal');if(m&&e.target===m)closeLoginModal();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.getElementById('loginModal');if(m&&m.classList.contains('open'))closeLoginModal();}});
+  updateLoginButton();
+
+  // 개인정보처리방침 모달
+  function openPrivacy(){
+    const modal = document.getElementById('privacyModal');
+    if (!modal) return;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePrivacy(){
+    const modal = document.getElementById('privacyModal');
+    if (!modal) return;
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('click', function(event){
+    const modal = document.getElementById('privacyModal');
+    if (modal && event.target === modal) closePrivacy();
+  });
+
+  document.addEventListener('keydown', function(event){
+    if (event.key === 'Escape') closePrivacy();
+  });
+</script>
+</body>
+</html>
