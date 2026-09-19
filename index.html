@@ -1352,112 +1352,50 @@
 
   // 길찾기 프록시 주소 26.8.9일자로 supabase 로 변경함...
   const ROUTE_API = 'https://teddoxpobtitkymduwpt.supabase.co';
-
-  // ===== 현재 위치에서 길찾기 =====
-  // ===== 경로 캐시 =====
-const ROUTE_CACHE_TTL = 5 * 60 * 1000; // 5분
-const ROUTE_CACHE_KEY = 'nolmap_route_cache_v1';
-
-function getRouteCacheKey(sx, sy, ex, ey){
-  const r = n => Number(n).toFixed(4);
-  return `${r(sx)},${r(sy)}>${r(ex)},${r(ey)}`;
-}
-
-function getCachedRoute(key){
-  try{
-    const raw = localStorage.getItem(ROUTE_CACHE_KEY);
-    if(!raw) return null;
-
-    const cache = JSON.parse(raw);
-    const item = cache[key];
-
-    if(!item) return null;
-
-    if(Date.now() - item.savedAt > ROUTE_CACHE_TTL){
-      delete cache[key];
-      localStorage.setItem(ROUTE_CACHE_KEY, JSON.stringify(cache));
-      return null;
-    }
-
-    return item.data;
-  }catch(e){
-    return null;
-  }
-}
-
-function saveCachedRoute(key, data){
-  try{
-    let cache = {};
-
-    try{
-      cache = JSON.parse(
-        localStorage.getItem(ROUTE_CACHE_KEY) || '{}'
-      );
-    }catch(e){
-      cache = {};
-    }
-
-    cache[key] = {
-      savedAt: Date.now(),
-      data
-    };
-
-    localStorage.setItem(
-      ROUTE_CACHE_KEY,
-      JSON.stringify(cache)
-    );
-  }catch(e){
-    // 캐시 저장 실패는 길찾기 자체에 영향을 주지 않음
-  }
-}
+// ===== Supabase 공개(anon) 키 =====
+// Supabase 대시보드 → Project Settings → API → "anon public" 키를 붙여넣으세요.
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlZGRveHBvYnRpdGt5bWR1d3B0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3ODM0NDcsImV4cCI6MjEwNTM1OTQ0N30.7UnM3XlNuXgjK6lhHlW00NZAhQGK9UwOZBZh9uT0-cg';
 
 function findMyRoute(){
   const btnEl = document.getElementById('findBtn');
-  const btnText = { set textContent(v){ if(btnEl) btnEl.textContent = v.indexOf('찾는') > -1 ? '⏳' : '📍'; } };
-
+  const setBtn = loading => { if(btnEl) btnEl.textContent = loading ? '⏳' : '📍'; };
   const show = (isErr, title, body) => showHTML(title, body, isErr);
 
   if(!window._map){
-    show(
-      true,
-      '⚠️ 지도를 먼저 불러와 주세요',
-      '<p>잠시 후 다시 눌러주세요.</p>'
-    );
+    show(true, '⚠️ 지도를 먼저 불러와 주세요', '<p>잠시 후 다시 눌러주세요.</p>');
     return;
   }
 
   if(!navigator.geolocation){
-    show(
-      true,
-      '⚠️ 위치 기능을 쓸 수 없어요',
-      '<p>이 브라우저는 위치 확인을 지원하지 않아요.</p>'
-    );
+    show(true, '⚠️ 위치 기능을 쓸 수 없어요', '<p>이 브라우저는 위치 확인을 지원하지 않아요.</p>');
     return;
   }
 
-  btnText.textContent = '📍 내 위치를 찾는 중...';
+  setBtn(true);
 
   navigator.geolocation.getCurrentPosition(
     async pos => {
       try{
-        const me = [
-          pos.coords.latitude,
-          pos.coords.longitude
-        ];
-
         const map = window._map;
         const LL = window._LL;
-        const dest = window._dest;
 
-        const sx = me[1];
-        const sy = me[0];
-        const ex = dest[1];
-        const ey = dest[0];
+        // 출발지(내 위치) / 도착지(놀구로): sx,ex = 경도(lng), sy,ey = 위도(lat)
+        const sx = pos.coords.longitude;
+        const sy = pos.coords.latitude;
+        const ex = window._dest[1];
+        const ey = window._dest[0];
 
-        const cacheKey =
-          getRouteCacheKey(sx, sy, ex, ey);
+        // 도착지와 30m 이내면 API를 부르지 않고 바로 안내
+        const dLat = (sy - ey) * 111000;
+        const dLng = (sx - ex) * 111000 * Math.cos(sy * Math.PI / 180);
+        if(Math.hypot(dLat, dLng) < 30){
+          show(false, '🎈 거의 다 왔어요!', '<p>신도림놀구로 바로 앞이에요.</p>');
+          return;
+        }
 
-        // 1. 먼저 기기 캐시 확인
+        const cacheKey = getRouteCacheKey(sx, sy, ex, ey);
+
+        // 1. 기기 캐시 먼저 확인
         let data = getCachedRoute(cacheKey);
 
         if(data){
@@ -1473,30 +1411,26 @@ function findMyRoute(){
             '&ex=' + encodeURIComponent(ex) +
             '&ey=' + encodeURIComponent(ey);
 
-          const response = await fetch(url);
+          const response = await fetch(url, {
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: 'Bearer ' + SUPABASE_ANON_KEY
+            }
+          });
 
           if(!response.ok){
-            throw new Error(
-              'Route API 오류: ' + response.status
-            );
+            const errText = await response.text().catch(() => '');
+            throw new Error('Route API ' + response.status + ': ' + errText);
           }
 
           data = await response.json();
 
-          if(
-            data &&
-            Array.isArray(data.path) &&
-            data.path.length > 0
-          ){
+          if(data && Array.isArray(data.path) && data.path.length > 0){
             saveCachedRoute(cacheKey, data);
           }
         }
 
-        if(
-          !data ||
-          !Array.isArray(data.path) ||
-          data.path.length === 0
-        ){
+        if(!data || !Array.isArray(data.path) || data.path.length === 0){
           throw new Error('경로 데이터가 없습니다.');
         }
 
@@ -1508,143 +1442,72 @@ function findMyRoute(){
         // 새 경로 표시
         const path = data.path.map(p => LL(p));
 
-        window._routeLine =
-          new kakao.maps.Polyline({
-            path,
-            strokeWeight: 6,
-            strokeColor: '#4285F4',
-            strokeOpacity: 0.9,
-            strokeStyle: 'solid'
-          });
-
+        window._routeLine = new kakao.maps.Polyline({
+          path,
+          strokeWeight: 6,
+          strokeColor: '#4285F4',
+          strokeOpacity: 0.9,
+          strokeStyle: 'solid'
+        });
         window._routeLine.setMap(map);
 
         // 경로 전체가 보이게
-        const bounds =
-          new kakao.maps.LatLngBounds();
+        const bounds = new kakao.maps.LatLngBounds();
+        data.path.forEach(p => bounds.extend(LL(p)));
+        map.setBounds(bounds, 60, 40, 60, 40);
 
-        data.path.forEach(p => {
-          bounds.extend(LL(p));
-        });
-
-        map.setBounds(
-          bounds,
-          60,
-          40,
-          60,
-          40
-        );
-
-        // 실제 API 거리
-        const dist = Number(
-          data.distance || 0
-        );
-
-        const distText =
-          dist >= 1000
-            ? (dist / 1000).toFixed(1) + 'km'
-            : Math.round(dist) + 'm';
-
-        // 실제 API 시간
-        const mins = Math.max(
-          1,
-          Math.round(
-            Number(data.time || dist / 1.1) / 60
-          )
-        );
+        // 거리 / 시간
+        const dist = Number(data.distance || 0);
+        const distText = dist >= 1000
+          ? (dist / 1000).toFixed(1) + 'km'
+          : Math.round(dist) + 'm';
+        const mins = Math.max(1, Math.round(Number(data.time || dist / 1.1) / 60));
 
         show(
           false,
           '🍀 신도림놀구로까지 길을 찾았어요',
           '<div class="route-stats">' +
-
-          '<div class="route-stat">' +
-          '<div class="num">' +
-          distText +
+            '<div class="route-stat"><div class="num">' + distText + '</div><div class="lbl">거리</div></div>' +
+            '<div class="route-stat"><div class="num">' + mins + '분</div><div class="lbl">도보</div></div>' +
           '</div>' +
-          '<div class="lbl">거리</div>' +
-          '</div>' +
-
-          '<div class="route-stat">' +
-          '<div class="num">' +
-          mins +
-          '분</div>' +
-          '<div class="lbl">도보</div>' +
-          '</div>' +
-
-          '</div>' +
-
-          '<p style="margin-top:10px;">' +
-          '파란 선을 따라 실제 경로를 따라가면 신도림놀구로에 도착할 수 있어요.' +
-          '</p>'
+          '<p style="margin-top:10px;">파란 선을 따라 실제 경로를 따라가면 신도림놀구로에 도착할 수 있어요.</p>'
         );
-
-        btnText.textContent =
-          '📍 현재 위치에서 길찾기';
 
       }catch(e){
-        console.error(
-          '놀맵 경로 오류:',
-          e
-        );
-
-        btnText.textContent =
-          '📍 현재 위치에서 길찾기';
+        console.error('놀맵 경로 오류:', e);
 
         const dest = window._dest;
-
         const url =
-          'https://map.kakao.com/link/to/신도림놀구로,' +
-          dest[0] + ',' +
-          dest[1];
+          'https://map.kakao.com/link/to/신도림놀구로,' + dest[0] + ',' + dest[1];
 
         show(
           true,
           '⚠️ 경로를 불러오지 못했어요',
-          '<p>' +
-          '지금은 길 안내를 받지 못했어요. 아래 버튼으로 카카오맵에서 길을 확인할 수 있어요.' +
-          '</p>' +
-
-          '<a class="btn primary"' +
-          ' style="width:100%;margin-top:10px;text-decoration:none;"' +
-          ' href="' + url + '"' +
-          ' target="_blank">' +
-          '🗺️ 카카오맵으로 길찾기' +
-          '</a>'
+          '<p>지금은 길 안내를 받지 못했어요. 아래 버튼으로 카카오맵에서 길을 확인할 수 있어요.</p>' +
+          '<a class="btn primary" style="width:100%;margin-top:10px;text-decoration:none;" ' +
+          'href="' + url + '" target="_blank">🗺️ 카카오맵으로 길찾기</a>'
         );
+      }finally{
+        setBtn(false);
       }
     },
 
     err => {
-      btnText.textContent =
-        '📍 현재 위치에서 길찾기';
+      setBtn(false);
 
-      let msg =
-        '위치를 확인하지 못했어요.';
-
+      let msg = '위치를 확인하지 못했어요.';
       if(err.code === 1){
-        msg =
-          '위치 권한이 꺼져 있어요. 브라우저 설정에서 위치를 허용해 주세요.';
+        msg = '위치 권한이 꺼져 있어요. 브라우저 설정에서 위치를 허용해 주세요.';
       }else if(err.code === 2){
-        msg =
-          '지금은 위치 신호를 잡지 못했어요. 실외에서 다시 시도해 주세요.';
+        msg = '지금은 위치 신호를 잡지 못했어요. 실외에서 다시 시도해 주세요.';
       }else if(err.code === 3){
-        msg =
-          '위치 확인이 오래 걸려요. 잠시 후 다시 눌러주세요.';
+        msg = '위치 확인이 오래 걸려요. 잠시 후 다시 눌러주세요.';
       }
 
-      show(
-        true,
-        '📍 위치를 확인할 수 없어요',
-        '<p>' + msg + '</p>'
-      );
+      show(true, '📍 위치를 확인할 수 없어요', '<p>' + msg + '</p>');
     },
 
-    {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 30000
-    }
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
   );
 }
 
