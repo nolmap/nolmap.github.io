@@ -735,6 +735,7 @@
       <div class="hero-card">
         <div class="status-pill">🟢 지금 통행 가능해요</div>
         <h3>오늘도 안전하게, 신도림놀구로!</h3>
+        <p>추천 경로로 걸으면 도보 12분, 가로등 14개가 함께해요.</p>
         <div class="btnrow">
           <button class="btn on-hero" onclick="go('map'); setTimeout(findMyRoute, 600);">🍀 경로 보기</button>
           <button class="btn on-hero outline" onclick="go('place')">🎈 놀구로 소개</button>
@@ -1321,6 +1322,7 @@ setInterval(updateNolguroStatus, 60000);
         window._map.setLevel(2);
         window._map.setCenter(window._LL(pl.pos));
       }
+      pl._id = id;
       showPanel(pl);
     }, 350);
   }
@@ -1339,7 +1341,7 @@ setInterval(updateNolguroStatus, 60000);
       '<div class="info-acts">' +
         (pl.photo ? '<button class="pic" type="button" onclick="openPhoto(\''+pl.photo+'\',\''+pl.name+'\')">📷 사진</button>' : '') +
         (pl.tel ? '<a class="call" href="tel:' + pl.tel.replace(/-/g,'') + '">☎️ 전화</a>' : '') +
-        '<button class="go" type="button" onclick="findMyRoute()">📍 길찾기</button>' +
+        '<button class="go" type="button" onclick="findMyRoute(\'' + (pl._id || 'nolguro') + '\')">📍 길찾기</button>' +
       '</div>';
     el.classList.add('open');
     document.getElementById('mapCtrl').classList.add('up');
@@ -1486,7 +1488,10 @@ function saveCachedRoute(key, data){
     console.warn('경로 캐시 저장 실패:', e);
   }
 }
-function findMyRoute(){
+function findMyRoute(placeId = 'nolguro'){
+  const targetPlace = PLACES[placeId] || PLACES.nolguro;
+  const targetPos = (targetPlace && targetPlace.pos) ? targetPlace.pos : window._dest;
+  const targetName = (targetPlace && targetPlace.name) ? targetPlace.name : '신도림놀구로';
   const btnEl = document.getElementById('findBtn');
   const setBtn = loading => { if(btnEl) btnEl.textContent = loading ? '⏳' : '📍'; };
   const show = (isErr, title, body) => showHTML(title, body, isErr);
@@ -1509,17 +1514,17 @@ function findMyRoute(){
         const map = window._map;
         const LL = window._LL;
 
-        // 출발지(내 위치) / 도착지(놀구로): sx,ex = 경도(lng), sy,ey = 위도(lat)
+        // 출발지(내 위치) / 선택한 도착지
         const sx = pos.coords.longitude;
         const sy = pos.coords.latitude;
-        const ex = window._dest[1];
-        const ey = window._dest[0];
+        const ex = targetPos[1];
+        const ey = targetPos[0];
 
         // 도착지와 30m 이내면 API를 부르지 않고 바로 안내
         const dLat = (sy - ey) * 111000;
         const dLng = (sx - ex) * 111000 * Math.cos(sy * Math.PI / 180);
         if(Math.hypot(dLat, dLng) < 30){
-          show(false, '🎈 거의 다 왔어요!', '<p>신도림놀구로 바로 앞이에요.</p>');
+          show(false, '🎈 거의 다 왔어요!', '<p>' + targetName + ' 바로 앞이에요.</p>');
           return;
         }
 
@@ -1590,20 +1595,20 @@ function findMyRoute(){
 
         show(
           false,
-          '🍀 신도림놀구로까지 길을 찾았어요',
+          '🍀 ' + targetName + '까지 길을 찾았어요',
           '<div class="route-stats">' +
             '<div class="route-stat"><div class="num">' + distText + '</div><div class="lbl">거리</div></div>' +
             '<div class="route-stat"><div class="num">' + mins + '분</div><div class="lbl">도보</div></div>' +
           '</div>' +
-          '<p style="margin-top:10px;">파란 선을 따라 실제 경로를 따라가면 신도림놀구로에 도착할 수 있어요.</p>'
+          '<p style="margin-top:10px;">파란 선을 따라 실제 경로를 따라가면 ' + targetName + '에 도착할 수 있어요.</p>'
         );
 
       }catch(e){
         console.error('놀맵 경로 오류:', e);
 
-        const dest = window._dest;
+        const dest = targetPos;
         const url =
-          'https://map.kakao.com/link/to/신도림놀구로,' + dest[0] + ',' + dest[1];
+          'https://map.kakao.com/link/to/' + encodeURIComponent(targetName) + ',' + dest[0] + ',' + dest[1];
 
         show(
           true,
