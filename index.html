@@ -1356,6 +1356,54 @@
 // Supabase 대시보드 → Project Settings → API → "anon public" 키를 붙여넣으세요.
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlZGRveHBvYnRpdGt5bWR1d3B0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3ODM0NDcsImV4cCI6MjEwNTM1OTQ0N30.7UnM3XlNuXgjK6lhHlW00NZAhQGK9UwOZBZh9uT0-cg';
 
+  // ===== 길찾기 캐시 =====
+
+function getRouteCacheKey(sx, sy, ex, ey){
+  const round = n => Number(n).toFixed(4);
+  return [
+    'nolmap_route',
+    round(sx),
+    round(sy),
+    round(ex),
+    round(ey)
+  ].join('_');
+}
+
+function getCachedRoute(key){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return null;
+
+    const saved = JSON.parse(raw);
+
+    // 캐시 유효기간: 24시간
+    const MAX_AGE = 24 * 60 * 60 * 1000;
+
+    if(!saved.time || Date.now() - saved.time > MAX_AGE){
+      localStorage.removeItem(key);
+      return null;
+    }
+
+    return saved.data || null;
+  }catch(e){
+    console.warn('경로 캐시 읽기 실패:', e);
+    return null;
+  }
+}
+
+function saveCachedRoute(key, data){
+  try{
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        time: Date.now(),
+        data: data
+      })
+    );
+  }catch(e){
+    console.warn('경로 캐시 저장 실패:', e);
+  }
+}
 function findMyRoute(){
   const btnEl = document.getElementById('findBtn');
   const setBtn = loading => { if(btnEl) btnEl.textContent = loading ? '⏳' : '📍'; };
