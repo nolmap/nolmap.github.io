@@ -1350,11 +1350,8 @@
     if(btn) btn.classList.toggle('off', !window._angelsOn);
   }
 
-  // 길찾기 프록시 주소 26.8.9일자로 supabase 로 변경함...
-  const ROUTE_API = 'https://teddoxpobtitkymduwpt.supabase.co/functions/v1/route';
-// ===== Supabase 공개(anon) 키 =====
-// Supabase 대시보드 → Project Settings → API → "anon public" 키를 붙여넣으세요.
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlZGRveHBvYnRpdGt5bWR1d3B0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3ODM0NDcsImV4cCI6MjEwNTM1OTQ0N30.7UnM3XlNuXgjK6lhHlW00NZAhQGK9UwOZBZh9uT0-cg';
+  // ===== 놀맵 길찾기 Cloudflare Worker =====
+  const ROUTE_API = 'https://nolmap.jyooni0706.workers.dev';
 
   // ===== 길찾기 캐시 =====
 
@@ -1449,7 +1446,7 @@ function findMyRoute(){
         if(data){
           console.log('🚀 놀맵 경로 캐시 사용');
         }else{
-          // 2. 캐시가 없을 때만 Supabase /route 호출
+          // 2. 캐시가 없을 때만 Cloudflare Worker /route 호출
           console.log('🌐 새로운 경로 요청');
 
           const url =
@@ -1459,12 +1456,7 @@ function findMyRoute(){
             '&ex=' + encodeURIComponent(ex) +
             '&ey=' + encodeURIComponent(ey);
 
-          const response = await fetch(url, {
-            headers: {
-              apikey: SUPABASE_ANON_KEY,
-              Authorization: 'Bearer ' + SUPABASE_ANON_KEY
-            }
-          });
+          const response = await fetch(url);
 
           if(!response.ok){
             const errText = await response.text().catch(() => '');
