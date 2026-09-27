@@ -837,7 +837,10 @@
         </p>
         <div class="place-info">
           <div class="info-row"><span class="ic">📍</span>서울 구로구 신도림로13길 51 (지하1층, 1~2층)</div>
-          <div class="info-row"><span class="ic">🕗</span>운영 중 · 20:00 운영 종료</div>
+          <div class="info-row">
+  <span class="ic">🕗</span>
+  <span id="nolguro-status">운영 정보 확인 중...</span>
+</div>
           <div class="info-row"><span class="ic">☎️</span>02-2068-2511</div>
           <div class="info-row"><span class="ic">🎫</span>이용료 무료</div>
         </div>
@@ -1094,6 +1097,89 @@
   </div>
 </div>
 
+  // ===== 놀구로 운영 상태 =====
+async function updateNolguroStatus() {
+  const el = document.getElementById('nolguro-status');
+  if (!el) return;
+
+  // 한국 시간 기준
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23'
+    })
+    .formatToParts(new Date())
+    .filter(p => p.type !== 'literal')
+    .map(p => [p.type, p.value])
+  );
+
+  const today =
+    `${parts.year}-${parts.month}-${parts.day}`;
+
+  // 1. 공휴일 확인
+  try {
+    const res = await fetch(
+      `https://nolmap.jyooni0706.workers.dev/holiday?date=${today}`
+    );
+
+    const holiday = await res.json();
+
+    if (holiday.ok && holiday.isHoliday) {
+      el.textContent =
+        `휴관 · ${holiday.localName || holiday.name || '공휴일'}`;
+      return;
+    }
+  } catch (error) {
+    console.warn('공휴일 확인 실패:', error);
+  }
+
+  // 2. 요일 확인
+  const weekdayMap = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6
+  };
+
+  const day = weekdayMap[parts.weekday];
+
+  // 일요일 / 월요일 휴관
+  if (day === 0 || day === 1) {
+    el.textContent = '휴관 · 화~토 운영';
+    return;
+  }
+
+  // 3. 운영시간 확인
+  const minutes =
+    Number(parts.hour) * 60 +
+    Number(parts.minute);
+
+  if (minutes < 9 * 60) {
+    el.textContent = '운영 전 · 09:00 운영 시작';
+
+  } else if (minutes < 20 * 60) {
+    el.textContent = '운영 중 · 20:00 운영 종료';
+
+  } else {
+    el.textContent = '운영 종료 · 화~토 09:00~20:00';
+  }
+}
+
+// 페이지 로드 즉시 실행
+updateNolguroStatus();
+
+// 1분마다 자동 갱신
+setInterval(updateNolguroStatus, 60000);
+  
 <script>
   const titles = {
     home:  ['놀구로오는길', '신도림놀구로 가는 가장 안전한 길'],
