@@ -132,34 +132,24 @@
   <!-- 0. 소개글 · 사진 수정 -->
   <section id="editorSection">
     <h2>✏️ 소개글 · 사진 수정</h2>
-    <p class="desc">구로엔젤과 삼대발견의 소개글과 사진을 고쳐서 GitHub에 바로 저장해요. 저장하고 1~2분 뒤 놀맵에 반영돼요.</p>
+    <p class="desc">구로엔젤과 삼대발견의 소개글과 사진을 고쳐서 저장해요. 저장하고 1~2분 뒤 놀맵에 반영돼요.</p>
 
-    <!-- GitHub 로그인 -->
-    <div id="ghLogin" class="gh-login">
-      <label class="lbl" for="ghToken">GitHub 토큰</label>
+    <!-- 관리자 로그인 (저장은 Cloudflare Worker가 GitHub에 대신 해요) -->
+    <form id="ghLogin" class="gh-login" onsubmit="event.preventDefault(); ghLogin();">
+      <label class="lbl" for="ghToken">관리자 비밀번호</label>
       <div class="row">
-        <input id="ghToken" class="inp" type="password" autocomplete="off" placeholder="github_pat_..." style="flex:1;min-width:200px;">
-        <button class="b" type="button" onclick="ghLogin()">연결</button>
+        <input id="ghToken" class="inp" type="password" autocomplete="current-password" placeholder="비밀번호" style="flex:1;min-width:200px;">
+        <button class="b" type="submit">들어가기</button>
       </div>
-      <details class="help">
-        <summary>토큰 만드는 법</summary>
-        <ol>
-          <li>GitHub → 오른쪽 위 프로필 → <b>Settings</b> → 맨 아래 <b>Developer settings</b></li>
-          <li><b>Personal access tokens → Fine-grained tokens → Generate new token</b></li>
-          <li>Resource owner: <b>nolmap</b>, Repository access: <b>Only select repositories → nolmap.github.io</b></li>
-          <li>Permissions → Repository permissions → <b>Contents: Read and write</b></li>
-          <li>만들어진 <code>github_pat_...</code> 값을 위 칸에 붙여 넣기</li>
-        </ol>
-        <p>토큰은 <b>이 브라우저에만</b> 저장돼요. 공용 컴퓨터에서는 다 쓰고 꼭 "연결 해제"를 눌러 주세요.</p>
-      </details>
+      <p class="help">비밀번호는 Cloudflare Worker의 <code>ADMIN_PASSWORD</code> secret이에요. 이 탭을 닫으면 다시 입력해야 해요.</p>
       <div class="msg" id="ghLoginMsg"></div>
-    </div>
+    </form>
 
     <!-- 편집기 -->
     <div id="ghEditor" style="display:none;">
       <div class="row gh-who">
         <span class="pill ok" id="ghWho">연결됨</span>
-        <button class="b ghost small" type="button" onclick="ghLogout()">연결 해제</button>
+        <button class="b ghost small" type="button" onclick="ghLogout()">나가기</button>
       </div>
 
       <div class="chip-group"><span class="chip-lbl">🧚 구로엔젤</span><div class="chips" id="chipsAngel"></div></div>
@@ -442,78 +432,68 @@
     toast('경로 캐시 ' + keys.length + '개를 지웠어요');
   }
 
-  // ===== 0. 소개글 · 사진 수정 (GitHub에 직접 저장) =====
-  const GH = { owner:'nolmap', repo:'nolmap.github.io', branch:'main' };
-  const TOKEN_KEY = 'nolmap_admin_token';
-  let ghToken = '';
-  let EDIT = null;
-  let remoteLoaded = false;   // { id, body, photos:[{path}|{blob,url,isNew}], origBody, origPhotos }
+  // ===== 0. 소개글 · 사진 수정 (Cloudflare Worker가 GitHub에 저장) =====
+  const ADMIN_API = 'https://plain-salad-81b0.nolguro0905.workers.dev';
+  const PW_KEY = 'nolmap_admin_pw';
+  let adminPw = '';
+  let EDIT = null;   // { id, body, photos:[{path}|{blob,url,isNew}], origBody, origPhotos }
+  let remoteLoaded = false;
 
-  const encPath = p => p.split('/').map(encodeURIComponent).join('/');
-  async function gh(path, opts = {}){
-    const res = await fetch('https://api.github.com/repos/' + GH.owner + '/' + GH.repo + path, {
-      ...opts,
-      headers: {
-        'Accept': 'application/vnd.github+json',
-        'Authorization': 'Bearer ' + ghToken,
-        'X-GitHub-Api-Version': '2022-11-28',
-        ...(opts.body ? { 'Content-Type': 'application/json' } : {})
-      }
-    });
-    if(!res.ok){
-      let msg = 'GitHub ' + res.status;
-      try{ const j = await res.json(); if(j.message) msg += ' · ' + j.message; }catch(_){}
-      const err = new Error(msg); err.status = res.status; throw err;
+  async function adminApi(path, opts = {}){
+    let res;
+    try{
+      res = await fetch(ADMIN_API + path, {
+        method: opts.method || 'GET',
+        headers: { 'X-Admin-Password': adminPw, ...(opts.body ? { 'Content-Type':'application/json' } : {}) },
+        body: opts.body ? JSON.stringify(opts.body) : undefined
+      });
+    }catch(e){ throw new Error('관리자 서버에 연결하지 못했어요'); }
+    let data = {};
+    try{ data = await res.json(); }catch(_){}
+    if(!res.ok || !data.ok){
+      const err = new Error(data.error || ('서버 오류 ' + res.status)); err.status = res.status; throw err;
     }
-    return res.status === 204 ? null : res.json();
+    return data;
   }
 
-  // 텍스트·바이너리 ↔ base64
   function bytesToB64(bytes){
     let s = '';
     for(let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
     return btoa(s);
   }
-  const textToB64 = t => bytesToB64(new TextEncoder().encode(t));
-  const b64ToText = b => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, '')), c => c.charCodeAt(0)));
-
-  async function readRemoteData(){
-    const f = await gh('/contents/places.json?ref=' + GH.branch);
-    return { sha: f.sha, data: JSON.parse(b64ToText(f.content)) };
-  }
 
   async function ghLogin(auto){
     const input = $('ghToken');
     const msg = $('ghLoginMsg');
-    const t = auto ? ghToken : input.value.trim();
-    if(!t){ msg.className = 'msg bad'; msg.textContent = '토큰을 붙여 넣어 주세요.'; return; }
-    ghToken = t;
+    const pw = auto ? adminPw : input.value;
+    if(!pw){ msg.className = 'msg bad'; msg.textContent = '비밀번호를 입력해 주세요.'; return; }
+    adminPw = pw;
     msg.className = 'msg'; msg.textContent = '확인 중...';
     try{
-      const repo = await gh('');
-      if(!repo.permissions || !repo.permissions.push) throw new Error('이 토큰은 저장소에 쓸 권한이 없어요 (Contents: Read and write 필요)');
-      try{ localStorage.setItem(TOKEN_KEY, t); }catch(_){}
+      const chk = await adminApi('/admin/check', { method:'POST' });
+      if(!chk.canWrite) throw new Error('Worker의 GITHUB_TOKEN에 저장소 쓰기 권한이 없어요 (Contents: Read and write 필요)');
+      try{ sessionStorage.setItem(PW_KEY, pw); }catch(_){}
       input.value = '';
       $('ghLogin').style.display = 'none';
       $('ghEditor').style.display = '';
-      $('ghWho').textContent = '✓ ' + GH.owner + '/' + GH.repo + ' 연결됨';
-      // 편집은 항상 GitHub의 최신 데이터로
-      const { data } = await readRemoteData();
+      $('ghWho').textContent = '✓ 관리자 · ' + chk.repo;
+      const { data } = await adminApi('/admin/data');   // 편집은 항상 GitHub의 최신 데이터로
       applyData(data);
       remoteLoaded = true;
       renderChips();
       renderPlaces();
+      msg.textContent = '';
     }catch(e){
-      ghToken = '';
-      if(auto){ try{ localStorage.removeItem(TOKEN_KEY); }catch(_){} }
+      adminPw = '';
+      try{ sessionStorage.removeItem(PW_KEY); }catch(_){}
       msg.className = 'msg bad';
-      msg.textContent = (e.status === 401 ? '토큰이 맞지 않거나 만료됐어요.' : e.message);
+      msg.textContent = e.message;
     }
   }
   function ghLogout(){
-    if(EDIT && isDirty() && !confirm('저장하지 않은 수정이 있어요. 연결을 해제할까요?')) return;
-    ghToken = ''; EDIT = null;
-    try{ localStorage.removeItem(TOKEN_KEY); }catch(_){}
+    if(EDIT && isDirty() && !confirm('저장하지 않은 수정이 있어요. 나갈까요?')) return;
+    adminPw = ''; EDIT = null;
+    try{ sessionStorage.removeItem(PW_KEY); }catch(_){}
     $('ghEditor').style.display = 'none';
     $('editPane').style.display = 'none';
     $('ghLogin').style.display = '';
@@ -623,88 +603,36 @@
     renderEditPhotos();
   }
 
-  // 파일 이름: 장소 이름에서 글자·숫자만 남기고 "-번호.jpg" (예: 경기유류상사-2.jpg)
-  const baseName = name => String(name).replace(/\(주\)|㈜/g, '').replace(/[^0-9A-Za-z가-힣]/g, '') || 'photo';
-
   async function saveEdit(){
-    if(!EDIT || !ghToken) return;
+    if(!EDIT || !adminPw) return;
     EDIT.body = $('edBody').value.trim();
     if(!isDirty()){ toast('바뀐 내용이 없어요'); return; }
     const btn = $('saveBtn'), msg = $('saveMsg');
-    const step = t => { msg.className = 'msg'; msg.textContent = t; };
     btn.disabled = true;
+    msg.className = 'msg';
+    const newCount = EDIT.photos.filter(p => p.isNew).length;
+    msg.textContent = newCount ? '사진 ' + newCount + '장 올리고 저장하는 중... (조금 걸려요)' : '저장하는 중...';
     try{
-      // 1) 최신 데이터 다시 읽기 (그 사이 다른 수정이 있어도 덮어쓰지 않도록)
-      step('최신 데이터 확인 중...');
-      const remote = await readRemoteData();
-      const data = remote.data;
-      const place = data.places[EDIT.id];
-      if(!place) throw new Error('GitHub의 places.json에 ' + EDIT.id + ' 장소가 없어요');
-
-      // 2) 새 사진 업로드
-      const newOnes = EDIT.photos.filter(p => p.isNew);
-      let existing = [];
-      if(newOnes.length){
-        step('사진 이름 정하는 중...');
-        existing = (await gh('/contents/images?ref=' + GH.branch)).map(f => f.name);
-        const base = baseName(place.name);
-        const re = new RegExp('^' + base + '-(\\d+)\\.jpg$');
-        let n = existing.reduce((m, nm) => { const r = nm.match(re); return r ? Math.max(m, +r[1]) : m; }, 0);
-        for(let i = 0; i < newOnes.length; i++){
-          const ph = newOnes[i];
-          const fname = base + '-' + (++n) + '.jpg';
-          step('사진 올리는 중... (' + (i + 1) + '/' + newOnes.length + ') ' + fname);
-          const bytes = new Uint8Array(await ph.blob.arrayBuffer());
-          await gh('/contents/' + encPath('images/' + fname), {
-            method:'PUT',
-            body: JSON.stringify({ message: '사진 추가: ' + place.name + ' (' + fname + ')', content: bytesToB64(bytes), branch: GH.branch })
-          });
-          ph.path = 'images/' + fname;
-          ph.isNew = false;
-        }
+      const photos = [];
+      for(const ph of EDIT.photos){
+        photos.push(ph.isNew ? { data: bytesToB64(new Uint8Array(await ph.blob.arrayBuffer())) } : ph.path);
       }
-
-      // 3) places.json 저장 (이 장소의 소개글·사진만 바꿔요)
-      step('장소 데이터 저장 중...');
-      const removed = (place.photos || []).filter(p => !EDIT.photos.some(x => x.path === p));
-      place.body = EDIT.body;
-      place.photos = EDIT.photos.map(p => p.path);
-      if(!place.photos.length) delete place.photos;
-      await gh('/contents/places.json', {
-        method:'PUT',
-        body: JSON.stringify({
-          message: '장소 수정: ' + place.name + ' (소개글·사진)',
-          content: textToB64(JSON.stringify(data, null, 2) + '\n'),
-          sha: remote.sha,
-          branch: GH.branch
-        })
-      });
-
-      // 4) 이제 아무 장소도 안 쓰는 사진 파일은 저장소에서 지우기
-      const stillUsed = new Set(Object.values(data.places).flatMap(p => p.photos || []));
-      const orphan = removed.filter(p => !stillUsed.has(p));
-      if(orphan.length){
-        const listing = await gh('/contents/images?ref=' + GH.branch);
-        for(const p of orphan){
-          const f = listing.find(x => 'images/' + x.name === p);
-          if(!f) continue;
-          step('안 쓰는 사진 정리 중... ' + f.name);
-          await gh('/contents/' + encPath(p), {
-            method:'DELETE',
-            body: JSON.stringify({ message: '사진 삭제: ' + f.name, sha: f.sha, branch: GH.branch })
-          });
-        }
-      }
-
-      applyData(data);
-      EDIT.origBody = EDIT.body;
-      EDIT.origPhotos = EDIT.photos.map(p => p.path);
+      const r = await adminApi('/admin/save', { method:'POST', body:{ id: EDIT.id, body: EDIT.body, photos } });
+      applyData(r.data);
+      EDIT.photos.forEach(ph => { if(ph.url) URL.revokeObjectURL(ph.url); });
+      EDIT.photos = r.place.photos.map(path => ({ path }));
+      EDIT.body = r.place.body;
+      EDIT.origBody = r.place.body;
+      EDIT.origPhotos = r.place.photos.slice();
       renderEditPhotos();
+      renderPlaces();
       msg.className = 'msg ok';
-      msg.textContent = '✓ 저장했어요. 1~2분 뒤 놀맵에 반영돼요.' + (orphan.length ? ' (안 쓰는 사진 ' + orphan.length + '장 삭제)' : '');
+      msg.textContent = '✓ 저장했어요. 1~2분 뒤 놀맵에 반영돼요.' + (r.deleted && r.deleted.length ? ' (안 쓰는 사진 ' + r.deleted.length + '장 삭제)' : '');
     }catch(e){
       msg.className = 'msg bad';
-      msg.textContent = (e.status === 409 ? '그 사이 다른 곳에서 데이터가 바뀌었어요. 다시 저장해 주세요. ' : '저장하지 못했어요: ') + e.message;
+      if(e.status === 401){ msg.textContent = '비밀번호가 바뀌었거나 맞지 않아요. 다시 들어가 주세요.'; }
+      else if(e.status === 409){ msg.textContent = '그 사이 다른 곳에서 데이터가 바뀌었어요. 다시 저장해 주세요.'; }
+      else msg.textContent = '저장하지 못했어요: ' + e.message;
     }finally{
       btn.disabled = false;
     }
@@ -713,8 +641,9 @@
   window.addEventListener('beforeunload', e => { if(isDirty()){ e.preventDefault(); e.returnValue = ''; } });
 
   // ===== 시작 =====
-  try{ ghToken = localStorage.getItem(TOKEN_KEY) || ''; }catch(_){}
-  if(ghToken) ghLogin(true);
+  try{ localStorage.removeItem('nolmap_admin_token'); }catch(_){}   // 예전 방식 토큰이 남아 있으면 지우기
+  try{ adminPw = sessionStorage.getItem(PW_KEY) || ''; }catch(_){}
+  if(adminPw) ghLogin(true);
   checkServices();
   renderLocal();
   loadPlaces()
