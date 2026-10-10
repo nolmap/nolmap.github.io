@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>놀맵 관리자</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=fdf609543f391b19f0295840c6173357&autoload=false"></script>
+<style>
+  :root{
+    --bg:#F2FAE7; --leaf:#8FD14F; --leaf-deep:#5FAE3A; --leaf-text:#3E7A2C;
+    --white:#fff; --ink:#3A4A2E; --muted:#8B9C7E; --line:#E3EED8;
+    --ok:#3E9B2C; --ok-bg:#E9F8E1; --warn:#B07E12; --warn-bg:#FFF3D6; --bad:#E14545; --bad-bg:#FFEAEA;
+    --mono:ui-monospace, Menlo, Consolas, monospace;
+    --shadow:0 6px 16px rgba(95,174,58,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Gowun Dodum',sans-serif;font-size:13px;}
+  .wrap{max-width:860px;margin:0 auto;padding:20px 16px 48px;}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+  header h1{margin:0;font-family:'Jua',sans-serif;font-size:22px;color:var(--leaf-text);}
+  header p{margin:2px 0 0;font-size:11px;color:var(--muted);}
+  a.back{font-family:'Jua',sans-serif;font-size:12px;color:var(--leaf-deep);text-decoration:none;
+    background:var(--white);padding:8px 12px;border-radius:999px;box-shadow:var(--shadow);white-space:nowrap;}
+  section{background:var(--white);border-radius:20px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px;}
+  section h2{margin:0 0 4px;font-family:'Jua',sans-serif;font-size:16px;color:var(--ink);display:flex;align-items:center;gap:8px;}
+  section .desc{margin:0 0 12px;font-size:11.5px;color:var(--muted);line-height:1.5;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  button.b{border:none;border-radius:999px;padding:9px 14px;font-family:'Jua',sans-serif;font-size:12px;cursor:pointer;
+    background:var(--leaf);color:#fff;}
+  button.b.ghost{background:var(--bg);color:var(--leaf-text);}
+  button.b.danger{background:var(--bad-bg);color:var(--bad);}
+  button.b:disabled{opacity:.6;cursor:wait;}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+  .pill.ok{background:var(--ok-bg);color:var(--ok);}
+  .pill.warn{background:var(--warn-bg);color:var(--warn);}
+  .pill.bad{background:var(--bad-bg);color:var(--bad);}
+  .pill.idle{background:#EEF2EA;color:var(--muted);}
+
+  .status-list{display:grid;gap:8px;}
+  .status-item{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--bg);border-radius:12px;padding:10px 12px;}
+  .status-item b{font-family:'Jua',sans-serif;font-weight:normal;font-size:13px;}
+  .status-item small{display:block;color:var(--muted);font-size:10.5px;margin-top:2px;font-family:var(--mono);word-break:break-all;}
+
+  .tbl-wrap{overflow-x:auto;margin:0 -4px;}
+  table{width:100%;border-collapse:collapse;min-width:640px;}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  th{font-size:10.5px;color:var(--muted);font-weight:700;}
+  td.name b{font-family:'Jua',sans-serif;font-weight:normal;font-size:13px;}
+  td.name small{display:block;color:var(--muted);font-size:10px;}
+  td.mono{font-family:var(--mono);font-size:11px;}
+  .thumbs{display:flex;gap:4px;}
+  .thumbs img{width:34px;height:34px;object-fit:cover;border-radius:7px;background:var(--bg);}
+  .thumbs img.broken{outline:2px solid var(--bad);}
+  .type{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap;}
+  .type.angel{background:#FFF3D6;color:#B07E12;}
+  .type.disc{background:#F3E8FF;color:#7A3FB5;}
+  .type.home{background:var(--ok-bg);color:var(--ok);}
+  .summary{margin-top:10px;font-size:11.5px;color:var(--muted);}
+
+  #pickMap{width:100%;height:360px;border-radius:14px;background:#EAF7DC;}
+  .pick-out{margin-top:10px;display:grid;gap:8px;}
+  .codebox{display:flex;align-items:center;gap:8px;background:#2B3424;color:#E9F8E1;border-radius:10px;padding:9px 12px;
+    font-family:var(--mono);font-size:12px;}
+  .codebox code{flex:1;word-break:break-all;}
+  .codebox button{border:none;background:rgba(255,255,255,0.14);color:#E9F8E1;border-radius:6px;padding:5px 9px;font-size:11px;cursor:pointer;}
+  .pin{width:18px;height:18px;border-radius:50%;background:#E14545;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);}
+  .home-pin{background:var(--leaf-deep);color:#fff;font-family:'Jua',sans-serif;font-size:11px;padding:4px 9px;border-radius:999px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);white-space:nowrap;}
+
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12px;margin-bottom:12px;}
+  .kv dt{color:var(--muted);}
+  .kv dd{margin:0;font-family:var(--mono);}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:#2B3424;color:#fff;padding:9px 16px;border-radius:999px;font-size:12px;transition:all .2s;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🛠️ 놀맵 관리자</h1>
+      <p>서비스 상태 · 장소 데이터 점검 · 좌표 찾기</p>
+    </div>
+    <a class="back" href="index.html">← 놀맵으로</a>
+  </header>
+
+  <!-- 1. 서비스 상태 -->
+  <section>
+    <h2>📡 서비스 상태</h2>
+    <p class="desc">놀맵이 쓰는 외부 서비스가 지금 응답하는지 확인해요.</p>
+    <div class="status-list" id="statusList"></div>
+    <div class="row" style="margin-top:10px;"><button class="b ghost" type="button" onclick="checkServices()">다시 확인</button></div>
+  </section>
+
+  <!-- 2. 장소 점검 -->
+  <section>
+    <h2>📍 장소 · 사진 점검</h2>
+    <p class="desc">지금 배포된 <code>index.html</code>의 장소 데이터를 읽어와요. 사진이 안 열리는 장소는 빨간 테두리로 표시돼요.
+      <b>도보 거리 재측정</b>을 누르면 놀구로에서 각 장소까지 실제 걷는 거리를 다시 재고, 화면에 적힌 거리와 30m 이상 차이 나면 알려줘요.</p>
+    <div class="row" style="margin-bottom:10px;">
+      <button class="b" type="button" id="measureBtn" onclick="measureAll()">🚶 도보 거리 재측정</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>구분</th><th>장소</th><th>사진</th><th>적힌 거리</th><th>측정 도보</th><th>좌표</th></tr></thead>
+        <tbody id="placeRows"><tr><td colspan="6" style="color:var(--muted);">불러오는 중...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="summary" id="placeSummary"></div>
+  </section>
+
+  <!-- 3. 좌표 찾기 -->
+  <section>
+    <h2>🎯 좌표 찾기</h2>
+    <p class="desc">지도에서 새 장소를 누르면 좌표와 놀구로까지의 도보 거리를 알려줘요. 나온 코드를 그대로 장소 데이터에 붙여 넣으면 돼요.</p>
+    <div id="pickMap"></div>
+    <div class="pick-out" id="pickOut">
+      <div class="codebox"><code id="pickCode">지도를 눌러 위치를 고르세요.</code><button type="button" onclick="copyText('pickCode')">복사</button></div>
+    </div>
+  </section>
+
+  <!-- 4. 이 기기 데이터 -->
+  <section>
+    <h2>📱 이 기기에 저장된 데이터</h2>
+    <p class="desc">놀맵이 이 브라우저에 저장해 둔 값이에요. 다른 사람의 기기에는 영향을 주지 않아요.</p>
+    <dl class="kv" id="localInfo"></dl>
+    <div class="row">
+      <button class="b danger" type="button" onclick="clearRouteCache()">경로 캐시 지우기</button>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'https://nolmap.jyooni0706.workers.dev';
+  let PLACES = {}, ANGEL_IDS = [], DISCOVER_IDS = [];
+  let HOME = [37.51037, 126.88001];
+
+  const $ = id => document.getElementById(id);
+  const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  function toast(msg){
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1600);
+  }
+  function copyText(id){
+    const text = $(id).textContent;
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+      .then(() => toast('복사했어요'))
+      .catch(() => toast('복사하지 못했어요. 길게 눌러 직접 복사해 주세요.'));
+  }
+
+  // 도보 경로 (놀맵 앱과 같은 Worker)
+  async function walk(from, to){
+    const url = API + '?sx=' + from[1] + '&sy=' + from[0] + '&ex=' + to[1] + '&ey=' + to[0];
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if(!data || !Array.isArray(data.path) || !data.path.length) throw new Error('경로 없음');
+    return { distance: Number(data.distance || 0), time: Number(data.time || 0) };
+  }
+  const round5 = m => Math.round(m / 5) * 5;
+
+  // ===== 1. 서비스 상태 =====
+  const SERVICES = [
+    { key:'route',   name:'길찾기 API',    url:'(Worker 경로 조회)' },
+    { key:'holiday', name:'공휴일 API',    url:'(Worker /holiday)' },
+    { key:'kakao',   name:'카카오 지도 SDK', url:'dapi.kakao.com' },
+    { key:'site',    name:'놀맵 페이지',    url:'index.html' }
+  ];
+  function renderStatus(key, state, label, detail){
+    const el = $('st-' + key);
+    if(!el) return;
+    el.querySelector('.pill').className = 'pill ' + state;
+    el.querySelector('.pill').textContent = label;
+    if(detail !== undefined) el.querySelector('small').textContent = detail;
+  }
+  async function timed(fn){
+    const t0 = performance.now();
+    const v = await fn();
+    return { v, ms: Math.round(performance.now() - t0) };
+  }
+  function checkServices(){
+    $('statusList').innerHTML = SERVICES.map(s =>
+      '<div class="status-item" id="st-' + s.key + '"><div><b>' + s.name + '</b><small>' + esc(s.url) + '</small></div>' +
+      '<span class="pill idle">확인 중</span></div>').join('');
+
+    timed(() => walk(HOME, [37.5108293, 126.8803841]))
+      .then(r => renderStatus('route', 'ok', '정상 · ' + r.ms + 'ms', '놀구로 → 고가네 며느리 ' + Math.round(r.v.distance) + 'm'))
+      .catch(e => renderStatus('route', 'bad', '오류', e.message));
+
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Seoul' }).format(new Date());
+    timed(() => fetch(API + '/holiday?date=' + today).then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
+      .then(r => renderStatus('holiday', r.v && r.v.ok ? 'ok' : 'warn', (r.v && r.v.ok ? '정상' : '응답 이상') + ' · ' + r.ms + 'ms',
+        today + ' → ' + (r.v && r.v.isHoliday ? '공휴일 (' + (r.v.localName || r.v.name || '') + ')' : '평일/주말')))
+      .catch(e => renderStatus('holiday', 'bad', '오류', e.message));
+
+    if(window.kakao && kakao.maps) renderStatus('kakao', 'ok', '정상', 'SDK 로드됨');
+    else renderStatus('kakao', 'bad', '오류', 'SDK를 불러오지 못했어요 (도메인 등록 확인)');
+
+    timed(() => fetch('index.html', { cache:'no-store' }).then(r => r.ok ? r.text() : Promise.reject(new Error('HTTP ' + r.status))))
+      .then(r => renderStatus('site', 'ok', '정상 · ' + r.ms + 'ms', 'index.html ' + Math.round(r.v.length / 1024) + 'KB'))
+      .catch(e => renderStatus('site', 'bad', '오류', e.message));
+  }
+
+  // ===== 2. 장소 데이터 읽기 =====
+  async function loadPlaces(){
+    const html = await (await fetch('index.html', { cache:'no-store' })).text();
+    const start = html.indexOf('const PLACES = {');
+    const end = html.indexOf('\n  };', start);
+    if(start < 0 || end < 0) throw new Error('index.html에서 장소 데이터를 찾지 못했어요');
+    PLACES = new Function('return ' + html.slice(start + 'const PLACES = '.length, end + 4).trim())();
+    const ids = name => {
+      const m = html.match(new RegExp('const ' + name + "\\s*=\\s*\\[([^\\]]*)\\]"));
+      return m ? (m[1].match(/'([^']+)'/g) || []).map(s => s.slice(1, -1)) : [];
+    };
+    ANGEL_IDS = ids('ANGEL_IDS');
+    DISCOVER_IDS = ids('DISCOVER_IDS');
+    if(PLACES.nolguro && PLACES.nolguro.pos) HOME = PLACES.nolguro.pos;
+  }
+
+  function typeOf(id){
+    if(id === 'nolguro') return '<span class="type home">목적지</span>';
+    if(ANGEL_IDS.includes(id)) return '<span class="type angel">구로엔젤</span>';
+    if(DISCOVER_IDS.includes(id)) return '<span class="type disc">삼대발견</span>';
+    return '<span class="type">기타</span>';
+  }
+
+  function renderPlaces(){
+    const order = ['nolguro', ...ANGEL_IDS, ...DISCOVER_IDS, ...Object.keys(PLACES)]
+      .filter((id, i, arr) => PLACES[id] && arr.indexOf(id) === i);
+    $('placeRows').innerHTML = order.map(id => {
+      const p = PLACES[id];
+      const photos = p.photos || [];
+      return '<tr data-id="' + id + '">' +
+        '<td>' + typeOf(id) + '</td>' +
+        '<td class="name"><b>' + esc(p.name) + '</b><small>' + esc(id) + (p.pinOf ? ' · 핀은 ' + esc(p.pinOf) + '와 공유' : '') + '</small></td>' +
+        '<td><div class="thumbs">' + (photos.length
+          ? photos.map(src => '<img src="' + esc(src) + '" alt="" title="' + esc(src) + '" onerror="this.classList.add(\'broken\');checkSummary()">').join('')
+          : (id === 'nolguro' ? '—' : '<span class="pill warn">사진 없음</span>')) + '</div></td>' +
+        '<td>' + esc(p.dist || (id === 'nolguro' ? '—' : '')) + '</td>' +
+        '<td class="measured">' + (id === 'nolguro' ? '—' : '<span class="pill idle">—</span>') + '</td>' +
+        '<td class="mono">' + (p.pos ? p.pos[0].toFixed(6) + ',<br>' + p.pos[1].toFixed(6) : '<span class="pill bad">좌표 없음</span>') + '</td>' +
+      '</tr>';
+    }).join('');
+    checkSummary();
+  }
+
+  function checkSummary(){
+    const ids = Object.keys(PLACES).filter(id => id !== 'nolguro');
+    const noPhoto = ids.filter(id => !(PLACES[id].photos || []).length).map(id => PLACES[id].name);
+    const broken = document.querySelectorAll('.thumbs img.broken').length;
+    $('placeSummary').innerHTML =
+      '장소 ' + ids.length + '곳 (구로엔젤 ' + ANGEL_IDS.length + ', 삼대발견 ' + DISCOVER_IDS.length + ')' +
+      ' · 사진 ' + ids.reduce((n, id) => n + (PLACES[id].photos || []).length, 0) + '장' +
+      (broken ? ' · <b style="color:var(--bad);">열리지 않는 사진 ' + broken + '장</b>' : '') +
+      (noPhoto.length ? ' · 사진 없는 곳: ' + noPhoto.map(esc).join(', ') : '');
+  }
+
+  async function measureAll(){
+    const btn = $('measureBtn');
+    btn.disabled = true; btn.textContent = '⏳ 재는 중...';
+    let mismatch = 0;
+    const rows = [...document.querySelectorAll('#placeRows tr[data-id]')].filter(r => r.dataset.id !== 'nolguro');
+    for(const row of rows){
+      const p = PLACES[row.dataset.id];
+      const cell = row.querySelector('.measured');
+      if(!p.pos){ cell.innerHTML = '<span class="pill bad">좌표 없음</span>'; continue; }
+      cell.innerHTML = '<span class="pill idle">재는 중</span>';
+      try{
+        const r = await walk(HOME, p.pos);
+        const listed = parseInt(String(p.dist || '').replace(/[^0-9]/g, ''), 10);
+        const diff = isNaN(listed) ? null : Math.abs(listed - r.distance);
+        const state = diff === null ? 'warn' : diff >= 30 ? 'bad' : 'ok';
+        if(state === 'bad') mismatch++;
+        cell.innerHTML = '<span class="pill ' + state + '">' + Math.round(r.distance) + 'm</span>' +
+          (state === 'bad' ? '<br><small style="color:var(--bad);font-size:10px;">→ 약 ' + round5(r.distance) + 'm 추천</small>' : '');
+      }catch(e){
+        cell.innerHTML = '<span class="pill bad">실패</span>';
+      }
+    }
+    btn.disabled = false; btn.textContent = '🚶 도보 거리 재측정';
+    toast(mismatch ? '거리 차이가 큰 곳이 ' + mismatch + '곳 있어요' : '모든 거리가 30m 안쪽으로 맞아요');
+  }
+
+  // ===== 3. 좌표 찾기 =====
+  function initPickMap(){
+    if(!(window.kakao && kakao.maps)) {
+      $('pickMap').innerHTML = '<p style="padding:20px;color:var(--muted);">카카오 지도를 불러오지 못했어요.</p>';
+      return;
+    }
+    kakao.maps.load(() => {
+      const LL = p => new kakao.maps.LatLng(p[0], p[1]);
+      const map = new kakao.maps.Map($('pickMap'), { center: LL(HOME), level: 2 });
+      new kakao.maps.CustomOverlay({ position: LL(HOME), content:'<div class="home-pin">🎈 놀구로</div>', yAnchor: 0.5 }).setMap(map);
+      const pin = new kakao.maps.CustomOverlay({ position: LL(HOME), content:'<div class="pin"></div>', yAnchor: 0.5 });
+      let seq = 0;
+      kakao.maps.event.addListener(map, 'click', async e => {
+        const lat = e.latLng.getLat(), lng = e.latLng.getLng();
+        pin.setPosition(e.latLng); pin.setMap(map);
+        const pos = '[' + lat.toFixed(7) + ', ' + lng.toFixed(7) + ']';
+        $('pickCode').textContent = "pos:" + pos + ", dist:'측정 중...',";
+        const my = ++seq;
+        try{
+          const r = await walk(HOME, [lat, lng]);
+          if(my !== seq) return;
+          $('pickCode').textContent = "pos:" + pos + ", dist:'약 " + round5(r.distance) + "m',";
+        }catch(err){
+          if(my !== seq) return;
+          $('pickCode').textContent = "pos:" + pos + ", dist:'', // 도보 거리 측정 실패";
+        }
+      });
+    });
+  }
+
+  // ===== 4. 이 기기 데이터 =====
+  function routeKeys(){
+    const keys = [];
+    try{ for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if(k && k.startsWith('nolmap_route_')) keys.push(k); } }catch(e){}
+    return keys;
+  }
+  function renderLocal(){
+    let guardians = 0;
+    try{ guardians = JSON.parse(localStorage.getItem('nolmap_guardians') || '[]').length; }catch(e){}
+    $('localInfo').innerHTML =
+      '<dt>저장된 경로</dt><dd>' + routeKeys().length + '개 (24시간 뒤 자동 만료)</dd>' +
+      '<dt>보호자 연락처</dt><dd>' + guardians + '명</dd>';
+  }
+  function clearRouteCache(){
+    const keys = routeKeys();
+    try{ keys.forEach(k => localStorage.removeItem(k)); }catch(e){}
+    renderLocal();
+    toast('경로 캐시 ' + keys.length + '개를 지웠어요');
+  }
+
+  // ===== 시작 =====
+  checkServices();
+  renderLocal();
+  loadPlaces()
+    .then(() => { renderPlaces(); initPickMap(); })
+    .catch(e => {
+      $('placeRows').innerHTML = '<tr><td colspan="6" style="color:var(--bad);">' + esc(e.message) + '</td></tr>';
+      initPickMap();
+    });
+</script>
+</body>
+</html>
