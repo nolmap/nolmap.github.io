@@ -709,6 +709,28 @@
     margin:18px 0 6px;
   }
 
+  /* -------- developer console (아주 작게) -------- */
+  .dev-console{text-align:center; margin:2px 0 4px;}
+  .dev-console-btn{
+    border:none; background:none; padding:2px 4px; cursor:pointer;
+    font-family:ui-monospace, Menlo, Consolas, monospace;
+    font-size:8px; color:#C3CFB8; letter-spacing:0.3px;
+  }
+  .dev-console-box{
+    display:none; align-items:center; gap:4px;
+    width:150px; margin:4px auto 0; padding:3px 7px;
+    background:#2B3424; border-radius:6px;
+    font-family:ui-monospace, Menlo, Consolas, monospace; font-size:10px; color:#8FD14F;
+  }
+  .dev-console-box.open{display:flex;}
+  .dev-console-box input{
+    flex:1; min-width:0; border:none; outline:none; background:none;
+    font:inherit; font-size:16px; /* 16px 미만이면 아이폰이 입력 시 화면을 확대해요 */
+    color:#E9F8E1; padding:0;
+  }
+  .dev-console-box.err{animation:devShake .3s;}
+  @keyframes devShake{25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+
   /* -------- 하단 탭바 -------- */
   .tabbar{
     flex-shrink:0;
@@ -917,12 +939,6 @@
     <section class="screen" id="screen-settings">
       <div class="section-label">👤 계정 · 정보</div>
 
-      <button class="quicklink" onclick="openGuardianModal()">
-        <div class="qicon">🧸</div>
-        <div><h5>보호자 연락처 관리</h5><p>비상 연락처를 등록해요</p></div>
-        <div class="arrow">›</div>
-      </button>
-
       <button class="quicklink" onclick="openPrivacy()">
         <div class="qicon">📄</div>
         <div><h5>이용약관 · 개인정보처리방침</h5><p>안전하게 관리되고 있어요</p></div>
@@ -933,6 +949,14 @@
       </button>
 
       <div class="app-version">놀구로오는길 v1.0.0</div>
+
+      <div class="dev-console">
+        <button class="dev-console-btn" type="button" onclick="toggleDevConsole()">developer console</button>
+        <form class="dev-console-box" id="devConsole" onsubmit="return runDevConsole(event)">
+          <span>&gt;</span>
+          <input id="devConsoleInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="developer console">
+        </form>
+      </div>
     </section>
 
   </div>
@@ -1961,6 +1985,30 @@ function findMyRoute(placeId = 'nolguro'){
   }
 
   document.getElementById('contactForm')?.addEventListener('submit',submitContact);
+
+  // ===== developer console =====
+  function toggleDevConsole(){
+    const box = document.getElementById('devConsole');
+    if(!box) return;
+    const open = box.classList.toggle('open');
+    if(open){
+      const input = document.getElementById('devConsoleInput');
+      input.value = '';
+      setTimeout(() => input.focus(), 30);
+    }
+  }
+  function runDevConsole(event){
+    event.preventDefault();
+    const box = document.getElementById('devConsole');
+    const input = document.getElementById('devConsoleInput');
+    if(input.value.trim() === 'nolmap!!'){
+      location.href = 'admin.html';
+    } else {
+      input.value = '';
+      box.classList.remove('err'); void box.offsetWidth; box.classList.add('err');
+    }
+    return false;
+  }
 
   // 개인정보처리방침 모달
   function openPrivacy(){
