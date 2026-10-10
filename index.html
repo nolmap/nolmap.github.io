@@ -737,7 +737,7 @@
         <h3>오늘도 안전하게, 신도림놀구로!</h3>
         <p>추천 경로로 걸으면 도보 12분, 가로등 14개가 함께해요.</p>
         <div class="btnrow">
-          <button class="btn on-hero" onclick="go('map'); setTimeout(findMyRoute, 600);">🍀 경로 보기</button>
+          <button class="btn on-hero" onclick="go('map'); whenMapReady(() => findMyRoute());">🍀 경로 보기</button>
           <button class="btn on-hero outline" onclick="go('place')">🎈 놀구로 소개</button>
         </div>
       </div>
@@ -1388,6 +1388,12 @@ setInterval(updateNolguroStatus, 60000);
   }
 
   function initKakaoMap(){
+    // 지도 준비되면 실행할 작업 대기열
+   const _mapReadyQueue = [];
+   function whenMapReady(cb){
+   if(window._map) cb();
+   else _mapReadyQueue.push(cb);
+}
     const end = PLACES.nolguro.pos;
     const LL = p => new kakao.maps.LatLng(p[0], p[1]);
     const map = new kakao.maps.Map(document.getElementById('kakaoMap'), {
@@ -1427,6 +1433,7 @@ setInterval(updateNolguroStatus, 60000);
         yAnchor: 0.5
       }).setMap(map);
     });
+      _mapReadyQueue.splice(0).forEach(cb => cb());
   }
 
   function toggleAngels(){
