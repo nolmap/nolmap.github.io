@@ -154,16 +154,47 @@
     position:fixed; inset:0; z-index:2000;
     background:rgba(20,30,15,0.88);
     display:none; align-items:center; justify-content:center;
-    flex-direction:column; gap:12px; padding:24px;
+    flex-direction:column; gap:12px; padding:24px 0;
   }
   .photo-view.open{display:flex;}
-  .photo-view img{
-    max-width:100%; max-height:78vh;
-    border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,0.5);
+  /* 옆으로 넘기는 사진 트랙 */
+  .photo-track{
+    width:100%; max-width:600px;
+    display:flex; overflow-x:auto; overflow-y:hidden;
+    scroll-snap-type:x mandatory; scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    overscroll-behavior-x:contain;
   }
+  .photo-track::-webkit-scrollbar{display:none;}
+  .photo-slide{
+    flex:0 0 100%; scroll-snap-align:center; scroll-snap-stop:always;
+    display:flex; align-items:center; justify-content:center;
+    padding:0 24px; min-height:40vh;
+  }
+  .photo-slide img{
+    max-width:100%; max-height:72vh;
+    border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,0.5);
+    user-select:none; -webkit-user-drag:none;
+  }
+  .photo-slide .photo-err{color:#fff; font-size:13px;}
+  .photo-dots{display:flex; gap:7px; justify-content:center;}
+  .photo-dots span{
+    width:7px; height:7px; border-radius:50%;
+    background:rgba(255,255,255,0.4); transition:all .2s ease;
+  }
+  .photo-dots span.on{background:#fff; width:18px; border-radius:999px;}
+  .photo-nav{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:40px; height:40px; border-radius:50%;
+    border:none; background:rgba(255,255,255,0.85);
+    font-size:20px; line-height:1; cursor:pointer;
+    display:none;
+  }
+  .photo-nav.prev{left:12px;} .photo-nav.next{right:12px;}
+  @media (hover:hover){ .photo-view.multi .photo-nav{display:block;} }
   .photo-cap{
     color:#fff; font-family:'Jua',sans-serif; font-size:14px;
-    text-align:center;
+    text-align:center; padding:0 24px;
   }
   .photo-close{
     position:absolute; top:18px; right:18px;
@@ -1236,7 +1267,7 @@ setInterval(updateNolguroStatus, 60000);
       tel:'02-2068-2511' },
 
     a1: { emoji:'🍚', name:'고가네 며느리', sub:'🧚 구로엔젤 · 약 60m',
-      photo:'images/a1.jpg',
+      photos:['images/고가네며느리-1.jpg'],
       pos:[37.5108293, 126.8803841], dist:'약 60m', addr:'신도림동 296-61',
       body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
       rows:[['📍','신도림동 296-61'],['☎️','02-2676-1241']], tel:'02-2676-1241' },
@@ -1245,45 +1276,46 @@ setInterval(updateNolguroStatus, 60000);
       body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
       rows:[['📍','신도림로11라길 45'],['🕗','평일 09:00~18:00'],['☎️','02-2634-2587']], tel:'02-2634-2587' },
     a3: { emoji:'🛒', name:'진흥슈퍼', sub:'🧚 구로엔젤 · 약 120m',
-      photo:'images/a3.jpg',
+      photos:['images/진흥슈퍼-1.jpg','images/진흥슈퍼-2.jpg'],
       pos:[37.5113906, 126.8804797], dist:'약 120m', addr:'신도림동 296-45',
       body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
       rows:[['📍','신도림동 296-45'],['☎️','02-2068-9795']], tel:'02-2068-9795' },
     a4: { emoji:'⛪', name:'예수비전교회', sub:'🧚 구로엔젤 · 약 140m',
-      photo:'images/a4.jpg',
+      photos:['images/예수비전교회-1.jpg'],
       pos:[37.5100072, 126.8814935], dist:'약 140m', addr:'신도림로15길 22',
       body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
       rows:[['📍','신도림로15길 22'],['☎️','02-2678-5553']], tel:'02-2678-5553' },
     a5: { emoji:'🏘️', name:'서울부동산', sub:'🧚 구로엔젤 · 약 150m',
-      photo:'images/a5.jpg',
+      photos:['images/서울부동산-1.jpg','images/서울부동산-2.jpg'],
       pos:[37.5117032, 126.8805200], dist:'약 150m', addr:'다정한 밥상 옆',
       body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
       rows:[['📍','다정한 밥상 옆 (서울공인중개사사무소)'],['☎️','02-2637-7766'],['👤','대표 김승석']],
       tel:'02-2637-7766' },
     a6: { emoji:'🏪', name:'세븐일레븐', sub:'🧚 구로엔젤 · 약 165m',
-      photo:'images/a6.jpg',
+      photos:['images/세븐일레븐-1.jpg','images/세븐일레븐-2.jpg'],
       pos:[37.5093337, 126.8786729], dist:'약 165m', addr:'신도림로11길 38',
       body:'24시간 열려 있어요. 밤에도 들어갈 수 있어요.',
       rows:[['📍','신도림로11길 38'],['🕗','24시간']] },
     a7: { emoji:'⛪', name:'신도림제일교회', sub:'🧚 구로엔젤 · 약 170m',
-      photo:'images/a7.jpg',
+      photos:['images/신도림제일교회-1.jpg'],
       pos:[37.5089290, 126.8806751], dist:'약 170m', addr:'신도림동 390-25',
       body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
       rows:[['📍','신도림동 390-25'],['☎️','02-2677-4755']], tel:'02-2677-4755' },
     a8: { emoji:'🏘️', name:'씨유부동산', sub:'🧚 구로엔젤 · 약 175m',
-      photo:'images/a8.jpg',
+      photos:['images/씨유부동산-1.jpg'],
       pos:[37.5089216, 126.8793800], dist:'약 175m', addr:'황해방아간 옆',
       body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
       rows:[['📍','황해방아간 옆 (씨유공인중개사사무소)'],['☎️','010-6255-9348'],['👤','대표 이승도']],
       tel:'010-6255-9348' },
     a9: { emoji:'🍚', name:'협동백반', sub:'🧚 구로엔젤 · 약 250m',
-      photo:'images/a9.jpg',
+      photos:['images/협동백반-1.jpg'],
       pos:[37.5081452, 126.8798258], dist:'약 250m', addr:'신도림동 396-38',
       body:'도움이 필요하면 들어가서 도와달라고 말해도 괜찮아요.',
       rows:[['📍','신도림동 396-38'],['🕗','11:00~21:00 (일요일 휴무)'],['☎️','02-2636-4750']], tel:'02-2636-4750' },
 
     // ---- 삼대발견 ----
     d1: { emoji:'🎯', name:'뱀병장 슈팅레인지', sub:'✨ 삼대발견 · 약 125m',
+      photos:['images/뱀병장슈팅레인지-1.jpg','images/뱀병장슈팅레인지-2.jpg'],
       pos:[37.5106724, 126.8789543], dist:'약 125m',
       addr:'신도림로11라길 25-10 1층',
       body:'공장지대 속 숨겨진 비밀기지.',
@@ -1296,7 +1328,7 @@ setInterval(updateNolguroStatus, 60000);
         ['🚫','화요일 정기 휴무']
       ] },
     d2: { emoji:'🏭', name:'경동정밀', sub:'✨ 삼대발견 · 약 30m',
-      photo:'images/d1.jpg',
+      photos:['images/경동정밀-1.jpg'],
       pos:[37.5106583, 126.8800684], dist:'약 30m',
       addr:'놀구로 바로 옆',
       body:'CNC가공과 부품가공을 하는 동네 공장이에요.',
@@ -1307,6 +1339,8 @@ setInterval(updateNolguroStatus, 60000);
         ['📱','010-9077-2700']
       ], tel:'02-2633-7616' }
   };
+  // 각 장소에 자기 id 기록 (지도 핀에서 열어도 사진·길찾기가 맞는 장소로 가도록)
+  Object.keys(PLACES).forEach(k => { PLACES[k]._id = k; });
   const DISCOVER_IDS = ['d1','d2'];
   const ANGEL_IDS = ['a1','a2','a3','a4','a5','a6','a7','a8','a9'];
   const ANGEL_PINS = ANGEL_IDS.filter(id => PLACES[id].pos);
@@ -1339,7 +1373,10 @@ setInterval(updateNolguroStatus, 60000);
       (pl.body ? '<p class="info-body">' + pl.body + '</p>' : '') +
       (rows ? '<div class="info-rows">' + rows + '</div>' : '') +
       '<div class="info-acts">' +
-        (pl.photo ? '<button class="pic" type="button" onclick="openPhoto(\''+pl.photo+'\',\''+pl.name+'\')">📷 사진</button>' : '') +
+        (pl.photos && pl.photos.length
+          ? '<button class="pic" type="button" onclick="openPhoto(\'' + pl._id + '\')">📷 사진' +
+            (pl.photos.length > 1 ? ' ' + pl.photos.length + '장' : '') + '</button>'
+          : '') +
         (pl.tel ? '<a class="call" href="tel:' + pl.tel.replace(/-/g,'') + '">☎️ 전화</a>' : '') +
         '<button class="go" type="button" onclick="findMyRoute(\'' + (pl._id || 'nolguro') + '\')">📍 길찾기</button>' +
       '</div>';
@@ -1359,25 +1396,72 @@ setInterval(updateNolguroStatus, 60000);
   }
 
   // ===== 사진 보기 =====
-  function openPhoto(src, name){
+  // 사진이 여러 장이면 옆으로 스와이프해서 넘겨 볼 수 있어요.
+  function openPhoto(id){
+    const pl = PLACES[id];
+    if(!pl || !pl.photos || !pl.photos.length) return;
+    const photos = pl.photos;
+    const multi = photos.length > 1;
+
     let box = document.getElementById('photoView');
     if(!box){
       box = document.createElement('div');
       box.id = 'photoView';
       box.className = 'photo-view';
-      box.onclick = closePhoto;
+      // 사진 바깥(배경)이나 ✕를 누르면 닫기. 사진을 누르거나 넘길 때는 닫히지 않음.
+      box.addEventListener('click', e => {
+        if(e.target === box || e.target.classList.contains('photo-slide') ||
+           e.target.closest('.photo-close')) closePhoto();
+      });
       document.body.appendChild(box);
     }
+    if(box._keys){ document.removeEventListener('keydown', box._keys); box._keys = null; }
+    box.classList.toggle('multi', multi);
     box.innerHTML =
-      '<button class="photo-close" type="button">✕</button>' +
-      '<img src="' + src + '" alt="' + name + '" onerror="this.style.display=\'none\';' +
-      'this.nextElementSibling.textContent=\'사진을 불러오지 못했어요.\';">' +
-      '<div class="photo-cap">' + name + '</div>';
+      '<button class="photo-close" type="button" aria-label="닫기">✕</button>' +
+      '<div class="photo-track">' +
+        photos.map((src, i) =>
+          '<div class="photo-slide"><img src="' + src + '" alt="' + escapeHtml(pl.name) + ' 사진 ' + (i+1) + '" ' +
+          'onerror="this.outerHTML=\'<div class=&quot;photo-err&quot;>사진을 불러오지 못했어요.</div>\'"></div>'
+        ).join('') +
+      '</div>' +
+      (multi
+        ? '<button class="photo-nav prev" type="button" aria-label="이전 사진">‹</button>' +
+          '<button class="photo-nav next" type="button" aria-label="다음 사진">›</button>' +
+          '<div class="photo-dots">' + photos.map((_, i) => '<span' + (i === 0 ? ' class="on"' : '') + '></span>').join('') + '</div>'
+        : '') +
+      '<div class="photo-cap">' + escapeHtml(pl.name) +
+        (multi ? ' <span class="photo-count">1 / ' + photos.length + '</span>' : '') + '</div>';
+
+    const track = box.querySelector('.photo-track');
+    const current = () => Math.round(track.scrollLeft / track.clientWidth);
+    const goTo = i => track.scrollTo({ left: Math.max(0, Math.min(photos.length - 1, i)) * track.clientWidth });
+
+    if(multi){
+      const dots = box.querySelectorAll('.photo-dots span');
+      const count = box.querySelector('.photo-count');
+      track.addEventListener('scroll', () => {
+        const i = current();
+        dots.forEach((d, j) => d.classList.toggle('on', j === i));
+        if(count) count.textContent = (i + 1) + ' / ' + photos.length;
+      }, { passive:true });
+      box.querySelector('.photo-nav.prev').onclick = () => goTo(current() - 1);
+      box.querySelector('.photo-nav.next').onclick = () => goTo(current() + 1);
+    }
+
+    box._keys = e => {
+      if(e.key === 'Escape') closePhoto();
+      else if(multi && e.key === 'ArrowRight') goTo(current() + 1);
+      else if(multi && e.key === 'ArrowLeft') goTo(current() - 1);
+    };
+    document.addEventListener('keydown', box._keys);
     box.classList.add('open');
   }
   function closePhoto(){
     const box = document.getElementById('photoView');
-    if(box) box.classList.remove('open');
+    if(!box) return;
+    box.classList.remove('open');
+    if(box._keys){ document.removeEventListener('keydown', box._keys); box._keys = null; }
   }
 
   function closePanel(){
@@ -1670,8 +1754,8 @@ function findMyRoute(placeId = 'nolguro'){
       const d = PLACES[id];
       return '<div class="shop-item" onclick="openPlace(\''+id+'\')">' +
         '<div class="shop-no">'+(i+1)+'</div>' +
-        (d.photo
-          ? '<img class="shop-thumb" src="'+d.photo+'" alt="'+d.name+'">'
+        (d.photos && d.photos.length
+          ? '<img class="shop-thumb" src="'+d.photos[0]+'" alt="'+d.name+'">'
           : '<div class="shop-ic">'+d.emoji+'</div>') +
         '<div class="shop-txt">' +
           '<h5>'+d.name+' <span class="dist-tag">'+d.dist+'</span></h5>' +
@@ -1694,8 +1778,8 @@ function findMyRoute(placeId = 'nolguro'){
         const hour = (a.rows || []).find(r => r[0] === '🕗');
         return '<div class="shop-item" onclick="openPlace(\''+id+'\')">' +
           '<div class="shop-no">'+(i+1)+'</div>' +
-          (a.photo
-            ? '<img class="shop-thumb" src="'+a.photo+'" alt="'+a.name+'" onerror="this.outerHTML=\'<div class=&quot;shop-ic&quot;>'+a.emoji+'</div>\'">'
+          (a.photos && a.photos.length
+            ? '<img class="shop-thumb" src="'+a.photos[0]+'" alt="'+a.name+'" onerror="this.outerHTML=\'<div class=&quot;shop-ic&quot;>'+a.emoji+'</div>\'">'
             : '<div class="shop-ic">'+a.emoji+'</div>') +
           '<div class="shop-txt">' +
             '<h5>'+a.name+' <span class="dist-tag">'+a.dist+'</span></h5>' +
