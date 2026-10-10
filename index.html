@@ -1317,14 +1317,14 @@ setInterval(updateNolguroStatus, 60000);
     if(!pl) return;
     if(typeof closeAngelShops === 'function') closeAngelShops();
     go('map');
-    setTimeout(() => {
-      if(window._map && pl.pos){
+    whenMapReady(() => {
+      if(pl.pos){
         window._map.setLevel(2);
         window._map.setCenter(window._LL(pl.pos));
       }
       pl._id = id;
       showPanel(pl);
-    }, 350);
+    });
   }
 
   function showPanel(pl){
@@ -1387,13 +1387,14 @@ setInterval(updateNolguroStatus, 60000);
     if(c) c.classList.remove('up');
   }
 
+  // 지도 준비되면 실행할 작업 대기열
+  const _mapReadyQueue = [];
+  function whenMapReady(cb){
+    if(window._map) cb();
+    else _mapReadyQueue.push(cb);
+  }
+
   function initKakaoMap(){
-    // 지도 준비되면 실행할 작업 대기열
-   const _mapReadyQueue = [];
-   function whenMapReady(cb){
-   if(window._map) cb();
-   else _mapReadyQueue.push(cb);
-}
     const end = PLACES.nolguro.pos;
     const LL = p => new kakao.maps.LatLng(p[0], p[1]);
     const map = new kakao.maps.Map(document.getElementById('kakaoMap'), {
@@ -1433,7 +1434,9 @@ setInterval(updateNolguroStatus, 60000);
         yAnchor: 0.5
       }).setMap(map);
     });
-      _mapReadyQueue.splice(0).forEach(cb => cb());
+
+    // 대기 중이던 작업 실행
+    _mapReadyQueue.splice(0).forEach(cb => cb());
   }
 
   function toggleAngels(){
