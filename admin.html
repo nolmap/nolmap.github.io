@@ -28,11 +28,11 @@
   section h2{margin:0 0 4px;font-family:'Jua',sans-serif;font-size:16px;color:var(--ink);display:flex;align-items:center;gap:8px;}
   section .desc{margin:0 0 12px;font-size:11.5px;color:var(--muted);line-height:1.5;}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-  button.b{border:none;border-radius:999px;padding:9px 14px;font-family:'Jua',sans-serif;font-size:12px;cursor:pointer;
+  .b{border:none;border-radius:999px;padding:9px 14px;font-family:'Jua',sans-serif;font-size:12px;cursor:pointer;
     background:var(--leaf);color:#fff;}
-  button.b.ghost{background:var(--bg);color:var(--leaf-text);}
-  button.b.danger{background:var(--bad-bg);color:var(--bad);}
-  button.b:disabled{opacity:.6;cursor:wait;}
+  .b.ghost{background:var(--bg);color:var(--leaf-text);}
+  .b.danger{background:var(--bad-bg);color:var(--bad);}
+  .b:disabled{opacity:.6;cursor:wait;}
   .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;}
   .pill.ok{background:var(--ok-bg);color:var(--ok);}
   .pill.warn{background:var(--warn-bg);color:var(--warn);}
@@ -73,6 +73,47 @@
   .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12px;margin-bottom:12px;}
   .kv dt{color:var(--muted);}
   .kv dd{margin:0;font-family:var(--mono);}
+  /* 편집기 */
+  .lbl{display:block;font-family:'Jua',sans-serif;font-size:12px;color:var(--leaf-text);margin:12px 2px 6px;}
+  .inp{width:100%;border:1px solid #DCE9D0;background:#FAFDF7;border-radius:12px;padding:10px 12px;
+    font-family:'Gowun Dodum',sans-serif;font-size:14px;color:var(--ink);outline:none;}
+  .inp:focus{border-color:var(--leaf);}
+  textarea.inp{resize:vertical;line-height:1.5;}
+  .help{margin-top:10px;font-size:11.5px;color:var(--muted);line-height:1.6;}
+  .help summary{cursor:pointer;color:var(--leaf-deep);font-weight:700;}
+  .help ol{margin:6px 0;padding-left:18px;}
+  .msg{margin-top:10px;font-size:12px;line-height:1.5;}
+  .msg.ok{color:var(--ok);} .msg.bad{color:var(--bad);}
+  .gh-who{margin-bottom:12px;}
+  .b.small{padding:6px 11px;font-size:11px;}
+  .chip-group{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;}
+  .chip-lbl{font-family:'Jua',sans-serif;font-size:12px;color:var(--muted);white-space:nowrap;padding-top:6px;width:72px;flex-shrink:0;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{border:1px solid #DCE9D0;background:var(--white);border-radius:999px;padding:6px 11px;font-size:12px;cursor:pointer;
+    font-family:'Gowun Dodum',sans-serif;color:var(--ink);}
+  .chip.on{background:var(--leaf);border-color:var(--leaf);color:#fff;}
+  .edit-pane{margin-top:14px;border-top:1px dashed var(--line);padding-top:14px;}
+  .edit-head{display:flex;align-items:center;gap:10px;}
+  .edit-emoji{width:40px;height:40px;border-radius:13px;background:var(--ok-bg);display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .edit-head b{font-family:'Jua',sans-serif;font-weight:normal;font-size:16px;}
+  .edit-head small{display:block;color:var(--muted);font-size:10.5px;}
+  .ph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
+  .ph{position:relative;border-radius:12px;overflow:hidden;background:var(--bg);aspect-ratio:1/1;}
+  .ph img{width:100%;height:100%;object-fit:cover;display:block;}
+  .ph .no{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;border-radius:999px;padding:2px 7px;}
+  .ph .new{position:absolute;top:6px;right:6px;background:var(--leaf);color:#fff;font-size:10px;border-radius:999px;padding:2px 7px;}
+  .ph .acts{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;padding:6px;
+    background:linear-gradient(transparent,rgba(0,0,0,.55));}
+  .ph .acts button{border:none;background:rgba(255,255,255,.92);border-radius:8px;width:30px;height:28px;font-size:13px;cursor:pointer;}
+  .ph .acts button:disabled{opacity:.35;cursor:default;}
+  .ph .acts .del{color:var(--bad);}
+  .ph-empty{grid-column:1/-1;padding:18px;text-align:center;color:var(--muted);font-size:12px;background:var(--bg);border-radius:12px;}
+  .add-photo{display:inline-flex;align-items:center;margin-top:10px;cursor:pointer;}
+  .shared-note{font-size:11px;color:var(--warn);margin-top:8px;}
+  .shared-note:empty{display:none;}
+  .save-row{margin-top:16px;}
+  .dirty{font-size:11px;color:var(--warn);}
+
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;
     background:#2B3424;color:#fff;padding:9px 16px;border-radius:999px;font-size:12px;transition:all .2s;pointer-events:none;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -88,6 +129,68 @@
     <a class="back" href="index.html">← 놀맵으로</a>
   </header>
 
+  <!-- 0. 소개글 · 사진 수정 -->
+  <section id="editorSection">
+    <h2>✏️ 소개글 · 사진 수정</h2>
+    <p class="desc">구로엔젤과 삼대발견의 소개글과 사진을 고쳐서 GitHub에 바로 저장해요. 저장하고 1~2분 뒤 놀맵에 반영돼요.</p>
+
+    <!-- GitHub 로그인 -->
+    <div id="ghLogin" class="gh-login">
+      <label class="lbl" for="ghToken">GitHub 토큰</label>
+      <div class="row">
+        <input id="ghToken" class="inp" type="password" autocomplete="off" placeholder="github_pat_..." style="flex:1;min-width:200px;">
+        <button class="b" type="button" onclick="ghLogin()">연결</button>
+      </div>
+      <details class="help">
+        <summary>토큰 만드는 법</summary>
+        <ol>
+          <li>GitHub → 오른쪽 위 프로필 → <b>Settings</b> → 맨 아래 <b>Developer settings</b></li>
+          <li><b>Personal access tokens → Fine-grained tokens → Generate new token</b></li>
+          <li>Resource owner: <b>nolmap</b>, Repository access: <b>Only select repositories → nolmap.github.io</b></li>
+          <li>Permissions → Repository permissions → <b>Contents: Read and write</b></li>
+          <li>만들어진 <code>github_pat_...</code> 값을 위 칸에 붙여 넣기</li>
+        </ol>
+        <p>토큰은 <b>이 브라우저에만</b> 저장돼요. 공용 컴퓨터에서는 다 쓰고 꼭 "연결 해제"를 눌러 주세요.</p>
+      </details>
+      <div class="msg" id="ghLoginMsg"></div>
+    </div>
+
+    <!-- 편집기 -->
+    <div id="ghEditor" style="display:none;">
+      <div class="row gh-who">
+        <span class="pill ok" id="ghWho">연결됨</span>
+        <button class="b ghost small" type="button" onclick="ghLogout()">연결 해제</button>
+      </div>
+
+      <div class="chip-group"><span class="chip-lbl">🧚 구로엔젤</span><div class="chips" id="chipsAngel"></div></div>
+      <div class="chip-group"><span class="chip-lbl">✨ 삼대발견</span><div class="chips" id="chipsDisc"></div></div>
+
+      <div id="editPane" class="edit-pane" style="display:none;">
+        <div class="edit-head">
+          <div class="edit-emoji" id="edEmoji"></div>
+          <div><b id="edName"></b><small id="edId"></small></div>
+        </div>
+
+        <label class="lbl" for="edBody">소개글</label>
+        <textarea id="edBody" class="inp" rows="3" maxlength="300"></textarea>
+
+        <label class="lbl">사진 <small style="color:var(--muted);font-weight:normal;">· 첫 번째 사진이 목록 썸네일이에요</small></label>
+        <div class="ph-grid" id="edPhotos"></div>
+        <div class="shared-note" id="edShared"></div>
+        <label class="b ghost add-photo">＋ 사진 추가
+          <input type="file" accept="image/*" multiple onchange="addPhotos(this)" hidden>
+        </label>
+
+        <div class="row save-row">
+          <button class="b" type="button" id="saveBtn" onclick="saveEdit()">💾 GitHub에 저장</button>
+          <button class="b ghost" type="button" onclick="selectPlace(EDIT.id)">되돌리기</button>
+          <span class="dirty" id="edDirty"></span>
+        </div>
+        <div class="msg" id="saveMsg"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- 1. 서비스 상태 -->
   <section>
     <h2>📡 서비스 상태</h2>
@@ -99,7 +202,7 @@
   <!-- 2. 장소 점검 -->
   <section>
     <h2>📍 장소 · 사진 점검</h2>
-    <p class="desc">지금 배포된 <code>index.html</code>의 장소 데이터를 읽어와요. 사진이 안 열리는 장소는 빨간 테두리로 표시돼요.
+    <p class="desc">지금 배포된 <code>places.json</code>의 장소 데이터를 읽어와요. 사진이 안 열리는 장소는 빨간 테두리로 표시돼요.
       <b>도보 거리 재측정</b>을 누르면 놀구로에서 각 장소까지 실제 걷는 거리를 다시 재고, 화면에 적힌 거리와 30m 이상 차이 나면 알려줘요.</p>
     <div class="row" style="margin-bottom:10px;">
       <button class="b" type="button" id="measureBtn" onclick="measureAll()">🚶 도보 거리 재측정</button>
@@ -169,7 +272,8 @@
     { key:'route',   name:'길찾기 API',    url:'(Worker 경로 조회)' },
     { key:'holiday', name:'공휴일 API',    url:'(Worker /holiday)' },
     { key:'kakao',   name:'카카오 지도 SDK', url:'dapi.kakao.com' },
-    { key:'site',    name:'놀맵 페이지',    url:'index.html' }
+    { key:'site',    name:'놀맵 페이지',    url:'index.html' },
+    { key:'data',    name:'장소 데이터',    url:'places.json' }
   ];
   function renderStatus(key, state, label, detail){
     const el = $('st-' + key);
@@ -204,22 +308,24 @@
     timed(() => fetch('index.html', { cache:'no-store' }).then(r => r.ok ? r.text() : Promise.reject(new Error('HTTP ' + r.status))))
       .then(r => renderStatus('site', 'ok', '정상 · ' + r.ms + 'ms', 'index.html ' + Math.round(r.v.length / 1024) + 'KB'))
       .catch(e => renderStatus('site', 'bad', '오류', e.message));
+
+    timed(() => fetch('places.json', { cache:'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
+      .then(r => renderStatus('data', 'ok', '정상 · ' + r.ms + 'ms', '장소 ' + Object.keys(r.v.places || {}).length + '곳'))
+      .catch(e => renderStatus('data', 'bad', '오류', e.message));
   }
 
   // ===== 2. 장소 데이터 읽기 =====
-  async function loadPlaces(){
-    const html = await (await fetch('index.html', { cache:'no-store' })).text();
-    const start = html.indexOf('const PLACES = {');
-    const end = html.indexOf('\n  };', start);
-    if(start < 0 || end < 0) throw new Error('index.html에서 장소 데이터를 찾지 못했어요');
-    PLACES = new Function('return ' + html.slice(start + 'const PLACES = '.length, end + 4).trim())();
-    const ids = name => {
-      const m = html.match(new RegExp('const ' + name + "\\s*=\\s*\\[([^\\]]*)\\]"));
-      return m ? (m[1].match(/'([^']+)'/g) || []).map(s => s.slice(1, -1)) : [];
-    };
-    ANGEL_IDS = ids('ANGEL_IDS');
-    DISCOVER_IDS = ids('DISCOVER_IDS');
+  function applyData(d){
+    PLACES = d.places || {};
+    ANGEL_IDS = (d.angelIds || []).filter(id => PLACES[id]);
+    DISCOVER_IDS = (d.discoverIds || []).filter(id => PLACES[id]);
     if(PLACES.nolguro && PLACES.nolguro.pos) HOME = PLACES.nolguro.pos;
+  }
+  async function loadPlaces(){
+    const res = await fetch('places.json', { cache:'no-store' });
+    if(!res.ok) throw new Error('places.json을 불러오지 못했어요 (' + res.status + ')');
+    const d = await res.json();
+    if(!remoteLoaded) applyData(d);   // GitHub에서 최신본을 이미 받았으면 그걸 유지
   }
 
   function typeOf(id){
@@ -336,7 +442,279 @@
     toast('경로 캐시 ' + keys.length + '개를 지웠어요');
   }
 
+  // ===== 0. 소개글 · 사진 수정 (GitHub에 직접 저장) =====
+  const GH = { owner:'nolmap', repo:'nolmap.github.io', branch:'main' };
+  const TOKEN_KEY = 'nolmap_admin_token';
+  let ghToken = '';
+  let EDIT = null;
+  let remoteLoaded = false;   // { id, body, photos:[{path}|{blob,url,isNew}], origBody, origPhotos }
+
+  const encPath = p => p.split('/').map(encodeURIComponent).join('/');
+  async function gh(path, opts = {}){
+    const res = await fetch('https://api.github.com/repos/' + GH.owner + '/' + GH.repo + path, {
+      ...opts,
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': 'Bearer ' + ghToken,
+        'X-GitHub-Api-Version': '2022-11-28',
+        ...(opts.body ? { 'Content-Type': 'application/json' } : {})
+      }
+    });
+    if(!res.ok){
+      let msg = 'GitHub ' + res.status;
+      try{ const j = await res.json(); if(j.message) msg += ' · ' + j.message; }catch(_){}
+      const err = new Error(msg); err.status = res.status; throw err;
+    }
+    return res.status === 204 ? null : res.json();
+  }
+
+  // 텍스트·바이너리 ↔ base64
+  function bytesToB64(bytes){
+    let s = '';
+    for(let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+  const textToB64 = t => bytesToB64(new TextEncoder().encode(t));
+  const b64ToText = b => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, '')), c => c.charCodeAt(0)));
+
+  async function readRemoteData(){
+    const f = await gh('/contents/places.json?ref=' + GH.branch);
+    return { sha: f.sha, data: JSON.parse(b64ToText(f.content)) };
+  }
+
+  async function ghLogin(auto){
+    const input = $('ghToken');
+    const msg = $('ghLoginMsg');
+    const t = auto ? ghToken : input.value.trim();
+    if(!t){ msg.className = 'msg bad'; msg.textContent = '토큰을 붙여 넣어 주세요.'; return; }
+    ghToken = t;
+    msg.className = 'msg'; msg.textContent = '확인 중...';
+    try{
+      const repo = await gh('');
+      if(!repo.permissions || !repo.permissions.push) throw new Error('이 토큰은 저장소에 쓸 권한이 없어요 (Contents: Read and write 필요)');
+      try{ localStorage.setItem(TOKEN_KEY, t); }catch(_){}
+      input.value = '';
+      $('ghLogin').style.display = 'none';
+      $('ghEditor').style.display = '';
+      $('ghWho').textContent = '✓ ' + GH.owner + '/' + GH.repo + ' 연결됨';
+      // 편집은 항상 GitHub의 최신 데이터로
+      const { data } = await readRemoteData();
+      applyData(data);
+      remoteLoaded = true;
+      renderChips();
+      renderPlaces();
+    }catch(e){
+      ghToken = '';
+      if(auto){ try{ localStorage.removeItem(TOKEN_KEY); }catch(_){} }
+      msg.className = 'msg bad';
+      msg.textContent = (e.status === 401 ? '토큰이 맞지 않거나 만료됐어요.' : e.message);
+    }
+  }
+  function ghLogout(){
+    if(EDIT && isDirty() && !confirm('저장하지 않은 수정이 있어요. 연결을 해제할까요?')) return;
+    ghToken = ''; EDIT = null;
+    try{ localStorage.removeItem(TOKEN_KEY); }catch(_){}
+    $('ghEditor').style.display = 'none';
+    $('editPane').style.display = 'none';
+    $('ghLogin').style.display = '';
+    $('ghLoginMsg').textContent = '';
+  }
+
+  function renderChips(){
+    const chip = id => '<button type="button" class="chip' + (EDIT && EDIT.id === id ? ' on' : '') +
+      '" onclick="selectPlace(\'' + id + '\')">' + esc(PLACES[id].name) + '</button>';
+    $('chipsAngel').innerHTML = ANGEL_IDS.map(chip).join('');
+    $('chipsDisc').innerHTML = DISCOVER_IDS.map(chip).join('');
+  }
+
+  function selectPlace(id){
+    if(EDIT && EDIT.id !== id && isDirty() && !confirm('저장하지 않은 수정이 있어요. 다른 장소로 넘어갈까요?')) return;
+    const p = PLACES[id];
+    if(!p) return;
+    EDIT = {
+      id,
+      body: p.body || '',
+      photos: (p.photos || []).map(path => ({ path })),
+      origBody: p.body || '',
+      origPhotos: (p.photos || []).slice()
+    };
+    $('edEmoji').textContent = p.emoji || '📍';
+    $('edName').textContent = p.name;
+    $('edId').textContent = id + (ANGEL_IDS.includes(id) ? ' · 구로엔젤' : ' · 삼대발견');
+    $('edBody').value = EDIT.body;
+    $('saveMsg').textContent = '';
+    $('editPane').style.display = '';
+    renderChips();
+    renderEditPhotos();
+  }
+
+  function isDirty(){
+    if(!EDIT) return false;
+    const now = EDIT.photos.map(ph => ph.path || '#new');
+    return EDIT.body !== EDIT.origBody || now.join('|') !== EDIT.origPhotos.join('|');
+  }
+  function updateDirty(){ $('edDirty').textContent = isDirty() ? '● 저장 안 된 수정이 있어요' : ''; }
+
+  function renderEditPhotos(){
+    const list = EDIT.photos;
+    $('edPhotos').innerHTML = list.length ? list.map((ph, i) =>
+      '<div class="ph">' +
+        '<img src="' + esc(ph.isNew ? ph.url : ph.path) + '" alt="">' +
+        '<span class="no">' + (i + 1) + '</span>' +
+        (ph.isNew ? '<span class="new">새 사진</span>' : '') +
+        '<div class="acts">' +
+          '<button type="button" title="앞으로" onclick="movePhoto(' + i + ',-1)"' + (i === 0 ? ' disabled' : '') + '>◀</button>' +
+          '<button type="button" class="del" title="빼기" onclick="removePhoto(' + i + ')">✕</button>' +
+          '<button type="button" title="뒤로" onclick="movePhoto(' + i + ',1)"' + (i === list.length - 1 ? ' disabled' : '') + '>▶</button>' +
+        '</div>' +
+      '</div>').join('')
+      : '<div class="ph-empty">사진이 없어요. 아래 "＋ 사진 추가"로 넣어 주세요.</div>';
+
+    // 같은 사진을 쓰는 다른 장소 안내 (예: 흥왕은 구로엔젤·삼대발견 둘 다)
+    const mine = new Set(EDIT.photos.filter(p => p.path).map(p => p.path));
+    const others = Object.keys(PLACES).filter(id => id !== EDIT.id &&
+      (PLACES[id].photos || []).some(p => mine.has(p)));
+    $('edShared').textContent = others.length
+      ? '※ ' + others.map(id => PLACES[id].name + '(' + id + ')').join(', ') + '도 같은 사진을 써요. 여기서 바꾸면 이 장소에만 적용돼요.'
+      : '';
+    updateDirty();
+  }
+
+  function movePhoto(i, d){
+    const j = i + d, a = EDIT.photos;
+    if(j < 0 || j >= a.length) return;
+    [a[i], a[j]] = [a[j], a[i]];
+    renderEditPhotos();
+  }
+  function removePhoto(i){
+    const ph = EDIT.photos.splice(i, 1)[0];
+    if(ph && ph.url) URL.revokeObjectURL(ph.url);
+    renderEditPhotos();
+  }
+
+  // 웹용으로 줄이기 (긴 변 1000px, JPEG 82%) — 기존 사진과 같은 기준
+  async function resizeImage(file){
+    let src;
+    try{ src = await createImageBitmap(file, { imageOrientation:'from-image' }); }
+    catch(_){
+      src = await new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = URL.createObjectURL(file); });
+    }
+    const w0 = src.width, h0 = src.height, k = Math.min(1, 1000 / Math.max(w0, h0));
+    const c = document.createElement('canvas');
+    c.width = Math.round(w0 * k); c.height = Math.round(h0 * k);
+    c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+    return new Promise((ok, no) => c.toBlob(b => b ? ok(b) : no(new Error('변환 실패')), 'image/jpeg', 0.82));
+  }
+
+  async function addPhotos(input){
+    const files = [...input.files];
+    input.value = '';
+    if(!files.length || !EDIT) return;
+    $('saveMsg').className = 'msg'; $('saveMsg').textContent = '사진 준비 중...';
+    for(const f of files){
+      try{
+        const blob = await resizeImage(f);
+        EDIT.photos.push({ isNew:true, blob, url: URL.createObjectURL(blob) });
+      }catch(e){
+        $('saveMsg').className = 'msg bad'; $('saveMsg').textContent = f.name + ' 을(를) 읽지 못했어요.';
+      }
+    }
+    if($('saveMsg').className === 'msg') $('saveMsg').textContent = '';
+    renderEditPhotos();
+  }
+
+  // 파일 이름: 장소 이름에서 글자·숫자만 남기고 "-번호.jpg" (예: 경기유류상사-2.jpg)
+  const baseName = name => String(name).replace(/\(주\)|㈜/g, '').replace(/[^0-9A-Za-z가-힣]/g, '') || 'photo';
+
+  async function saveEdit(){
+    if(!EDIT || !ghToken) return;
+    EDIT.body = $('edBody').value.trim();
+    if(!isDirty()){ toast('바뀐 내용이 없어요'); return; }
+    const btn = $('saveBtn'), msg = $('saveMsg');
+    const step = t => { msg.className = 'msg'; msg.textContent = t; };
+    btn.disabled = true;
+    try{
+      // 1) 최신 데이터 다시 읽기 (그 사이 다른 수정이 있어도 덮어쓰지 않도록)
+      step('최신 데이터 확인 중...');
+      const remote = await readRemoteData();
+      const data = remote.data;
+      const place = data.places[EDIT.id];
+      if(!place) throw new Error('GitHub의 places.json에 ' + EDIT.id + ' 장소가 없어요');
+
+      // 2) 새 사진 업로드
+      const newOnes = EDIT.photos.filter(p => p.isNew);
+      let existing = [];
+      if(newOnes.length){
+        step('사진 이름 정하는 중...');
+        existing = (await gh('/contents/images?ref=' + GH.branch)).map(f => f.name);
+        const base = baseName(place.name);
+        const re = new RegExp('^' + base + '-(\\d+)\\.jpg$');
+        let n = existing.reduce((m, nm) => { const r = nm.match(re); return r ? Math.max(m, +r[1]) : m; }, 0);
+        for(let i = 0; i < newOnes.length; i++){
+          const ph = newOnes[i];
+          const fname = base + '-' + (++n) + '.jpg';
+          step('사진 올리는 중... (' + (i + 1) + '/' + newOnes.length + ') ' + fname);
+          const bytes = new Uint8Array(await ph.blob.arrayBuffer());
+          await gh('/contents/' + encPath('images/' + fname), {
+            method:'PUT',
+            body: JSON.stringify({ message: '사진 추가: ' + place.name + ' (' + fname + ')', content: bytesToB64(bytes), branch: GH.branch })
+          });
+          ph.path = 'images/' + fname;
+          ph.isNew = false;
+        }
+      }
+
+      // 3) places.json 저장 (이 장소의 소개글·사진만 바꿔요)
+      step('장소 데이터 저장 중...');
+      const removed = (place.photos || []).filter(p => !EDIT.photos.some(x => x.path === p));
+      place.body = EDIT.body;
+      place.photos = EDIT.photos.map(p => p.path);
+      if(!place.photos.length) delete place.photos;
+      await gh('/contents/places.json', {
+        method:'PUT',
+        body: JSON.stringify({
+          message: '장소 수정: ' + place.name + ' (소개글·사진)',
+          content: textToB64(JSON.stringify(data, null, 2) + '\n'),
+          sha: remote.sha,
+          branch: GH.branch
+        })
+      });
+
+      // 4) 이제 아무 장소도 안 쓰는 사진 파일은 저장소에서 지우기
+      const stillUsed = new Set(Object.values(data.places).flatMap(p => p.photos || []));
+      const orphan = removed.filter(p => !stillUsed.has(p));
+      if(orphan.length){
+        const listing = await gh('/contents/images?ref=' + GH.branch);
+        for(const p of orphan){
+          const f = listing.find(x => 'images/' + x.name === p);
+          if(!f) continue;
+          step('안 쓰는 사진 정리 중... ' + f.name);
+          await gh('/contents/' + encPath(p), {
+            method:'DELETE',
+            body: JSON.stringify({ message: '사진 삭제: ' + f.name, sha: f.sha, branch: GH.branch })
+          });
+        }
+      }
+
+      applyData(data);
+      EDIT.origBody = EDIT.body;
+      EDIT.origPhotos = EDIT.photos.map(p => p.path);
+      renderEditPhotos();
+      msg.className = 'msg ok';
+      msg.textContent = '✓ 저장했어요. 1~2분 뒤 놀맵에 반영돼요.' + (orphan.length ? ' (안 쓰는 사진 ' + orphan.length + '장 삭제)' : '');
+    }catch(e){
+      msg.className = 'msg bad';
+      msg.textContent = (e.status === 409 ? '그 사이 다른 곳에서 데이터가 바뀌었어요. 다시 저장해 주세요. ' : '저장하지 못했어요: ') + e.message;
+    }finally{
+      btn.disabled = false;
+    }
+  }
+  $('edBody') && $('edBody').addEventListener('input', () => { if(EDIT){ EDIT.body = $('edBody').value.trim(); updateDirty(); } });
+  window.addEventListener('beforeunload', e => { if(isDirty()){ e.preventDefault(); e.returnValue = ''; } });
+
   // ===== 시작 =====
+  try{ ghToken = localStorage.getItem(TOKEN_KEY) || ''; }catch(_){}
+  if(ghToken) ghLogin(true);
   checkServices();
   renderLocal();
   loadPlaces()
