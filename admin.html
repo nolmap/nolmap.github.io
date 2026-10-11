@@ -426,11 +426,8 @@
     return keys;
   }
   function renderLocal(){
-    let guardians = 0;
-    try{ guardians = JSON.parse(localStorage.getItem('nolmap_guardians') || '[]').length; }catch(e){}
     $('localInfo').innerHTML =
-      '<dt>저장된 경로</dt><dd>' + routeKeys().length + '개 (24시간 뒤 자동 만료)</dd>' +
-      '<dt>보호자 연락처</dt><dd>' + guardians + '명</dd>';
+      '<dt>저장된 경로</dt><dd>' + routeKeys().length + '개 (24시간 뒤 자동 만료)</dd>';
   }
   function clearRouteCache(){
     const keys = routeKeys();
