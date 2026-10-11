@@ -113,6 +113,7 @@
   .shared-note:empty{display:none;}
   .save-row{margin-top:16px;}
   .dirty{font-size:11px;color:var(--warn);}
+  .count{font-size:10.5px;color:var(--muted);text-align:right;margin-top:3px;}
 
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;
     background:#2B3424;color:#fff;padding:9px 16px;border-radius:999px;font-size:12px;transition:all .2s;pointer-events:none;}
@@ -163,6 +164,12 @@
 
         <label class="lbl" for="edBody">소개글</label>
         <textarea id="edBody" class="inp" rows="3" maxlength="300"></textarea>
+
+        <div id="edDetailWrap">
+          <label class="lbl" for="edDetail">자세한 설명 <small style="color:var(--muted);font-weight:normal;">· 삼대발견 "📖 설명" 버튼을 누르면 나와요. 빈 줄로 문단을 나눠요</small></label>
+          <textarea id="edDetail" class="inp" rows="8" maxlength="3000"></textarea>
+          <div class="count" id="edDetailCount"></div>
+        </div>
 
         <label class="lbl">사진 <small style="color:var(--muted);font-weight:normal;">· 첫 번째 사진이 목록 썸네일이에요</small></label>
         <div class="ph-grid" id="edPhotos"></div>
@@ -511,8 +518,12 @@
     if(EDIT && EDIT.id !== id && isDirty() && !confirm('저장하지 않은 수정이 있어요. 다른 장소로 넘어갈까요?')) return;
     const p = PLACES[id];
     if(!p) return;
+    const hasDetail = DISCOVER_IDS.includes(id);
     EDIT = {
       id,
+      hasDetail,
+      detail: p.detail || '',
+      origDetail: p.detail || '',
       body: p.body || '',
       photos: (p.photos || []).map(path => ({ path })),
       origBody: p.body || '',
@@ -522,6 +533,9 @@
     $('edName').textContent = p.name;
     $('edId').textContent = id + (ANGEL_IDS.includes(id) ? ' · 구로엔젤' : ' · 삼대발견');
     $('edBody').value = EDIT.body;
+    $('edDetailWrap').style.display = hasDetail ? '' : 'none';
+    $('edDetail').value = EDIT.detail;
+    $('edDetailCount').textContent = EDIT.detail.length + ' / 3000자';
     $('saveMsg').textContent = '';
     $('editPane').style.display = '';
     renderChips();
@@ -531,7 +545,7 @@
   function isDirty(){
     if(!EDIT) return false;
     const now = EDIT.photos.map(ph => ph.path || '#new');
-    return EDIT.body !== EDIT.origBody || now.join('|') !== EDIT.origPhotos.join('|');
+    return EDIT.body !== EDIT.origBody || EDIT.detail !== EDIT.origDetail || now.join('|') !== EDIT.origPhotos.join('|');
   }
   function updateDirty(){ $('edDirty').textContent = isDirty() ? '● 저장 안 된 수정이 있어요' : ''; }
 
@@ -606,6 +620,7 @@
   async function saveEdit(){
     if(!EDIT || !adminPw) return;
     EDIT.body = $('edBody').value.trim();
+    EDIT.detail = $('edDetail').value.trim();
     if(!isDirty()){ toast('바뀐 내용이 없어요'); return; }
     const btn = $('saveBtn'), msg = $('saveMsg');
     btn.disabled = true;
@@ -617,12 +632,18 @@
       for(const ph of EDIT.photos){
         photos.push(ph.isNew ? { data: bytesToB64(new Uint8Array(await ph.blob.arrayBuffer())) } : ph.path);
       }
-      const r = await adminApi('/admin/save', { method:'POST', body:{ id: EDIT.id, body: EDIT.body, photos } });
+      const payload = { id: EDIT.id, body: EDIT.body, photos };
+      if(EDIT.hasDetail) payload.detail = EDIT.detail;
+      const r = await adminApi('/admin/save', { method:'POST', body: payload });
+      if(EDIT.hasDetail && EDIT.detail !== EDIT.origDetail && r.place.detail === undefined){
+        throw new Error('Cloudflare Worker 코드가 예전 버전이라 자세한 설명이 저장되지 않았어요. cloudflare/admin-worker.js를 다시 배포해 주세요.');
+      }
       applyData(r.data);
       EDIT.photos.forEach(ph => { if(ph.url) URL.revokeObjectURL(ph.url); });
       EDIT.photos = r.place.photos.map(path => ({ path }));
       EDIT.body = r.place.body;
       EDIT.origBody = r.place.body;
+      if(EDIT.hasDetail){ EDIT.detail = r.place.detail || ''; EDIT.origDetail = EDIT.detail; $('edDetail').value = EDIT.detail; }
       EDIT.origPhotos = r.place.photos.slice();
       renderEditPhotos();
       renderPlaces();
@@ -638,6 +659,12 @@
     }
   }
   $('edBody') && $('edBody').addEventListener('input', () => { if(EDIT){ EDIT.body = $('edBody').value.trim(); updateDirty(); } });
+  $('edDetail') && $('edDetail').addEventListener('input', () => {
+    if(!EDIT) return;
+    EDIT.detail = $('edDetail').value.trim();
+    $('edDetailCount').textContent = $('edDetail').value.length + ' / 3000자';
+    updateDirty();
+  });
   window.addEventListener('beforeunload', e => { if(isDirty()){ e.preventDefault(); e.returnValue = ''; } });
 
   // ===== 시작 =====

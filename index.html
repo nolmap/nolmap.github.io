@@ -153,6 +153,16 @@
   }
   .info-acts .go{background:var(--leaf); color:white;}
   .info-acts .pic{background:#FFF3D6; color:#B07E12;}
+  .info-acts .story{background:#F3E8FF; color:#7A3FB5;}
+  .info-acts a, .info-acts button{white-space:nowrap;}
+  .info-acts.many{gap:6px;}
+  .info-acts.many a, .info-acts.many button{font-size:11.5px;}
+  /* 삼대발견 자세한 설명 */
+  .detail-body{padding:14px 18px 18px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .detail-body .detail-sub{font-size:11px; color:#7A3FB5; margin:0 0 10px;}
+  .detail-body p{font-size:13px; line-height:1.75; color:#4C5E40; margin:0 0 10px; word-break:keep-all;}
+  .detail-body .detail-empty{color:var(--muted, #8B9C7E);}
+  .detail-body img{width:100%; border-radius:14px; margin:4px 0 12px; display:block;}
   .photo-view{
     position:fixed; inset:0; z-index:2000;
     background:rgba(20,30,15,0.88);
@@ -1045,6 +1055,18 @@
     </div>
   </div>
 
+  <!-- ============ 삼대발견 자세한 설명 ============ -->
+  <div class="privacy-modal" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle"
+       onclick="if(event.target === this) closeDetail()">
+    <div class="privacy-card">
+      <div class="privacy-head">
+        <h3 id="detailTitle">설명</h3>
+        <button class="privacy-close" type="button" onclick="closeDetail()">닫기</button>
+      </div>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+  </div>
+
   <!-- ============ 개인정보처리방침 ============ -->
   <div class="privacy-modal" id="privacyModal" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
     <div class="privacy-card">
@@ -1333,6 +1355,34 @@ setInterval(updateNolguroStatus, 60000);
     }));
   }
 
+  // 삼대발견 장소면 설명을 보여줄 id (흥왕처럼 구로엔젤 핀을 같이 쓰는 경우도 포함)
+  function detailIdOf(id){
+    if(!id) return null;
+    if(DISCOVER_IDS.includes(id)) return id;
+    return DISCOVER_IDS.find(d => PLACES[d] && PLACES[d].pinOf === id) || null;
+  }
+
+  function openDetail(id){
+    const pl = PLACES[id];
+    const modal = document.getElementById('detailModal');
+    if(!pl || !modal) return;
+    document.getElementById('detailTitle').textContent = (pl.emoji ? pl.emoji + ' ' : '') + pl.name;
+    const text = String(pl.detail || '').trim();
+    const paras = text
+      ? text.split(/\n\s*\n|\n/).map(s => s.trim()).filter(Boolean).map(s => '<p>' + escapeHtml(s) + '</p>').join('')
+      : '<p>' + escapeHtml(pl.body || '') + '</p><p class="detail-empty">자세한 설명은 준비 중이에요.</p>';
+    document.getElementById('detailBody').innerHTML =
+      '<p class="detail-sub">✨ 삼대발견' + (pl.dist ? ' · 놀구로에서 ' + escapeHtml(pl.dist) : '') + '</p>' +
+      (pl.photos && pl.photos.length ? '<img src="' + pl.photos[0] + '" alt="' + escapeHtml(pl.name) + '" onerror="this.remove()">' : '') +
+      paras;
+    document.getElementById('detailBody').scrollTop = 0;
+    modal.classList.add('open');
+  }
+  function closeDetail(){
+    const modal = document.getElementById('detailModal');
+    if(modal) modal.classList.remove('open');
+  }
+
   function showPanel(pl){
     const el = document.getElementById('infoPanel');
     if(!el) return;
@@ -1344,11 +1394,15 @@ setInterval(updateNolguroStatus, 60000);
       '<div><h4>' + pl.name + '</h4><div class="sub">' + (pl.sub||'') + '</div></div></div>' +
       (pl.body ? '<p class="info-body">' + pl.body + '</p>' : '') +
       (rows ? '<div class="info-rows">' + rows + '</div>' : '') +
-      '<div class="info-acts">' +
+      (() => {
+        const n = (pl.photos && pl.photos.length ? 1 : 0) + (detailIdOf(pl._id) ? 1 : 0) + (pl.tel ? 1 : 0) + 1;
+        return '<div class="info-acts' + (n >= 4 ? ' many' : '') + '">';
+      })() +
         (pl.photos && pl.photos.length
           ? '<button class="pic" type="button" onclick="openPhoto(\'' + pl._id + '\')">📷 사진' +
             (pl.photos.length > 1 ? ' ' + pl.photos.length + '장' : '') + '</button>'
           : '') +
+        (detailIdOf(pl._id) ? '<button class="story" type="button" onclick="openDetail(\'' + detailIdOf(pl._id) + '\')">📖 설명</button>' : '') +
         (pl.tel ? '<a class="call" href="tel:' + pl.tel.replace(/-/g,'') + '">☎️ 전화</a>' : '') +
         '<button class="go" type="button" onclick="findMyRoute(\'' + (pl._id || 'nolguro') + '\')">📍 길찾기</button>' +
       '</div>';

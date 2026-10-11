@@ -9,7 +9,8 @@
  *   POST /admin/check   비밀번호 확인
  *   GET  /admin/data    places.json 최신본
  *   POST /admin/save    한 장소의 소개글·사진 저장
- *        { id, body, photos: [ "images/xxx.jpg" | { data: "<base64 jpeg>" } , ... ] }
+ *        { id, body, detail?, photos: [ "images/xxx.jpg" | { data: "<base64 jpeg>" } , ... ] }
+ *        detail(자세한 설명)은 보냈을 때만 바꿔요. 빈 문자열이면 지워요.
  */
 
 const REPO = 'nolmap/nolmap.github.io';
@@ -75,6 +76,8 @@ export default {
 async function savePlace(gh, input) {
   const id = String(input.id || '');
   const body = String(input.body || '').trim().slice(0, 300);
+  const hasDetail = Object.prototype.hasOwnProperty.call(input, 'detail');
+  const detail = hasDetail ? String(input.detail || '').replace(/\r\n/g, '\n').trim().slice(0, 3000) : null;
   const photosIn = Array.isArray(input.photos) ? input.photos : [];
   if (!id) throw httpError(400, 'id가 없어요');
   if (photosIn.length > 12) throw httpError(400, '사진은 한 장소에 12장까지예요');
@@ -113,6 +116,7 @@ async function savePlace(gh, input) {
 
   const removed = (place.photos || []).filter(p => !finalPhotos.includes(p));
   place.body = body;
+  if (hasDetail) { if (detail) place.detail = detail; else delete place.detail; }
   if (finalPhotos.length) place.photos = finalPhotos; else delete place.photos;
 
   await gh('/contents/places.json', {
@@ -142,7 +146,7 @@ async function savePlace(gh, input) {
     }
   }
 
-  return { ok: true, place: { id, body: place.body, photos: place.photos || [] }, added, deleted, data };
+  return { ok: true, place: { id, body: place.body, detail: place.detail || '', photos: place.photos || [] }, added, deleted, data };
 }
 
 // ---------- GitHub ----------
