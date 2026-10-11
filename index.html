@@ -4,6 +4,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta charset="UTF-8">
 <title>놀맵</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=fdf609543f391b19f0295840c6173357&autoload=false"></script>
@@ -55,7 +57,8 @@
     gap:10px;
     flex-shrink:0;
   }
-  .mascot-sm{width:38px;height:38px;flex-shrink:0;}
+  .mascot-sm{width:42px;height:42px;flex-shrink:0;display:block;border-radius:10px;
+    box-shadow:0 3px 10px rgba(95,174,58,0.18);}
   .title{
     font-family:'Jua', sans-serif;
     font-size:19px;
@@ -766,16 +769,7 @@
 <div class="phone">
 
   <div class="header">
-    <svg class="mascot-sm" viewBox="0 0 100 100">
-      <circle cx="50" cy="50" r="48" fill="#FFF3D6"/>
-      <path d="M20 40 Q50 15 80 40 L74 46 Q50 28 26 46 Z" fill="#8FD14F"/>
-      <circle cx="50" cy="55" r="22" fill="#FFFFFF" stroke="#8FD14F" stroke-width="3"/>
-      <circle cx="43" cy="53" r="3" fill="#3E7A2C"/>
-      <circle cx="57" cy="53" r="3" fill="#3E7A2C"/>
-      <path d="M42 62 Q50 68 58 62" stroke="#3E7A2C" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <circle cx="34" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
-      <circle cx="66" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
-    </svg>
+    <img class="mascot-sm" src="images/logo.png" alt="놀맵" width="42" height="42">
     <div>
       <div class="title" id="screenTitle">❤️놀맵❤️</div>
       <div class="subtitle" id="screenSubtitle">⭐신도림놀구로를 가는 가장 안전한 길⭐</div>
