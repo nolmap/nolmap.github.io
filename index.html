@@ -218,6 +218,32 @@
     display:flex;align-items:center;justify-content:center;
     font-size:15px; box-shadow:0 3px 8px rgba(0,0,0,0.22); cursor:pointer;
   }
+  /* 장소마다 다른 지도 핀: 가운데는 장소 아이콘, 오른쪽 위 작은 배지로 구로엔젤/삼대발견 구분 */
+  .place-pin{
+    position:relative; width:36px; height:36px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; line-height:1; cursor:pointer;
+    box-shadow:0 3px 8px rgba(0,0,0,0.22);
+  }
+  .place-pin.angel{background:#FFF3D6; border:3px solid var(--leaf);}
+  .place-pin.disc{background:#F3E8FF; border:3px solid #A96BE0;}
+  .place-pin.angel.disc{border-color:var(--leaf); box-shadow:0 0 0 3px #A96BE0, 0 3px 8px rgba(0,0,0,0.22);}
+  .pp-badges{position:absolute; top:-7px; right:-9px; display:flex; gap:1px;}
+  .pp-badge{
+    width:17px; height:17px; border-radius:50%; background:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; box-shadow:0 1px 3px rgba(0,0,0,0.25);
+  }
+  .pp-name{
+    position:absolute; top:calc(100% + 3px); left:50%; transform:translateX(-50%);
+    white-space:nowrap; font-family:'Jua',sans-serif; font-size:10.5px; line-height:1;
+    padding:3px 7px; border-radius:999px; background:rgba(255,255,255,0.95);
+    box-shadow:0 1px 4px rgba(0,0,0,0.18); pointer-events:none;
+    display:none;
+  }
+  .place-pin.angel .pp-name{color:var(--leaf-text);}
+  .place-pin.disc .pp-name{color:#7A3FB5;}
+  .show-pin-names .pp-name{display:block;}
   .dist-tag{
     display:inline-block; background:var(--safe-bg); color:var(--leaf-deep);
     font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:999px;
@@ -1445,10 +1471,25 @@ setInterval(updateNolguroStatus, 60000);
       yAnchor: 0.5
     }).setMap(map);
 
+    // 장소 핀: 가게마다 자기 아이콘 + 구로엔젤(🧚)/삼대발견(✨) 배지 + 가까이 보면 이름
+    const sharedDisc = new Set(DISCOVER_IDS.map(id => PLACES[id].pinOf).filter(Boolean));
+    const placePin = (id, isAngel, isDisc) => {
+      const p = PLACES[id];
+      return '<div class="place-pin' + (isAngel ? ' angel' : '') + (isDisc ? ' disc' : '') +
+        '" onclick="showPanel(PLACES.' + id + ')" title="' + escapeHtml(p.name) + '">' +
+        '<span>' + (p.emoji || '📍') + '</span>' +
+        '<span class="pp-badges">' +
+          (isAngel ? '<span class="pp-badge">🧚</span>' : '') +
+          (isDisc ? '<span class="pp-badge">✨</span>' : '') +
+        '</span>' +
+        '<span class="pp-name">' + escapeHtml(p.name) + '</span>' +
+      '</div>';
+    };
+
     window._angelMarks = ANGEL_PINS.map(id => {
       const ov = new kakao.maps.CustomOverlay({
         position: LL(PLACES[id].pos),
-        content: '<div class="angel-pin" onclick="showPanel(PLACES.' + id + ')">🧚</div>',
+        content: placePin(id, true, sharedDisc.has(id)),
         yAnchor: 0.5
       });
       ov.setMap(map);
@@ -1460,10 +1501,17 @@ setInterval(updateNolguroStatus, 60000);
     DISCOVER_IDS.filter(id => PLACES[id].pos && !PLACES[id].pinOf).forEach(id => {
       new kakao.maps.CustomOverlay({
         position: LL(PLACES[id].pos),
-        content: '<div class="discover-pin" onclick="showPanel(PLACES.' + id + ')">✨</div>',
-        yAnchor: 0.5
+        content: placePin(id, false, true),
+        yAnchor: 0.5,
+        zIndex: 2
       }).setMap(map);
     });
+
+    // 가까이 확대했을 때만 가게 이름 보이기 (멀리서는 겹쳐서 복잡해요)
+    const mapEl = document.getElementById('kakaoMap');
+    const syncNames = () => mapEl.classList.toggle('show-pin-names', map.getLevel() <= 2);
+    kakao.maps.event.addListener(map, 'zoom_changed', syncNames);
+    syncNames();
 
     // 대기 중이던 작업 실행
     _mapReadyQueue.splice(0).forEach(cb => cb());
