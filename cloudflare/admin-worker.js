@@ -11,6 +11,8 @@
  *   POST /admin/save    한 장소의 소개글·사진 저장
  *        { id, body, detail?, photos: [ "images/xxx.jpg" | { data: "<base64 jpeg>" } , ... ] }
  *        detail(자세한 설명)은 보냈을 때만 바꿔요. 빈 문자열이면 지워요.
+ *        addr, tel, hours, rows(가게 정보)도 보냈을 때만 바꿔요.
+ *        흥왕처럼 구로엔젤·삼대발견에 같이 있는 가게(pinOf)는 가게 정보를 짝에도 같이 저장해요.
  */
 
 const REPO = 'nolmap/nolmap.github.io';
@@ -67,7 +69,8 @@ export default {
 
       return json({ ok: false, error: '없는 주소예요' }, 404);
     } catch (e) {
-      return json({ ok: false, error: e.message || String(e), status: e.status || 500 }, e.status === 409 ? 409 : 500);
+      const code = e.status >= 400 && e.status < 500 ? e.status : 500;
+      return json({ ok: false, error: e.message || String(e), status: code }, code);
     }
   }
 };
@@ -81,6 +84,7 @@ async function savePlace(gh, input) {
   const photosIn = Array.isArray(input.photos) ? input.photos : [];
   if (!id) throw httpError(400, 'id가 없어요');
   if (photosIn.length > 12) throw httpError(400, '사진은 한 장소에 12장까지예요');
+  const info = readInfo(input);
 
   const { sha, data } = await readPlaces(gh);
   const place = data.places && data.places[id];
@@ -117,6 +121,10 @@ async function savePlace(gh, input) {
   const removed = (place.photos || []).filter(p => !finalPhotos.includes(p));
   place.body = body;
   if (hasDetail) { if (detail) place.detail = detail; else delete place.detail; }
+  if (info) {
+    const twinId = place.pinOf || Object.keys(data.places).find(k => data.places[k].pinOf === id);
+    for (const p of [place, twinId && data.places[twinId]].filter(Boolean)) applyInfo(p, info);
+  }
   if (finalPhotos.length) place.photos = finalPhotos; else delete place.photos;
 
   await gh('/contents/places.json', {
@@ -146,7 +154,56 @@ async function savePlace(gh, input) {
     }
   }
 
-  return { ok: true, place: { id, body: place.body, detail: place.detail || '', photos: place.photos || [] }, added, deleted, data };
+  return {
+    ok: true,
+    place: {
+      id, body: place.body, detail: place.detail || '', photos: place.photos || [],
+      addr: place.addr || '', tel: place.tel || '', hours: place.hours || {}, rows: place.rows || []
+    },
+    added, deleted, data
+  };
+}
+
+// ---------- 가게 정보 (주소·전화·운영시간·정보 줄) ----------
+const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+const TIME_RANGE = /^([01]\d|2[0-4]):[0-5]\d-([01]\d|2[0-4]):[0-5]\d$/;
+function readInfo(input) {
+  const has = k => Object.prototype.hasOwnProperty.call(input, k);
+  if (!['addr', 'tel', 'hours', 'rows'].some(has)) return null;
+  const info = {};
+  if (has('addr')) info.addr = String(input.addr || '').trim().slice(0, 60);
+  if (has('tel')) {
+    const tel = String(input.tel || '').trim();
+    if (tel && !/^[0-9+\-\s()]{6,20}$/.test(tel)) throw httpError(400, '전화번호 형식이 이상해요');
+    info.tel = tel;
+  }
+  if (has('hours')) {
+    const h = input.hours && typeof input.hours === 'object' ? input.hours : {};
+    const out = {};
+    for (const d of DAYS) {
+      const v = h[d];
+      if (v === undefined || v === null || v === '') continue;
+      const s = String(v).trim();
+      const ok = s === 'closed' || s === '24h' || s.split(',').every(p => TIME_RANGE.test(p.trim()));
+      if (!ok) throw httpError(400, '운영시간 형식이 이상해요: ' + d + ' ' + s);
+      out[d] = s.split(',').map(p => p.trim()).join(',');
+    }
+    info.hours = out;
+  }
+  if (has('rows')) {
+    if (!Array.isArray(input.rows) || input.rows.length > 15) throw httpError(400, '정보 줄은 15줄까지예요');
+    info.rows = input.rows.map(r => {
+      if (!Array.isArray(r)) throw httpError(400, '정보 줄 형식이 이상해요');
+      return [String(r[0] || '').trim().slice(0, 8) || '📌', String(r[1] || '').trim().slice(0, 120)];
+    }).filter(r => r[1]);
+  }
+  return info;
+}
+function applyInfo(p, info) {
+  if ('addr' in info) { if (info.addr) p.addr = info.addr; else delete p.addr; }
+  if ('tel' in info) { if (info.tel) p.tel = info.tel; else delete p.tel; }
+  if ('hours' in info) { if (Object.keys(info.hours).length) p.hours = info.hours; else delete p.hours; }
+  if ('rows' in info) p.rows = info.rows;
 }
 
 // ---------- GitHub ----------
@@ -166,7 +223,8 @@ function makeGitHub(token) {
     if (!res.ok) {
       let msg = 'GitHub ' + res.status;
       try { const j = await res.json(); if (j.message) msg += ' · ' + j.message; } catch (_) {}
-      throw httpError(res.status, msg);
+      // GitHub 쪽 오류는 409(동시 수정)만 그대로, 나머지는 502로 (관리자 비밀번호 오류 401과 헷갈리지 않게)
+      throw httpError(res.status === 409 || res.status === 422 ? 409 : 502, msg);
     }
     return res.status === 204 ? null : res.json();
   };

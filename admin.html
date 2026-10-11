@@ -7,6 +7,7 @@
 <title>놀맵 관리자</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="hours.js"></script>
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=fdf609543f391b19f0295840c6173357&autoload=false"></script>
 <style>
   :root{
@@ -114,6 +115,42 @@
   .save-row{margin-top:16px;}
   .dirty{font-size:11px;color:var(--warn);}
   .count{font-size:10.5px;color:var(--muted);text-align:right;margin-top:3px;}
+  /* 가게 정보 */
+  .info-box{margin-top:14px;padding:12px;border-radius:14px;background:#FAFDF7;border:1px solid #E3EED8;}
+  .info-box > .lbl:first-child{margin-top:0;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  @media (max-width:480px){ .two{grid-template-columns:1fr;} }
+  .inp.sm{padding:8px 10px;font-size:13px;}
+  .hours-grid{display:grid;gap:6px;}
+  .hrow{display:grid;grid-template-columns:28px 108px 1fr;gap:6px;align-items:center;}
+  .hrow .d{font-family:'Jua',sans-serif;font-size:13px;color:var(--leaf-text);text-align:center;}
+  .hrow.we .d{color:#C0504D;}
+  .hrow select,.hrow input{border:1px solid #DCE9D0;background:#fff;border-radius:9px;padding:6px 7px;font-size:13px;font-family:inherit;color:var(--ink);min-width:0;}
+  .hrow .times{display:flex;gap:4px;align-items:center;min-width:0;}
+  .hrow .times input[type=time]{flex:1;}
+  .hrow .times input[type=text]{flex:1;}
+  .hrow .times span{color:var(--muted);font-size:12px;}
+  .hrow .times:empty{display:none;}
+  /* 좁은 화면: 시간 입력을 요일 선택 아래 줄로 내려서 잘리지 않게 */
+  @media (max-width:520px){
+    .hrow{grid-template-columns:24px 1fr;}
+    .hrow .times{grid-column:2;}
+  }
+  .hours-tools{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+  .hours-prev{margin-top:8px;font-size:12px;background:#fff;border-radius:10px;padding:8px 10px;border:1px dashed #DCE9D0;line-height:1.6;}
+  .hours-prev b{font-weight:700;}
+  .chk{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--ink);margin-top:8px;cursor:pointer;}
+  .rows-list{display:grid;gap:6px;}
+  .rrow{display:grid;grid-template-columns:48px 1fr auto;gap:6px;align-items:center;}
+  .rrow input{border:1px solid #DCE9D0;background:#fff;border-radius:9px;padding:7px 8px;font-size:13px;font-family:inherit;color:var(--ink);min-width:0;}
+  .rrow input.ic{text-align:center;font-size:16px;padding:5px 2px;}
+  .rrow input[readonly]{background:#F1F6EC;color:var(--muted);}
+  .rrow .acts{display:flex;gap:3px;}
+  .rrow .acts button{border:none;background:var(--bg);border-radius:7px;width:26px;height:28px;cursor:pointer;font-size:11px;color:var(--leaf-text);}
+  .rrow .acts button.del{color:var(--bad);}
+  .rrow .acts button:disabled{opacity:.35;cursor:default;}
+  .note{font-size:11px;color:var(--warn);margin-top:6px;}
+  .note:empty{display:none;}
 
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;
     background:#2B3424;color:#fff;padding:9px 16px;border-radius:999px;font-size:12px;transition:all .2s;pointer-events:none;}
@@ -169,6 +206,31 @@
           <label class="lbl" for="edDetail">자세한 설명 <small style="color:var(--muted);font-weight:normal;">· 삼대발견 "📖 설명" 버튼을 누르면 나와요. 빈 줄로 문단을 나눠요</small></label>
           <textarea id="edDetail" class="inp" rows="8" maxlength="3000"></textarea>
           <div class="count" id="edDetailCount"></div>
+        </div>
+
+        <div class="info-box">
+          <label class="lbl">🏷️ 가게 정보</label>
+          <div class="two">
+            <div><label class="lbl" for="edAddr" style="margin-top:4px;">목록에 보이는 주소</label>
+              <input id="edAddr" class="inp sm" type="text" maxlength="60" placeholder="예: 신도림동 296-61"></div>
+            <div><label class="lbl" for="edTel" style="margin-top:4px;">☎️ 전화 버튼 번호 <small style="color:var(--muted);font-weight:normal;">· 비우면 버튼이 없어져요</small></label>
+              <input id="edTel" class="inp sm" type="tel" maxlength="20" placeholder="예: 02-2676-1241"></div>
+          </div>
+
+          <label class="lbl">🕗 운영시간 <small style="color:var(--muted);font-weight:normal;">· "정보 없음"인 요일엔 영업 중 표시를 안 해요</small></label>
+          <div class="hours-grid" id="edHours"></div>
+          <div class="hours-tools">
+            <button class="b ghost small" type="button" onclick="copyHours('weekdays')">월요일 → 평일 모두</button>
+            <button class="b ghost small" type="button" onclick="copyHours('all')">월요일 → 매일</button>
+            <button class="b ghost small" type="button" onclick="copyHours('clear')">모두 정보 없음</button>
+          </div>
+          <div class="hours-prev" id="edHoursPrev"></div>
+          <label class="chk"><input type="checkbox" id="edAutoHour" checked onchange="onInfoChange()"> 아래 정보 줄의 🕗 운영시간도 자동으로 맞추기</label>
+
+          <label class="lbl">📋 정보 줄 <small style="color:var(--muted);font-weight:normal;">· 정보 창에 나오는 줄이에요. 왼쪽 칸은 아이콘(이모지)</small></label>
+          <div class="rows-list" id="edRows"></div>
+          <button class="b ghost small" type="button" style="margin-top:8px;" onclick="addRow()">＋ 줄 추가</button>
+          <div class="note" id="edMirror"></div>
         </div>
 
         <label class="lbl">사진 <small style="color:var(--muted);font-weight:normal;">· 첫 번째 사진이 목록 썸네일이에요</small></label>
@@ -522,10 +584,15 @@
       detail: p.detail || '',
       origDetail: p.detail || '',
       body: p.body || '',
+      addr: p.addr || '',
+      tel: p.tel || '',
+      hours: Object.assign({}, p.hours || {}),
+      rows: (p.rows || []).map(r => [r[0], r[1]]),
       photos: (p.photos || []).map(path => ({ path })),
       origBody: p.body || '',
       origPhotos: (p.photos || []).slice()
     };
+    EDIT.origInfo = infoKey(EDIT);
     $('edEmoji').textContent = p.emoji || '📍';
     $('edName').textContent = p.name;
     $('edId').textContent = id + (ANGEL_IDS.includes(id) ? ' · 구로엔젤' : ' · 삼대발견');
@@ -533,6 +600,16 @@
     $('edDetailWrap').style.display = hasDetail ? '' : 'none';
     $('edDetail').value = EDIT.detail;
     $('edDetailCount').textContent = EDIT.detail.length + ' / 3000자';
+    $('edAddr').value = EDIT.addr;
+    $('edTel').value = EDIT.tel;
+    // 🕗 줄이 요약과 같거나 운영시간이 없으면 자동 맞추기를 켜 둬요
+    const hourRow = EDIT.rows.find(r => r[0] === '🕗');
+    $('edAutoHour').checked = !hourRow || !Object.keys(EDIT.hours).length || hourRow[1] === NolHours.summarize(EDIT.hours);
+    const twin = twinOf(id);
+    $('edMirror').textContent = twin ? '※ 가게 정보(주소·전화·운영시간·정보 줄)는 ' + PLACES[twin].name + '(' + twin + ')에도 같이 저장돼요.' : '';
+    customDays.clear();
+    renderHours();
+    renderRows();
     $('saveMsg').textContent = '';
     $('editPane').style.display = '';
     renderChips();
@@ -542,9 +619,113 @@
   function isDirty(){
     if(!EDIT) return false;
     const now = EDIT.photos.map(ph => ph.path || '#new');
-    return EDIT.body !== EDIT.origBody || EDIT.detail !== EDIT.origDetail || now.join('|') !== EDIT.origPhotos.join('|');
+    return EDIT.body !== EDIT.origBody || EDIT.detail !== EDIT.origDetail ||
+      infoKey(EDIT) !== EDIT.origInfo || now.join('|') !== EDIT.origPhotos.join('|');
   }
   function updateDirty(){ $('edDirty').textContent = isDirty() ? '● 저장 안 된 수정이 있어요' : ''; }
+
+  // ----- 가게 정보 (주소·전화·운영시간·정보 줄) -----
+  const DAY_KO = { mon:'월', tue:'화', wed:'수', thu:'목', fri:'금', sat:'토', sun:'일' };
+  function infoKey(E){
+    const hs = {}; NolHours.DAYS.forEach(d => { if(E.hours[d]) hs[d] = E.hours[d]; });
+    return JSON.stringify([E.addr, E.tel, hs, E.rows]);
+  }
+  // 흥왕처럼 구로엔젤·삼대발견 두 곳에 있는 가게 짝 찾기
+  function twinOf(id){
+    if(PLACES[id] && PLACES[id].pinOf) return PLACES[id].pinOf;
+    return Object.keys(PLACES).find(k => PLACES[k].pinOf === id) || null;
+  }
+  const customDays = new Set();   // "직접 입력"을 고른 요일 (아직 비어 있어도 입력칸 보이기)
+  function dayMode(v, d){
+    if(d && customDays.has(d)) return 'custom';
+    if(!v) return 'none';
+    if(v === 'closed' || v === '24h') return v;
+    return /^\d\d:\d\d-\d\d:\d\d$/.test(v) ? 'open' : 'custom';
+  }
+  function renderHours(){
+    $('edHours').innerHTML = NolHours.DAYS.map(d => {
+      const v = EDIT.hours[d] || '', m = dayMode(v, d);
+      const [o, c] = m === 'open' ? v.split('-') : ['', ''];
+      return '<div class="hrow' + (d === 'sat' || d === 'sun' ? ' we' : '') + '" data-d="' + d + '">' +
+        '<span class="d">' + DAY_KO[d] + '</span>' +
+        '<select onchange="setDayMode(\'' + d + '\', this.value)">' +
+          [['none','정보 없음'],['open','영업'],['closed','휴무'],['24h','24시간'],['custom','직접 입력']]
+            .map(([k, t]) => '<option value="' + k + '"' + (k === m ? ' selected' : '') + '>' + t + '</option>').join('') +
+        '</select>' +
+        '<div class="times">' +
+          (m === 'open' ? '<input type="time" value="' + o + '" onchange="setDayTime(\'' + d + '\')"><span>~</span><input type="time" value="' + c + '" onchange="setDayTime(\'' + d + '\')">' : '') +
+          (m === 'custom' ? '<input type="text" value="' + esc(v) + '" placeholder="11:00-15:00,17:00-21:00" oninput="setDayCustom(\'' + d + '\', this)">' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+    onInfoChange();
+  }
+  function setDayMode(d, m){
+    if(m === 'custom') customDays.add(d); else customDays.delete(d);
+    if(m === 'none') delete EDIT.hours[d];
+    else if(m === 'closed' || m === '24h') EDIT.hours[d] = m;
+    else if(m === 'open') EDIT.hours[d] = /^\d\d:\d\d-\d\d:\d\d$/.test(EDIT.hours[d] || '') ? EDIT.hours[d] : '09:00-18:00';
+    else if(EDIT.hours[d] && !['closed','24h'].includes(EDIT.hours[d])) { /* 기존 시간을 그대로 고치기 */ }
+    else delete EDIT.hours[d];
+    renderHours();
+  }
+  function setDayTime(d){
+    const ins = document.querySelectorAll('.hrow[data-d="' + d + '"] input[type=time]');
+    const o = ins[0].value, c = ins[1].value;
+    if(o && c) EDIT.hours[d] = o + '-' + c;
+    onInfoChange();
+  }
+  function setDayCustom(d, el){
+    const v = el.value.replace(/\s/g, '').replace(/~/g, '-');
+    if(v) EDIT.hours[d] = v; else delete EDIT.hours[d];
+    el.style.borderColor = !v || NolHours.isValidDay(v) ? '' : 'var(--bad)';
+    onInfoChange();
+  }
+  function copyHours(kind){
+    if(kind === 'clear'){ EDIT.hours = {}; renderHours(); return; }
+    const v = EDIT.hours.mon;
+    if(!v){ toast('먼저 월요일 시간을 정해 주세요'); return; }
+    const targets = kind === 'weekdays' ? ['tue','wed','thu','fri'] : ['tue','wed','thu','fri','sat','sun'];
+    targets.forEach(d => EDIT.hours[d] = v);
+    renderHours();
+  }
+  function hoursValid(){
+    return NolHours.DAYS.every(d => !EDIT.hours[d] || NolHours.isValidDay(EDIT.hours[d]));
+  }
+  // 운영시간이 바뀌면 미리보기와 🕗 줄을 맞춰요
+  function onInfoChange(){
+    const sum = hoursValid() ? NolHours.summarize(EDIT.hours) : '';
+    const st = hoursValid() ? NolHours.status(EDIT.hours) : null;
+    $('edHoursPrev').innerHTML = !hoursValid()
+      ? '<span style="color:var(--bad);">직접 입력한 시간 형식이 맞지 않아요 (예: 11:00-15:00,17:00-21:00)</span>'
+      : (sum ? '요약: <b>' + esc(sum) + '</b>' : '운영시간 정보 없음') +
+        (st ? '<br>지금: <b style="color:' + (st.open ? (st.soon ? '#B26A00' : '#2F8A1E') : '#7C8A73') + ';">' + esc(st.open && st.soon ? '곧 마감' : st.label) + '</b> ' + esc(st.detail || '') : '');
+    if($('edAutoHour').checked && hoursValid()){
+      const i = EDIT.rows.findIndex(r => r[0] === '🕗');
+      if(sum){ if(i >= 0) EDIT.rows[i][1] = sum; else EDIT.rows.push(['🕗', sum]); }
+      else if(i >= 0 && Object.keys(EDIT.hours).length === 0) { /* 시간 정보를 지웠어도 기존 줄은 남겨요 */ }
+    }
+    renderRows();
+    updateDirty();
+  }
+  function renderRows(){
+    const auto = $('edAutoHour').checked;
+    $('edRows').innerHTML = EDIT.rows.length ? EDIT.rows.map((r, i) => {
+      const locked = auto && r[0] === '🕗' && Object.keys(EDIT.hours).length > 0;
+      return '<div class="rrow">' +
+        '<input class="ic" type="text" maxlength="8" value="' + esc(r[0]) + '" oninput="setRow(' + i + ',0,this.value)"' + (locked ? ' readonly' : '') + '>' +
+        '<input type="text" maxlength="120" value="' + esc(r[1]) + '" oninput="setRow(' + i + ',1,this.value)"' + (locked ? ' readonly title="운영시간에서 자동으로 만들어져요"' : '') + '>' +
+        '<div class="acts">' +
+          '<button type="button" title="위로" onclick="moveRow(' + i + ',-1)"' + (i === 0 ? ' disabled' : '') + '>▲</button>' +
+          '<button type="button" title="아래로" onclick="moveRow(' + i + ',1)"' + (i === EDIT.rows.length - 1 ? ' disabled' : '') + '>▼</button>' +
+          '<button type="button" class="del" title="빼기" onclick="removeRow(' + i + ')">✕</button>' +
+        '</div></div>';
+    }).join('') : '<div class="ph-empty" style="padding:10px;">정보 줄이 없어요.</div>';
+  }
+  function setRow(i, k, v){ EDIT.rows[i][k] = v; updateDirty(); }
+  function moveRow(i, d){ const j = i + d; if(j < 0 || j >= EDIT.rows.length) return; [EDIT.rows[i], EDIT.rows[j]] = [EDIT.rows[j], EDIT.rows[i]]; renderRows(); updateDirty(); }
+  function removeRow(i){ EDIT.rows.splice(i, 1); renderRows(); updateDirty(); }
+  function addRow(){ EDIT.rows.push(['📌', '']); renderRows(); updateDirty(); const ins = $('edRows').querySelectorAll('.rrow input:not(.ic)'); if(ins.length) ins[ins.length - 1].focus(); }
 
   function renderEditPhotos(){
     const list = EDIT.photos;
@@ -618,6 +799,12 @@
     if(!EDIT || !adminPw) return;
     EDIT.body = $('edBody').value.trim();
     EDIT.detail = $('edDetail').value.trim();
+    EDIT.addr = $('edAddr').value.trim();
+    EDIT.tel = $('edTel').value.trim();
+    EDIT.rows = EDIT.rows.map(r => [String(r[0]).trim(), String(r[1]).trim()]).filter(r => r[1]);
+    renderRows();
+    if(!hoursValid()){ $('saveMsg').className = 'msg bad'; $('saveMsg').textContent = '운영시간 형식을 먼저 고쳐 주세요.'; return; }
+    if(EDIT.tel && !/^[0-9+\-\s()]{6,20}$/.test(EDIT.tel)){ $('saveMsg').className = 'msg bad'; $('saveMsg').textContent = '전화번호는 숫자와 - 만 써 주세요.'; return; }
     if(!isDirty()){ toast('바뀐 내용이 없어요'); return; }
     const btn = $('saveBtn'), msg = $('saveMsg');
     btn.disabled = true;
@@ -629,9 +816,13 @@
       for(const ph of EDIT.photos){
         photos.push(ph.isNew ? { data: bytesToB64(new Uint8Array(await ph.blob.arrayBuffer())) } : ph.path);
       }
-      const payload = { id: EDIT.id, body: EDIT.body, photos };
+      const hours = {}; NolHours.DAYS.forEach(d => { if(EDIT.hours[d]) hours[d] = EDIT.hours[d]; });
+      const payload = { id: EDIT.id, body: EDIT.body, photos, addr: EDIT.addr, tel: EDIT.tel, hours, rows: EDIT.rows };
       if(EDIT.hasDetail) payload.detail = EDIT.detail;
       const r = await adminApi('/admin/save', { method:'POST', body: payload });
+      if(r.place.rows === undefined && infoKey(EDIT) !== EDIT.origInfo){
+        throw new Error('Cloudflare Worker 코드가 예전 버전이라 가게 정보가 저장되지 않았어요. cloudflare/admin-worker.js를 다시 배포해 주세요.');
+      }
       if(EDIT.hasDetail && EDIT.detail !== EDIT.origDetail && r.place.detail === undefined){
         throw new Error('Cloudflare Worker 코드가 예전 버전이라 자세한 설명이 저장되지 않았어요. cloudflare/admin-worker.js를 다시 배포해 주세요.');
       }
@@ -642,6 +833,13 @@
       EDIT.origBody = r.place.body;
       if(EDIT.hasDetail){ EDIT.detail = r.place.detail || ''; EDIT.origDetail = EDIT.detail; $('edDetail').value = EDIT.detail; }
       EDIT.origPhotos = r.place.photos.slice();
+      if(r.place.rows){
+        EDIT.addr = r.place.addr || ''; EDIT.tel = r.place.tel || '';
+        EDIT.hours = Object.assign({}, r.place.hours || {}); EDIT.rows = r.place.rows.map(x => [x[0], x[1]]);
+        EDIT.origInfo = infoKey(EDIT);
+        $('edAddr').value = EDIT.addr; $('edTel').value = EDIT.tel;
+        renderHours();
+      }
       renderEditPhotos();
       renderPlaces();
       msg.className = 'msg ok';
@@ -656,6 +854,8 @@
     }
   }
   $('edBody') && $('edBody').addEventListener('input', () => { if(EDIT){ EDIT.body = $('edBody').value.trim(); updateDirty(); } });
+  $('edAddr').addEventListener('input', () => { if(EDIT){ EDIT.addr = $('edAddr').value.trim(); updateDirty(); } });
+  $('edTel').addEventListener('input', () => { if(EDIT){ EDIT.tel = $('edTel').value.trim(); updateDirty(); } });
   $('edDetail') && $('edDetail').addEventListener('input', () => {
     if(!EDIT) return;
     EDIT.detail = $('edDetail').value.trim();

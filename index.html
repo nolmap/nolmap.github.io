@@ -8,6 +8,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="hours.js"></script>
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=fdf609543f391b19f0295840c6173357&autoload=false"></script>
 <style>
   :root{
@@ -254,6 +255,24 @@
   .place-pin.angel .pp-name{color:var(--leaf-text);}
   .place-pin.disc .pp-name{color:#7A3FB5;}
   .show-pin-names .pp-name{display:block;}
+  /* 지금 영업 중 표시 */
+  .open-tag{
+    display:inline-block; font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:999px;
+    margin-left:4px; vertical-align:middle; white-space:nowrap; font-family:'Gowun Dodum',sans-serif;
+  }
+  .open-tag.on{background:#E3F6DA; color:#2F8A1E;}
+  .open-tag.soon{background:#FFF1D6; color:#B26A00;}
+  .open-tag.off{background:#EFF1EC; color:#7C8A73;}
+  .info-open{margin-top:5px; font-size:11.5px; font-weight:700;}
+  .info-open.on{color:#2F8A1E;} .info-open.soon{color:#B26A00;} .info-open.off{color:#7C8A73;}
+  .info-open small{font-weight:normal; opacity:.85; margin-left:4px;}
+  .pp-open{
+    position:absolute; left:-3px; bottom:-3px; width:11px; height:11px; border-radius:50%;
+    border:2px solid #fff; box-shadow:0 1px 2px rgba(0,0,0,.25); display:none;
+  }
+  .pp-open.on{display:block; background:#2FBF3A;}
+  .pp-open.soon{display:block; background:#FFA41B;}
+  .pp-open.off{display:block; background:#B9C0B3;}
   .dist-tag{
     display:inline-block; background:var(--safe-bg); color:var(--leaf-deep);
     font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:999px;
@@ -1268,6 +1287,33 @@ setInterval(updateNolguroStatus, 60000);
     }));
   }
 
+  // ===== 지금 영업 중 =====
+  function openState(pl){
+    if(!pl || !pl.hours || !window.NolHours) return null;
+    const s = NolHours.status(pl.hours);
+    if(!s) return null;
+    return { cls: s.open ? (s.soon ? 'soon' : 'on') : 'off', label: s.open && s.soon ? '곧 마감' : s.label, detail: s.detail };
+  }
+  function openTag(pl){
+    const s = openState(pl);
+    return s ? '<span class="open-tag ' + s.cls + '">' + s.label + '</span>' : '';
+  }
+  // 1분마다 지도 핀 점과 열려 있는 목록을 새로 계산
+  function refreshOpenStatus(){
+    document.querySelectorAll('.place-pin[data-id]').forEach(el => {
+      const s = openState(PLACES[el.dataset.id]);
+      const dot = el.querySelector('.pp-open');
+      if(dot) dot.className = 'pp-open' + (s ? ' ' + s.cls : '');
+    });
+    const shop = document.getElementById('angelShopModal');
+    if(shop && shop.classList.contains('open')) renderAngelShops();
+    const disc = document.getElementById('screen-discover');
+    if(disc && disc.classList.contains('active')) renderDiscover();
+    const panel = document.getElementById('infoPanel');
+    if(panel && panel.classList.contains('open') && panel._place) showPanel(panel._place);
+  }
+  setInterval(refreshOpenStatus, 60000);
+
   // 삼대발견 장소면 설명을 보여줄 id (흥왕처럼 구로엔젤 핀을 같이 쓰는 경우도 포함)
   function detailIdOf(id){
     if(!id) return null;
@@ -1304,7 +1350,9 @@ setInterval(updateNolguroStatus, 60000);
     el.innerHTML =
       '<button class="info-close" type="button" onclick="closePanel()">✕</button>' +
       '<div class="info-head"><div class="info-emoji">' + pl.emoji + '</div>' +
-      '<div><h4>' + pl.name + '</h4><div class="sub">' + (pl.sub||'') + '</div></div></div>' +
+      '<div><h4>' + pl.name + '</h4><div class="sub">' + (pl.sub||'') + '</div>' +
+        (() => { const s = openState(pl); return s ? '<div class="info-open ' + s.cls + '">● ' + s.label + (s.detail ? '<small>' + s.detail + '</small>' : '') + '</div>' : ''; })() +
+      '</div></div>' +
       (pl.body ? '<p class="info-body">' + pl.body + '</p>' : '') +
       (rows ? '<div class="info-rows">' + rows + '</div>' : '') +
       (() => {
@@ -1319,6 +1367,7 @@ setInterval(updateNolguroStatus, 60000);
         (pl.tel ? '<a class="call" href="tel:' + pl.tel.replace(/-/g,'') + '">☎️ 전화</a>' : '') +
         '<button class="go" type="button" onclick="findMyRoute(\'' + (pl._id || 'nolguro') + '\')">📍 길찾기</button>' +
       '</div>';
+    el._place = pl;
     el.classList.add('open');
     document.getElementById('mapCtrl').classList.add('up');
   }
@@ -1442,8 +1491,10 @@ setInterval(updateNolguroStatus, 60000);
     const sharedDisc = new Set(DISCOVER_IDS.map(id => PLACES[id].pinOf).filter(Boolean));
     const placePin = (id, isAngel, isDisc) => {
       const p = PLACES[id];
+      const s = openState(p);
       return '<div class="place-pin' + (isAngel ? ' angel' : '') + (isDisc ? ' disc' : '') +
-        '" onclick="showPanel(PLACES.' + id + ')" title="' + escapeHtml(p.name) + '">' +
+        '" data-id="' + id + '" onclick="showPanel(PLACES.' + id + ')" title="' + escapeHtml(p.name) + '">' +
+        '<span class="pp-open' + (s ? ' ' + s.cls : '') + '"></span>' +
         '<span>' + (p.emoji || '📍') + '</span>' +
         '<span class="pp-badges">' +
           (isAngel ? '<span class="pp-badge">🧚</span>' : '') +
@@ -1719,7 +1770,7 @@ function findMyRoute(placeId = 'nolguro'){
           ? '<img class="shop-thumb" src="'+d.photos[0]+'" alt="'+d.name+'">'
           : '<div class="shop-ic">'+d.emoji+'</div>') +
         '<div class="shop-txt">' +
-          '<h5>'+d.name+' <span class="dist-tag">'+d.dist+'</span></h5>' +
+          '<h5>'+d.name+' <span class="dist-tag">'+d.dist+'</span>'+openTag(d)+'</h5>' +
           '<p>'+d.body+'</p>' +
           '<p class="shop-meta">'+d.addr+'</p>' +
         '</div><div class="shop-go">›</div></div>';
@@ -1743,7 +1794,7 @@ function findMyRoute(placeId = 'nolguro'){
             ? '<img class="shop-thumb" src="'+a.photos[0]+'" alt="'+a.name+'" onerror="this.outerHTML=\'<div class=&quot;shop-ic&quot;>'+a.emoji+'</div>\'">'
             : '<div class="shop-ic">'+a.emoji+'</div>') +
           '<div class="shop-txt">' +
-            '<h5>'+a.name+' <span class="dist-tag">'+a.dist+'</span></h5>' +
+            '<h5>'+a.name+' <span class="dist-tag">'+a.dist+'</span>'+openTag(a)+'</h5>' +
             '<p>'+a.addr+'</p>' +
             (a.tel || hour ? '<p class="shop-meta">' +
               (a.tel ? '☎️ '+a.tel : '') +
