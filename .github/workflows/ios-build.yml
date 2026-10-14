@@ -1,0 +1,73 @@
+# 놀맵 iOS 빌드 확인 (서명 없이 시뮬레이터용으로 빌드 → 아이폰 시뮬레이터에서 실행 → 화면 캡처)
+# 결과(빌드 로그, 스크린샷, 생성된 Xcode 프로젝트)는 'ios-build' 브랜치에 올라가요.
+name: Build iOS (simulator)
+
+on:
+  push:
+    branches: [main]
+    paths: ['ios/**', '.github/workflows/ios-build.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ios-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: XcodeGen
+        run: |
+          brew install xcodegen > /dev/null
+          cd ios && xcodegen generate
+
+      - name: Build for simulator
+        run: |
+          set -o pipefail
+          cd ios
+          xcodebuild -project NolMap.xcodeproj -scheme NolMap -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 | tee ../ios-build.log | grep -E "error:|warning:|BUILD" || true
+          test -d build/Build/Products/Debug-iphonesimulator/NolMap.app
+
+      - name: Run in simulator and screenshot
+        if: success()
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; c=[x for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone')]; print(sorted(c,key=lambda x:x['name'])[-1]['udid'])")
+          echo "device: $UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl location "$UDID" set 37.5087,126.8912 || true
+          xcrun simctl install "$UDID" ios/build/Build/Products/Debug-iphonesimulator/NolMap.app
+          xcrun simctl launch "$UDID" kr.or.playguro.nolmap
+          sleep 25
+          mkdir -p out
+          xcrun simctl io "$UDID" screenshot out/simulator-home.png
+          xcrun simctl list devices | grep "$UDID" > out/device.txt || true
+
+      - name: Collect output
+        if: always()
+        run: |
+          mkdir -p out
+          cp ios-build.log out/ 2>/dev/null || echo "no log" > out/ios-build.log
+          if [ -d ios/NolMap.xcodeproj ]; then (cd ios && zip -qr ../out/NolMap.xcodeproj.zip NolMap.xcodeproj); fi
+          if [ -d ios/build/Build/Products/Debug-iphonesimulator/NolMap.app ]; then echo ok > out/status.txt; else echo failed > out/status.txt; fi
+          echo "commit: ${GITHUB_SHA}" >> out/status.txt
+          date -u >> out/status.txt
+
+      - name: Publish to 'ios-build' branch
+        if: always()
+        run: |
+          cd out
+          git init -q
+          git checkout -q -b ios-build
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -qm "iOS build for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ios-build

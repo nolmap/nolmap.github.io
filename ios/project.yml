@@ -1,0 +1,40 @@
+# 놀맵 iOS 프로젝트 (XcodeGen)
+# 맥에서: brew install xcodegen && cd ios && xcodegen generate  → NolMap.xcodeproj 생성
+name: NolMap
+options:
+  bundleIdPrefix: kr.or.playguro
+  deploymentTarget:
+    iOS: "15.0"
+  developmentLanguage: ko
+settings:
+  base:
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+targets:
+  NolMap:
+    type: application
+    platform: iOS
+    sources:
+      - path: NolMap
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: kr.or.playguro.nolmap
+        PRODUCT_NAME: NolMap
+        INFOPLIST_FILE: NolMap/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_STYLE: Automatic
+        # 애플 개발자 계정의 Team ID를 여기에 넣거나, Xcode의 Signing & Capabilities에서 고르세요.
+        DEVELOPMENT_TEAM: ""
+schemes:
+  NolMap:
+    build:
+      targets:
+        NolMap: all
+    run:
+      config: Debug
+    archive:
+      config: Release
