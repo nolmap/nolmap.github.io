@@ -255,7 +255,11 @@
     <h2>📡 서비스 상태</h2>
     <p class="desc">놀맵이 쓰는 외부 서비스가 지금 응답하는지 확인해요.</p>
     <div class="status-list" id="statusList"></div>
-    <div class="row" style="margin-top:10px;"><button class="b ghost" type="button" onclick="checkServices()">다시 확인</button></div>
+    <div class="row" style="margin-top:10px;">
+      <button class="b ghost" type="button" onclick="checkServices()">다시 확인</button>
+      <button class="b ghost" type="button" id="mailTestBtn" onclick="testContactMail()">✉️ 문의 메일 테스트 보내기</button>
+    </div>
+    <div class="msg" id="mailTestMsg"></div>
   </section>
 
   <!-- 2. 장소 점검 -->
@@ -298,7 +302,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const API = 'https://nolmap.jyooni0706.workers.dev';
+  const API = 'https://nolmap.nolguro0905.workers.dev';   // 길찾기·공휴일·문의하기 Worker
   let PLACES = {}, ANGEL_IDS = [], DISCOVER_IDS = [];
   let HOME = [37.51037, 126.88001];
 
@@ -319,9 +323,13 @@
   async function walk(from, to){
     const url = API + '?sx=' + from[1] + '&sy=' + from[0] + '&ex=' + to[1] + '&ey=' + to[0];
     const res = await fetch(url);
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    if(!data || !Array.isArray(data.path) || !data.path.length) throw new Error('경로 없음');
+    let data = null;
+    try{ data = await res.json(); }catch(_){}
+    if(!res.ok || !data || !data.ok){
+      const why = data && data.detail && data.detail.message ? data.detail.message : (data && data.error) || ('HTTP ' + res.status);
+      throw new Error(why);
+    }
+    if(!Array.isArray(data.path) || !data.path.length) throw new Error('경로 없음');
     return { distance: Number(data.distance || 0), time: Number(data.time || 0) };
   }
   const round5 = m => Math.round(m / 5) * 5;
@@ -356,7 +364,7 @@
       .catch(e => renderStatus('route', 'bad', '오류', e.message));
 
     const today = new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Seoul' }).format(new Date());
-    timed(() => fetch('https://nolmap.nolguro0905.workers.dev/holiday?date=' + today).then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
+    timed(() => fetch(API + '/holiday?date=' + today).then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
       .then(r => renderStatus('holiday', r.v && r.v.ok ? 'ok' : 'warn', (r.v && r.v.ok ? '정상' : '응답 이상') + ' · ' + r.ms + 'ms',
         today + ' → ' + (r.v && r.v.isHoliday ? '공휴일 (' + (r.v.localName || r.v.name || '') + ')' : '평일/주말')))
       .catch(e => renderStatus('holiday', 'bad', '오류', e.message));
@@ -371,6 +379,27 @@
     timed(() => fetch('places.json', { cache:'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
       .then(r => renderStatus('data', 'ok', '정상 · ' + r.ms + 'ms', '장소 ' + Object.keys(r.v.places || {}).length + '곳'))
       .catch(e => renderStatus('data', 'bad', '오류', e.message));
+  }
+
+  // 문의하기 메일이 실제로 가는지 확인 (playguro1@naver.com 으로 테스트 메일 1통)
+  async function testContactMail(){
+    if(!confirm('playguro1@naver.com 으로 테스트 메일을 1통 보낼까요?')) return;
+    const btn = $('mailTestBtn'), msg = $('mailTestMsg');
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = '보내는 중...';
+    try{
+      const res = await fetch(API + '/contact', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: '[테스트] 관리자 페이지 메일 확인', message: '놀맵 관리자 페이지에서 보낸 문의하기 테스트 메일이에요.\n답장하지 않으셔도 돼요.', name: '놀맵 관리자' })
+      });
+      let data = {}; try{ data = await res.json(); }catch(_){}
+      if(!res.ok || !data.ok){
+        const d = data.detail || {};
+        throw new Error((data.error || ('HTTP ' + res.status)) + (d.message ? ' · ' + d.message : ''));
+      }
+      msg.className = 'msg ok'; msg.textContent = '✓ 보냈어요. playguro1@naver.com 받은편지함(또는 스팸함)을 확인해 주세요.';
+    }catch(e){
+      msg.className = 'msg bad'; msg.textContent = '보내지 못했어요: ' + e.message;
+    }finally{ btn.disabled = false; }
   }
 
   // ===== 2. 장소 데이터 읽기 =====
