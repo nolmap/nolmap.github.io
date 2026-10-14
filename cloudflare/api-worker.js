@@ -37,10 +37,17 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
     try {
-      if (url.pathname === '/contact') return await handleContact(request, env, cors, origin);
-      if (url.pathname === '/holiday') return await handleHoliday(request, url, cors, ctx);
-      if (url.pathname === '/' || url.pathname === '/route') return await handleRoute(request, env, url, cors);
-      return json({ ok: false, error: '존재하지 않는 API 주소입니다.' }, 404, cors);
+      let res;
+      if (url.pathname === '/contact') res = await handleContact(request, env, cors, origin);
+      else if (url.pathname === '/holiday') res = await handleHoliday(request, url, cors, ctx);
+      else if (url.pathname === '/' || url.pathname === '/route') res = await handleRoute(request, env, url, cors);
+      else res = json({ ok: false, error: '존재하지 않는 API 주소입니다.' }, 404, cors);
+      // ?debug=1 이면 오류도 200으로 돌려줘서 내용을 확인하기 쉽게 (원래 상태 코드는 _status에)
+      if (url.searchParams.get('debug') === '1' && res.status !== 200) {
+        const body = await res.json().catch(() => ({}));
+        return json({ ...body, _status: res.status }, 200, cors);
+      }
+      return res;
     } catch (error) {
       console.error('Worker 오류:', error);
       return json({ ok: false, error: '서버 오류', detail: String(error) }, 500, cors);
