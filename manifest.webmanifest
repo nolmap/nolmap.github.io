@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "놀맵 - 신도림놀구로 가는 가장 안전한 길",
+  "short_name": "놀맵",
+  "description": "신도림놀구로까지 안전한 길, 구로엔젤 가게, 삼대발견 명소를 알려주는 지도",
+  "lang": "ko",
+  "start_url": "/?source=app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2FAE7",
+  "theme_color": "#F2FAE7",
+  "categories": ["navigation", "kids", "lifestyle"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

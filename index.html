@@ -6,6 +6,10 @@
 <title>놀맵</title>
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#F2FAE7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="놀맵">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
 <script src="hours.js"></script>
@@ -1953,6 +1957,13 @@ function findMyRoute(placeId = 'nolguro'){
   document.addEventListener('keydown', function(event){
     if (event.key === 'Escape') closePrivacy();
   });
+
+  // ===== 앱처럼 설치 (서비스 워커) =====
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => console.warn('서비스 워커 등록 실패:', err));
+    });
+  }
 </script>
 </body>
 </html>

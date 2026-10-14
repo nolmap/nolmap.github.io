@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#F2FAE7">
+<title>놀맵 · 인터넷 연결 없음</title>
+<style>
+  :root{ --bg:#F2FAE7; --leaf:#8FD14F; --leaf-deep:#5FAE3A; --ink:#3A4A2E; --muted:#7C8A73; }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    display:flex; align-items:center; justify-content:center; padding:24px; text-align:center;
+  }
+  .card{max-width:340px;}
+  img{width:96px;height:96px;border-radius:22px;box-shadow:0 6px 18px rgba(95,174,58,.2);}
+  h1{font-size:20px;margin:20px 0 8px;}
+  p{font-size:14px;line-height:1.6;color:var(--muted);margin:0 0 20px;}
+  button{
+    border:none;border-radius:999px;padding:13px 26px;font-size:15px;font-weight:700;
+    background:var(--leaf);color:#fff;cursor:pointer;box-shadow:0 8px 16px rgba(95,174,58,.3);
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img src="images/logo.png" alt="놀맵">
+    <h1>인터넷에 연결되어 있지 않아요</h1>
+    <p>와이파이나 데이터가 켜져 있는지 확인한 뒤<br>다시 시도해 주세요.</p>
+    <button type="button" onclick="location.href='./'">다시 시도</button>
+  </div>
+</body>
+</html>
