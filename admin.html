@@ -356,7 +356,7 @@
       .catch(e => renderStatus('route', 'bad', '오류', e.message));
 
     const today = new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Seoul' }).format(new Date());
-    timed(() => fetch(API + '/holiday?date=' + today).then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
+    timed(() => fetch('https://nolmap.nolguro0905.workers.dev/holiday?date=' + today).then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
       .then(r => renderStatus('holiday', r.v && r.v.ok ? 'ok' : 'warn', (r.v && r.v.ok ? '정상' : '응답 이상') + ' · ' + r.ms + 'ms',
         today + ' → ' + (r.v && r.v.isHoliday ? '공휴일 (' + (r.v.localName || r.v.name || '') + ')' : '평일/주말')))
       .catch(e => renderStatus('holiday', 'bad', '오류', e.message));

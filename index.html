@@ -1156,7 +1156,7 @@ async function updateNolguroStatus() {
   // 1. 공휴일 확인
   try {
     const res = await fetch(
-      `https://nolmap.jyooni0706.workers.dev/holiday?date=${today}`
+      `https://nolmap.nolguro0905.workers.dev/holiday?date=${today}`
     );
 
     const holiday = await res.json();
