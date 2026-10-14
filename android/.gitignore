@@ -1,0 +1,18 @@
+# 빌드 결과물
+.gradle/
+build/
+app/build/
+app/release/
+*.apk
+*.aab
+# Android Studio
+.idea/
+*.iml
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+# 서명 키 — 절대 저장소에 올리지 마세요!
+*.jks
+*.keystore
+keystore.properties

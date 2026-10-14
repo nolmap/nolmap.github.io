@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 놀맵 배경색(민트)과 맞춰요 -->
+    <color name="bar">#F2FAE7</color>
+    <color name="navbar">#FFFFFF</color>
+    <color name="splash_background">#F2FAE7</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
+</resources>
