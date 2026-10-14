@@ -48,8 +48,8 @@ jobs:
           cp build.log out/ 2>/dev/null || echo "no log" > out/build.log
           if [ -f android/app/build/outputs/apk/debug/app-debug.apk ]; then
             cp android/app/build/outputs/apk/debug/app-debug.apk out/nolmap-test.apk
-            keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey \
-              -storepass android -keypass android | grep -E "SHA256|SHA-256" > out/fingerprint.txt || true
+            keytool -list -v -keystore android/test-signing/nolmap-test.jks -alias nolmap-test \
+              -storepass nolmap-test | grep -E "SHA256" > out/fingerprint.txt || true
             echo "ok" > out/status.txt
           else
             echo "failed" > out/status.txt

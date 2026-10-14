@@ -1,10 +1,14 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "kr.or.playguro.nolmap",
-      "sha256_cert_fingerprints": []
+      "sha256_cert_fingerprints": [
+        "79:1C:6C:BE:94:6E:80:8A:4D:1D:2D:BE:21:69:18:53:E6:B3:57:78:BB:E2:81:82:07:C2:90:CB:CB:37:2C:19"
+      ]
     }
   }
 ]

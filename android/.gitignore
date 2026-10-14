@@ -14,5 +14,6 @@ captures/
 .cxx/
 # 서명 키 — 절대 저장소에 올리지 마세요!
 *.jks
+!test-signing/nolmap-test.jks
 *.keystore
 keystore.properties

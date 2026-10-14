@@ -15,7 +15,20 @@ android {
         versionName = "1.0.0"
     }
 
+    signingConfigs {
+        // 테스트 APK 전용 키 (test-signing/README.md 참고). 플레이스토어용(release)에는 쓰지 않아요.
+        create("test") {
+            storeFile = rootProject.file("test-signing/nolmap-test.jks")
+            storePassword = "nolmap-test"
+            keyAlias = "nolmap-test"
+            keyPassword = "nolmap-test"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("test")
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
