@@ -1,1 +1,475 @@
-<doctype HTML!>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta charset="UTF-8">
+<title>293번지 르네상스 · 놀맵</title>
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="theme-color" content="#F2FAE7">
+<meta name="description" content="293번지 청소년 이동권 보장 프로젝트 — 놀맵">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-mint: #F2FAE7;
+    --leaf: #8FD14F;
+    --leaf-deep: #5FAE3A;
+    --leaf-text: #3E7A2C;
+    --white: #FFFFFF;
+    --ink: #3A4A2E;
+    --muted: #8B9C7E;
+    --safe-bg: #E9F8E1;
+    --lamp: #FFC94A;
+    --purple: #7A3FB5;
+    --purple-bg: #F3E8FF;
+    --shadow: 0 8px 20px rgba(95,174,58,0.18);
+    --shadow-soft: 0 4px 14px rgba(58,74,46,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg-mint);
+    font-family: 'Gowun Dodum', sans-serif;
+    color: var(--ink);
+    min-height: 100%;
+  }
+
+  /* ── 상단 헤더 ── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(242,250,231,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1.5px solid #DCF0C4;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: var(--leaf-text);
+    font-family: 'Jua', sans-serif;
+    font-size: 13px;
+    background: var(--safe-bg);
+    border: none;
+    border-radius: 999px;
+    padding: 7px 13px 7px 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .header-back:active { opacity: 0.75; }
+  .header-title {
+    font-family: 'Jua', sans-serif;
+    font-size: 16px;
+    color: var(--leaf-text);
+    line-height: 1.2;
+  }
+  .header-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  /* ── 본문 ── */
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0 18px 48px;
+  }
+
+  /* ── 히어로 ── */
+  .hero {
+    margin: 20px 0 8px;
+    border-radius: 28px;
+    overflow: hidden;
+    background: linear-gradient(150deg, #4C9A28 0%, #2D6E18 100%);
+    padding: 28px 24px 24px;
+    position: relative;
+    box-shadow: 0 12px 28px rgba(46,110,24,0.32);
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.30);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.95);
+    margin-bottom: 14px;
+    letter-spacing: 0.2px;
+  }
+  .hero-num {
+    font-family: 'Jua', sans-serif;
+    font-size: 72px;
+    line-height: 1;
+    color: rgba(255,255,255,0.12);
+    position: absolute;
+    right: 18px;
+    top: 16px;
+    letter-spacing: -4px;
+    pointer-events: none;
+    user-select: none;
+  }
+  .hero h1 {
+    font-family: 'Jua', sans-serif;
+    font-size: 26px;
+    color: #fff;
+    line-height: 1.25;
+    margin-bottom: 10px;
+    word-break: keep-all;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: #C9F585;
+  }
+  .hero-desc {
+    font-size: 12.5px;
+    color: rgba(255,255,255,0.88);
+    line-height: 1.65;
+    word-break: keep-all;
+    margin-bottom: 18px;
+  }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .hero-pill {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 12px;
+    padding: 7px 13px;
+    font-size: 11px;
+    color: #fff;
+    line-height: 1.4;
+  }
+  .hero-pill strong {
+    display: block;
+    font-family: 'Jua', sans-serif;
+    font-size: 12px;
+    margin-bottom: 1px;
+    color: #C9F585;
+  }
+
+  /* ── 슬로건 박스 ── */
+  .slogan-box {
+    background: var(--white);
+    border-radius: 22px;
+    padding: 20px;
+    margin: 12px 0;
+    box-shadow: var(--shadow-soft);
+    border-left: 4px solid var(--leaf);
+  }
+  .slogan-box p {
+    font-family: 'Jua', sans-serif;
+    font-size: 14.5px;
+    color: var(--leaf-text);
+    line-height: 1.7;
+    word-break: keep-all;
+  }
+  .slogan-box p span {
+    display: block;
+    color: var(--leaf-deep);
+  }
+
+  /* ── 섹션 라벨 ── */
+  .section-label {
+    font-family: 'Jua', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.4px;
+    margin: 24px 2px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #D4E9C0;
+    margin-left: 2px;
+  }
+
+  /* ── 3대 축 카드 ── */
+  .axis-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .axis-card {
+    background: var(--white);
+    border-radius: 22px;
+    padding: 18px 18px 16px;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .axis-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(58,74,46,0.10);
+  }
+  .axis-num {
+    font-family: 'Jua', sans-serif;
+    font-size: 32px;
+    line-height: 1;
+    flex-shrink: 0;
+    width: 44px;
+    text-align: center;
+  }
+  .axis-num.c2 { color: #3A8FD4; }
+  .axis-num.c9 { color: var(--leaf-deep); }
+  .axis-num.c3 { color: var(--purple); }
+  .axis-body h3 {
+    font-family: 'Jua', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .axis-body p {
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.55;
+    word-break: keep-all;
+  }
+  .axis-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    margin-bottom: 6px;
+  }
+  .axis-badge.c2 { background: #E3F0FB; color: #2270A8; }
+  .axis-badge.c9 { background: var(--safe-bg); color: var(--leaf-deep); }
+  .axis-badge.c3 { background: var(--purple-bg); color: var(--purple); }
+  .axis-arrow {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 18px;
+    padding-top: 4px;
+    flex-shrink: 0;
+  }
+
+  /* ── 정보 박스 ── */
+  .info-box {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 10px;
+  }
+  .info-box-title {
+    font-family: 'Jua', sans-serif;
+    font-size: 13px;
+    color: var(--leaf-text);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 11.5px;
+    color: #5E7150;
+    line-height: 1.55;
+    padding: 4px 0;
+    border-bottom: 1px solid #F0F7E8;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-row .ic { flex-shrink: 0; width: 18px; }
+
+  /* ── 주제 한 줄 소개 ── */
+  .tagline-box {
+    background: var(--safe-bg);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin: 12px 0;
+    font-size: 12px;
+    color: var(--leaf-text);
+    line-height: 1.6;
+    word-break: keep-all;
+  }
+  .tagline-box strong {
+    font-family: 'Jua', sans-serif;
+    display: block;
+    font-size: 13px;
+    color: var(--leaf-deep);
+    margin-bottom: 4px;
+  }
+
+  /* ── CTA 버튼 ── */
+  .cta-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .btn {
+    flex: 1;
+    border: none;
+    border-radius: 999px;
+    padding: 14px 0;
+    font-family: 'Jua', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: opacity 0.15s;
+  }
+  .btn:active { opacity: 0.8; }
+  .btn-primary { background: var(--leaf); color: #fff; box-shadow: 0 8px 18px rgba(95,174,58,0.32); }
+  .btn-ghost { background: var(--white); color: var(--leaf-text); border: 2px solid var(--leaf); }
+
+  /* ── 공유 / 원문 링크 ── */
+  .footer-links {
+    text-align: center;
+    margin-top: 28px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 2;
+  }
+  .footer-links a {
+    color: var(--leaf-deep);
+    text-decoration: underline;
+  }
+
+  @media (min-width: 480px) {
+    .wrap { padding: 0 24px 56px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a class="header-back" href="https://nolmap.github.io">
+    ← 놀맵
+  </a>
+  <div>
+    <div class="header-title">293번지 르네상스</div>
+    <div class="header-sub">신도림놀구로 × 놀맵</div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 히어로 -->
+  <div class="hero">
+    <div class="hero-badge">🌱 CTR Impact · 신라상회기금 공모사업</div>
+    <div class="hero-num">293</div>
+    <h1>청소년이 만드는<br><em>293번지</em> 르네상스</h1>
+    <p class="hero-desc">
+      293번지 청소년 이동권 보장 프로젝트<br>
+      청소년이 다니면 길이 되고, 머무르면 공간이 되고,<br>참여하면 동네가 바뀝니다.
+    </p>
+    <div class="hero-meta">
+      <div class="hero-pill"><strong>📅 일시</strong>2026년 4월 ~ 2027년 2월</div>
+      <div class="hero-pill"><strong>👥 대상</strong>신도림동 청소년 및 지역 주민</div>
+      <div class="hero-pill"><strong>📞 문의</strong>02-2068-2014, 7</div>
+    </div>
+  </div>
+
+  <!-- 슬로건 -->
+  <div class="slogan-box">
+    <p>
+      우리가 동네를 바꿀 수 있다는 청소년 주도의 경험은
+      청소년들의 지역 소속감을 높이고, 지역의 어른들과 협력하는 관계를 만들어
+      개발 속에 단절된 세대를 연결하는 다리가 될 것입니다.
+      <span>— 신도림놀구로</span>
+    </p>
+  </div>
+
+  <!-- 3대 축 -->
+  <div class="section-label">✦ 프로젝트 3대 축</div>
+
+  <div class="axis-grid">
+
+    <a class="axis-card" href="https://www.playguro.or.kr/46">
+      <div class="axis-num c2">2</div>
+      <div class="axis-body">
+        <div class="axis-badge c2">이정표</div>
+        <h3>청소년이 만드는 안전지도</h3>
+        <p>청소년이 직접 안전지도 웹앱을 개발합니다. <strong>놀맵</strong>이 바로 그 이정표예요.</p>
+      </div>
+      <div class="axis-arrow">›</div>
+    </a>
+
+    <a class="axis-card" href="https://www.playguro.or.kr/49">
+      <div class="axis-num c9">9</div>
+      <div class="axis-body">
+        <div class="axis-badge c9">구로엔젤</div>
+        <h3>9개 수호천사 가게 발굴</h3>
+        <p>동네 가게·공장을 구로엔젤로 발굴하고 청소년의 안전을 함께 지킵니다.</p>
+      </div>
+      <div class="axis-arrow">›</div>
+    </a>
+
+    <a class="axis-card" href="https://www.playguro.or.kr/50">
+      <div class="axis-num c3">3</div>
+      <div class="axis-body">
+        <div class="axis-badge c3">삼대발견</div>
+        <h3>공장 스토리를 발견하다</h3>
+        <p>신도림동 일대 공장의 숨겨진 이야기를 청소년이 직접 발굴하고 기록합니다.</p>
+      </div>
+      <div class="axis-arrow">›</div>
+    </a>
+
+  </div>
+
+  <!-- 핵심 목표 한 줄 -->
+  <div class="tagline-box">
+    <strong>🎯 최종 목표</strong>
+    293번지 신도림동 일대가 청소년에게 "가고 싶은 곳"이 되게 만듭니다.
+  </div>
+
+  <!-- 사업 정보 -->
+  <div class="section-label">✦ 사업 정보</div>
+  <div class="info-box">
+    <div class="info-box-title">📋 프로젝트 개요</div>
+    <div class="info-row"><span class="ic">📅</span><span>2026년 4월 ~ 2027년 2월</span></div>
+    <div class="info-row"><span class="ic">👥</span><span>신도림동 청소년 및 지역 주민</span></div>
+    <div class="info-row"><span class="ic">🏆</span><span>CTR Impact: 신라상회기금 공모사업</span></div>
+    <div class="info-row"><span class="ic">☎️</span><span>02-2068-2014, 7</span></div>
+    <div class="info-row"><span class="ic">📍</span><span>서울 구로구 신도림로13길 51 (청소년입장지대 신도림놀구로)</span></div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-row">
+    <a class="btn btn-primary" href="https://nolmap.github.io">
+      🗺️ 놀맵 열기
+    </a>
+    <a class="btn btn-ghost" href="https://www.playguro.or.kr/45" target="_blank" rel="noopener">
+      🔗 원문 보기
+    </a>
+  </div>
+
+  <div class="footer-links">
+    이 페이지는 <a href="https://nolmap.github.io">놀맵(nolmap.github.io)</a>과 연동됩니다.<br>
+    운영 · 관리: <a href="https://www.playguro.or.kr" target="_blank" rel="noopener">청소년입장지대 신도림놀구로</a>
+  </div>
+
+</main>
+
+</body>
+</html>
