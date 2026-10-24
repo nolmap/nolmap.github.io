@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta charset="UTF-8">
+<title>3(삼)대발견 · 293번지 르네상스</title>
+<link rel="icon" href="../../favicon.ico" sizes="any">
+<meta name="theme-color" content="#F2FAE7">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-mint:#F2FAE7;--leaf:#8FD14F;--leaf-deep:#5FAE3A;--leaf-text:#3E7A2C;
+    --white:#FFFFFF;--ink:#3A4A2E;--muted:#8B9C7E;--safe-bg:#E9F8E1;
+    --purple:#7A3FB5;--purple-bg:#F3E8FF;
+    --shadow-soft:0 4px 14px rgba(58,74,46,0.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg-mint);font-family:'Gowun Dodum',sans-serif;color:var(--ink);min-height:100%;}
+  .header{position:sticky;top:0;z-index:50;background:rgba(242,250,231,0.92);backdrop-filter:blur(12px);border-bottom:1.5px solid #DCF0C4;padding:14px 20px;display:flex;align-items:center;gap:12px;}
+  .back{display:flex;align-items:center;gap:5px;text-decoration:none;color:var(--leaf-text);font-family:'Jua',sans-serif;font-size:13px;background:var(--safe-bg);border:none;border-radius:999px;padding:7px 13px 7px 10px;cursor:pointer;flex-shrink:0;}
+  .header-title{font-family:'Jua',sans-serif;font-size:16px;color:var(--leaf-text);line-height:1.2;}
+  .header-sub{font-size:10px;color:var(--muted);margin-top:1px;}
+  .wrap{max-width:560px;margin:0 auto;padding:0 18px 48px;}
+  .hero{margin:20px 0 8px;border-radius:28px;background:linear-gradient(150deg,#6B2FA0 0%,#4A1E73 100%);padding:28px 24px 24px;position:relative;box-shadow:0 12px 28px rgba(107,47,160,0.32);overflow:hidden;}
+  .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.30);border-radius:999px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,0.95);margin-bottom:14px;}
+  .hero-num{font-family:'Jua',sans-serif;font-size:140px;line-height:1;color:rgba(255,255,255,0.07);position:absolute;right:-8px;top:0;pointer-events:none;user-select:none;}
+  .hero h1{font-family:'Jua',sans-serif;font-size:26px;color:#fff;line-height:1.25;margin-bottom:10px;word-break:keep-all;}
+  .hero h1 em{font-style:normal;color:#DDB8FF;}
+  .hero-desc{font-size:12.5px;color:rgba(255,255,255,0.88);line-height:1.65;word-break:keep-all;margin-bottom:18px;}
+  .hero-pills{display:flex;flex-wrap:wrap;gap:8px;}
+  .hero-pill{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:12px;padding:7px 13px;font-size:11px;color:#fff;line-height:1.4;}
+  .hero-pill strong{display:block;font-family:'Jua',sans-serif;font-size:12px;margin-bottom:1px;color:#DDB8FF;}
+  .section-label{font-family:'Jua',sans-serif;font-size:12px;color:var(--muted);margin:24px 2px 10px;display:flex;align-items:center;gap:6px;}
+  .section-label::after{content:'';flex:1;height:1px;background:#D4E9C0;margin-left:2px;}
+  .card{background:var(--white);border-radius:22px;padding:18px 18px 16px;box-shadow:var(--shadow-soft);margin-bottom:10px;}
+  .card-icon{font-size:28px;margin-bottom:8px;}
+  .card h3{font-family:'Jua',sans-serif;font-size:15px;color:var(--ink);margin-bottom:6px;}
+  .card p{font-size:12px;color:var(--muted);line-height:1.6;word-break:keep-all;}
+  .badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;margin-bottom:8px;background:var(--purple-bg);color:var(--purple);}
+  .step-list{margin-top:10px;}
+  .step-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #F0F7E8;}
+  .step-item:last-child{border-bottom:none;}
+  .step-num{width:26px;height:26px;border-radius:50%;flex-shrink:0;background:var(--purple);color:#fff;font-family:'Jua',sans-serif;font-size:12px;display:flex;align-items:center;justify-content:center;}
+  .step-txt h5{font-family:'Jua',sans-serif;font-size:13px;color:var(--ink);margin-bottom:3px;}
+  .step-txt p{font-size:11.5px;color:var(--muted);line-height:1.5;}
+  .story-box{background:var(--purple-bg);border-radius:16px;padding:14px 16px;margin-bottom:8px;font-size:12px;color:var(--purple);line-height:1.6;word-break:keep-all;}
+  .story-box strong{font-family:'Jua',sans-serif;display:block;font-size:13px;margin-bottom:4px;color:#5B1E9E;}
+  .quote{font-size:12px;color:var(--purple);font-style:italic;margin-top:8px;padding-left:12px;border-left:3px solid var(--purple-bg);}
+  .cta-row{display:flex;gap:8px;margin-top:20px;}
+  .btn{flex:1;border:none;border-radius:999px;padding:14px 0;font-family:'Jua',sans-serif;font-size:13px;cursor:pointer;text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-primary{background:var(--leaf);color:#fff;box-shadow:0 8px 18px rgba(95,174,58,0.32);}
+  .btn-ghost{background:var(--white);color:var(--leaf-text);border:2px solid var(--leaf);}
+  .footer{text-align:center;margin-top:28px;font-size:11px;color:var(--muted);line-height:2;}
+  .footer a{color:var(--leaf-deep);text-decoration:underline;}
+  @media(min-width:480px){.wrap{padding:0 24px 56px;}}
+</style>
+</head>
+<body>
+<header class="header">
+  <a class="back" href="/293/">← 293</a>
+  <div>
+    <div class="header-title">3(삼)대발견</div>
+    <div class="header-sub">공장 스토리 발굴 · 청소년기자단 놀포터</div>
+  </div>
+</header>
+<main class="wrap">
+  <div class="hero">
+    <div class="hero-badge">✨ 293번지 르네상스 · 삼대발견</div>
+    <div class="hero-num">3</div>
+    <h1>청소년 기자단이 발굴하는<br><em>공장의 이야기</em></h1>
+    <p class="hero-desc">
+      신도림동 293번지 일대의 오래된 가게와 공장에는
+      숨겨진 이야기가 있어요. 청소년기자단 '놀포터'가
+      직접 찾아가 인터뷰하고 기록합니다.
+    </p>
+    <div class="hero-pills">
+      <div class="hero-pill"><strong>🎤 방법</strong>직접 인터뷰 · 취재</div>
+      <div class="hero-pill"><strong>📋 결과물</strong>현판 제작 · 기록</div>
+      <div class="hero-pill"><strong>🗺️ 연동</strong>놀맵 ✨ 핀</div>
+    </div>
+  </div>
+
+  <div class="section-label">✦ 삼대발견이란?</div>
+
+  <div class="card">
+    <div class="card-icon">✨</div>
+    <div class="badge">청소년기자단 놀포터</div>
+    <h3>3대에 걸친 이야기를 발견하다</h3>
+    <p>신도림동 일대 공장과 가게에서 오랜 세월 동안 한 자리를 지켜온 사람들의 이야기를 청소년이 직접 취재하고 기록해요. 익숙한 제품 뒤에도 누군가의 기술, 노력, 시간이 쌓여 있다는 걸 발견합니다.</p>
+  </div>
+
+  <div class="section-label">✦ 활동 내용</div>
+
+  <div class="card">
+    <div class="step-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-txt">
+          <h5>현장 인터뷰 취재</h5>
+          <p>청소년기자단 놀포터가 직접 가게·공장을 방문해 사장님과 인터뷰를 진행해요.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-txt">
+          <h5>이야기 기록 · 제작</h5>
+          <p>인터뷰 영상, 한 줄 소개, 가게를 대표하는 아이콘 등을 담은 콘텐츠를 만들어요.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-txt">
+          <h5>삼대발견 현판 제작 · 설치</h5>
+          <p>각 가게에 청소년기자단이 만든 현판을 설치해요. 인터뷰 QR코드도 담깁니다.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-txt">
+          <h5>놀맵 ✨ 핀 등록</h5>
+          <p>삼대발견 가게는 놀맵에 ✨ 배지 핀으로 표시되고, 사진과 이야기를 볼 수 있어요.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">✦ 발굴 이야기</div>
+
+  <div class="card">
+    <div class="story-box">
+      <strong>🏭 경동정밀</strong>
+      모터와 설비에 사용되는 다양한 부품을 정밀하게 가공하는 공장이에요. 도면 확인부터 가공, 검사, 포장까지 CNC 선반과 사람의 섬세한 손길이 함께합니다.
+      <p class="quote">"하고 싶은 일이 있으면 꼭 해보기" — 30년 넘게 한 분야를 지켜온 사장님의 응원</p>
+    </div>
+    <div class="story-box">
+      <strong>🛢️ 경기유류상사</strong>
+      생활 곳곳에서 사용되는 산업용 윤활유를 공급·유통하는 곳이에요. 보이지 않는 곳에서 우리의 일상을 움직이게 하는 윤활유처럼, 지역 산업을 든든히 뒷받침하고 있습니다.
+    </div>
+  </div>
+
+  <div class="section-label">✦ 놀맵에서 삼대발견 보기</div>
+  <div class="card">
+    <div class="card-icon">✨</div>
+    <h3>지도에서 ✨ 배지를 찾아보세요</h3>
+    <p>놀맵 지도 화면에서 삼대발견 가게는 ✨ 배지가 붙은 핀으로 표시돼요. 핀을 누르면 청소년기자단이 기록한 이야기와 사진을 볼 수 있어요.</p>
+  </div>
+
+  <div class="cta-row">
+    <a class="btn btn-primary" href="https://nolmap.github.io">🗺️ 놀맵에서 보기</a>
+    <a class="btn btn-ghost" href="/293/">← 293 홈</a>
+  </div>
+
+  <div class="footer">
+    293번지 르네상스 · <a href="https://nolmap.github.io">nolmap.github.io</a><br>
+    운영: <a href="https://www.playguro.or.kr" target="_blank" rel="noopener">청소년입장지대 신도림놀구로</a>
+  </div>
+</main>
+</body>
+</html>
