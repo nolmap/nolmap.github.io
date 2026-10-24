@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta charset="UTF-8">
+<title>2(이)정표 · 293번지 르네상스</title>
+<link rel="icon" href="../../favicon.ico" sizes="any">
+<meta name="theme-color" content="#F2FAE7">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-mint:#F2FAE7;--leaf:#8FD14F;--leaf-deep:#5FAE3A;--leaf-text:#3E7A2C;
+    --white:#FFFFFF;--ink:#3A4A2E;--muted:#8B9C7E;--safe-bg:#E9F8E1;
+    --accent:#2270A8;--accent-bg:#E3F0FB;
+    --shadow-soft:0 4px 14px rgba(58,74,46,0.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg-mint);font-family:'Gowun Dodum',sans-serif;color:var(--ink);min-height:100%;}
+  .header{position:sticky;top:0;z-index:50;background:rgba(242,250,231,0.92);backdrop-filter:blur(12px);border-bottom:1.5px solid #DCF0C4;padding:14px 20px;display:flex;align-items:center;gap:12px;}
+  .back{display:flex;align-items:center;gap:5px;text-decoration:none;color:var(--leaf-text);font-family:'Jua',sans-serif;font-size:13px;background:var(--safe-bg);border:none;border-radius:999px;padding:7px 13px 7px 10px;cursor:pointer;flex-shrink:0;}
+  .header-title{font-family:'Jua',sans-serif;font-size:16px;color:var(--leaf-text);line-height:1.2;}
+  .header-sub{font-size:10px;color:var(--muted);margin-top:1px;}
+  .wrap{max-width:560px;margin:0 auto;padding:0 18px 48px;}
+  .hero{margin:20px 0 8px;border-radius:28px;background:linear-gradient(150deg,#2270A8 0%,#1a5080 100%);padding:28px 24px 24px;position:relative;box-shadow:0 12px 28px rgba(34,112,168,0.32);overflow:hidden;}
+  .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.30);border-radius:999px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,0.95);margin-bottom:14px;}
+  .hero-num{font-family:'Jua',sans-serif;font-size:140px;line-height:1;color:rgba(255,255,255,0.07);position:absolute;right:-8px;top:0;pointer-events:none;user-select:none;}
+  .hero h1{font-family:'Jua',sans-serif;font-size:26px;color:#fff;line-height:1.25;margin-bottom:10px;word-break:keep-all;}
+  .hero h1 em{font-style:normal;color:#93D4FF;}
+  .hero-desc{font-size:12.5px;color:rgba(255,255,255,0.88);line-height:1.65;word-break:keep-all;margin-bottom:18px;}
+  .hero-pills{display:flex;flex-wrap:wrap;gap:8px;}
+  .hero-pill{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:12px;padding:7px 13px;font-size:11px;color:#fff;line-height:1.4;}
+  .hero-pill strong{display:block;font-family:'Jua',sans-serif;font-size:12px;margin-bottom:1px;color:#93D4FF;}
+  .section-label{font-family:'Jua',sans-serif;font-size:12px;color:var(--muted);margin:24px 2px 10px;display:flex;align-items:center;gap:6px;}
+  .section-label::after{content:'';flex:1;height:1px;background:#D4E9C0;margin-left:2px;}
+  .card{background:var(--white);border-radius:22px;padding:18px 18px 16px;box-shadow:var(--shadow-soft);margin-bottom:10px;}
+  .card-icon{font-size:28px;margin-bottom:8px;}
+  .card h3{font-family:'Jua',sans-serif;font-size:15px;color:var(--ink);margin-bottom:6px;}
+  .card p{font-size:12px;color:var(--muted);line-height:1.6;word-break:keep-all;}
+  .badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;margin-bottom:8px;background:var(--accent-bg);color:var(--accent);}
+  .step-list{margin-top:10px;}
+  .step-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #F0F7E8;}
+  .step-item:last-child{border-bottom:none;}
+  .step-num{width:26px;height:26px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;font-family:'Jua',sans-serif;font-size:12px;display:flex;align-items:center;justify-content:center;}
+  .step-txt h5{font-family:'Jua',sans-serif;font-size:13px;color:var(--ink);margin-bottom:3px;}
+  .step-txt p{font-size:11.5px;color:var(--muted);line-height:1.5;}
+  .tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .tag{background:var(--accent-bg);color:var(--accent);font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:999px;}
+  .cta-row{display:flex;gap:8px;margin-top:20px;}
+  .btn{flex:1;border:none;border-radius:999px;padding:14px 0;font-family:'Jua',sans-serif;font-size:13px;cursor:pointer;text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-primary{background:var(--leaf);color:#fff;box-shadow:0 8px 18px rgba(95,174,58,0.32);}
+  .btn-ghost{background:var(--white);color:var(--leaf-text);border:2px solid var(--leaf);}
+  .footer{text-align:center;margin-top:28px;font-size:11px;color:var(--muted);line-height:2;}
+  .footer a{color:var(--leaf-deep);text-decoration:underline;}
+  @media(min-width:480px){.wrap{padding:0 24px 56px;}}
+</style>
+</head>
+<body>
+<header class="header">
+  <a class="back" href="/293/">← 293</a>
+  <div>
+    <div class="header-title">2(이)정표</div>
+    <div class="header-sub">청소년 안전지도 웹앱 개발</div>
+  </div>
+</header>
+<main class="wrap">
+  <div class="hero">
+    <div class="hero-badge">🗺️ 293번지 르네상스 · 이정표</div>
+    <div class="hero-num">2</div>
+    <h1>청소년이 직접 만드는<br><em>안전지도 웹앱</em></h1>
+    <p class="hero-desc">
+      신도림동 293번지 일대를 안전하게 다닐 수 있도록
+      청소년이 직접 AI 코딩으로 웹앱을 개발합니다.
+      그게 바로 지금 여러분이 보고 있는 <strong style="color:#93D4FF">놀맵</strong>이에요!
+    </p>
+    <div class="hero-pills">
+      <div class="hero-pill"><strong>🤖 방법</strong>AI 코딩 · 웹앱 개발</div>
+      <div class="hero-pill"><strong>📍 결과물</strong>놀맵 안전지도</div>
+      <div class="hero-pill"><strong>👥 대상</strong>신도림동 청소년</div>
+    </div>
+  </div>
+
+  <div class="section-label">✦ 이정표가 하는 일</div>
+
+  <div class="card">
+    <div class="card-icon">🗺️</div>
+    <div class="badge">핵심 결과물</div>
+    <h3>놀맵 — 신도림놀구로 안전지도</h3>
+    <p>청소년이 놀구로에 오고 가는 길의 안전 경로, 위험 구간, 구로엔젤 가게, 삼대발견 장소를 한눈에 볼 수 있는 웹앱이에요. 지금 보고 있는 이 지도가 이정표 청소년들이 만든 거예요!</p>
+    <div class="tag-row">
+      <span class="tag">카카오맵 API</span>
+      <span class="tag">길찾기 기능</span>
+      <span class="tag">구로엔젤 핀</span>
+      <span class="tag">삼대발견 핀</span>
+      <span class="tag">Cloudflare</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-txt">
+          <h5>AI 공공교육</h5>
+          <p>AI와 코딩의 기초부터 배우며 웹앱 개발의 기반을 다져요.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-txt">
+          <h5>안전지도 웹앱 개발 · 배포</h5>
+          <p>놀맵을 직접 코딩하고 GitHub Pages로 배포해요. 오류를 찾고, 기능을 추가하고, 개선합니다.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-txt">
+          <h5>이동경로 데이터 수집</h5>
+          <p>실제로 걸어보며 안전한 경로와 위험 구간을 직접 확인하고 지도에 반영해요.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-txt">
+          <h5>지속적인 업데이트</h5>
+          <p>구로엔젤 가게 정보, 삼대발견 장소 등 최신 정보로 계속 업데이트해요.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">✦ 활동 현장</div>
+  <div class="card">
+    <div class="card-icon">💻</div>
+    <h3>청소년 개발자들의 기록</h3>
+    <p>놀맵 내 위치 호환성 문제 해결, 지도 길찾기 오류 수정, 관리자 페이지 개설까지 — 청소년들이 직접 머리를 맞대고 문제를 하나씩 해결해나가고 있어요. 선생님도 "여기가 스타트업인 줄 알았다"고 할 정도! 👩‍💻</p>
+  </div>
+
+  <div class="cta-row">
+    <a class="btn btn-primary" href="https://nolmap.github.io">🗺️ 놀맵 열기</a>
+    <a class="btn btn-ghost" href="/293/">← 293 홈</a>
+  </div>
+
+  <div class="footer">
+    293번지 르네상스 · <a href="https://nolmap.github.io">nolmap.github.io</a><br>
+    운영: <a href="https://www.playguro.or.kr" target="_blank" rel="noopener">청소년입장지대 신도림놀구로</a>
+  </div>
+</main>
+</body>
+</html>
