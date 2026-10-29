@@ -50,37 +50,61 @@
     --shadow:0 8px 20px rgba(249,115,22,0.18);
   }
 
-  /* ===== 글자 크기 토큰 ===== */
-  :root{
-    --fs-base:13px; --fs-sm:11px; --fs-xs:10px;
-    --fs-h4:15px; --fs-h5:13px; --fs-title:19px;
-    --fs-tab:9.5px; --fs-ticon:17px;
-    --tab-w:30px; --tab-h:30px;
-  }
-  :root[data-size="large"]{
-    --fs-base:16px; --fs-sm:14px; --fs-xs:13px;
-    --fs-h4:19px; --fs-h5:17px; --fs-title:22px;
-    --fs-tab:12px; --fs-ticon:21px;
-    --tab-w:36px; --tab-h:36px;
-  }
-  :root[data-size="xlarge"]{
-    --fs-base:20px; --fs-sm:18px; --fs-xs:16px;
-    --fs-h4:24px; --fs-h5:21px; --fs-title:26px;
-    --fs-tab:14px; --fs-ticon:26px;
-    --tab-w:44px; --tab-h:44px;
-  }
-  body{ font-size:var(--fs-base); }
-  .title{ font-size:var(--fs-title); }
-  .subtitle{ font-size:var(--fs-xs); }
-  .section-label{ font-size:var(--fs-h5); }
-  .quicklink h5, .setting-label h5, .shop-txt h5,
-  .place-head h4, .info-head h4{ font-size:var(--fs-h5); }
-  .quicklink p, .setting-label p, .shop-txt p,
-  .info-body, .place-desc{ font-size:var(--fs-sm); }
-  .info-head h4{ font-size:var(--fs-h4); }
-  .btn{ font-size:var(--fs-h5); }
-  .tab{ font-size:var(--fs-tab); }
-  .tab .ticon{ font-size:var(--fs-ticon); width:var(--tab-w); height:var(--tab-h); }
+  /* ===== 글자 크기 — JS로 클래스 적용 ===== */
+  /* 기본: 변화 없음 */
+  /* 크게 */
+  html.sz-large body,
+  html.sz-large .subtitle,
+  html.sz-large .quicklink p,
+  html.sz-large .setting-label p,
+  html.sz-large .shop-txt p,
+  html.sz-large .info-body,
+  html.sz-large .place-desc,
+  html.sz-large .open-tag,
+  html.sz-large .dist-tag{ font-size:14px !important; }
+  html.sz-large .title{ font-size:22px !important; }
+  html.sz-large .section-label,
+  html.sz-large .quicklink h5,
+  html.sz-large .setting-label h5,
+  html.sz-large .shop-txt h5,
+  html.sz-large .hero-card h4,
+  html.sz-large .btn,
+  html.sz-large .subscreen-head h3,
+  html.sz-large .back-btn{ font-size:16px !important; }
+  html.sz-large .place-head h4,
+  html.sz-large .info-head h4{ font-size:19px !important; }
+  html.sz-large .tab{ font-size:11px !important; }
+  html.sz-large .tab .ticon{ font-size:20px !important; width:34px !important; height:34px !important; }
+  html.sz-large .btn{ padding:15px 0 !important; }
+  html.sz-large .size-btn{ padding:14px 4px !important; }
+
+  /* 매우 크게 */
+  html.sz-xlarge body,
+  html.sz-xlarge .subtitle,
+  html.sz-xlarge .quicklink p,
+  html.sz-xlarge .setting-label p,
+  html.sz-xlarge .shop-txt p,
+  html.sz-xlarge .info-body,
+  html.sz-xlarge .place-desc,
+  html.sz-xlarge .open-tag,
+  html.sz-xlarge .dist-tag{ font-size:17px !important; }
+  html.sz-xlarge .title{ font-size:26px !important; }
+  html.sz-xlarge .section-label,
+  html.sz-xlarge .quicklink h5,
+  html.sz-xlarge .setting-label h5,
+  html.sz-xlarge .shop-txt h5,
+  html.sz-xlarge .hero-card h4,
+  html.sz-xlarge .btn,
+  html.sz-xlarge .subscreen-head h3,
+  html.sz-xlarge .back-btn{ font-size:20px !important; }
+  html.sz-xlarge .place-head h4,
+  html.sz-xlarge .info-head h4{ font-size:24px !important; }
+  html.sz-xlarge .tab{ font-size:13px !important; }
+  html.sz-xlarge .tab .ticon{ font-size:25px !important; width:42px !important; height:42px !important; }
+  html.sz-xlarge .btn{ padding:18px 0 !important; }
+  html.sz-xlarge .quicklink{ padding:16px 14px !important; }
+  html.sz-xlarge .setting-row{ padding:16px 14px !important; }
+  html.sz-xlarge .size-btn{ padding:18px 4px !important; }
 
   /* ===== 서브화면 (사용자 지정) ===== */
   .subscreen{display:none;}
@@ -1360,87 +1384,110 @@
 
 <script>
 
-// ===== 글자 크기 =====
+// ===== 글자 크기 (클래스 방식) =====
 const SIZE_KEY = 'nolmap_size';
 function setFontSize(sz) {
-  const root = document.documentElement;
-  root.removeAttribute('data-size');
-  if (sz && sz !== 'normal') root.setAttribute('data-size', sz);
+  const html = document.documentElement;
+  html.classList.remove('sz-normal','sz-large','sz-xlarge');
+  html.classList.add('sz-' + (sz || 'normal'));
   document.querySelectorAll('.size-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.sz === sz)
+    b.classList.toggle('active', b.dataset.sz === (sz || 'normal'))
   );
-  try { localStorage.setItem(SIZE_KEY, sz); } catch(_) {}
+  try { localStorage.setItem(SIZE_KEY, sz || 'normal'); } catch(_) {}
 }
 
 // ===== 서브화면 전환 =====
 function openSub(id) {
   document.querySelectorAll('.subscreen').forEach(s => s.classList.remove('active'));
   const target = document.getElementById(id);
-  if (target) { target.classList.add('active'); }
-  // 화면 스크롤 최상단
+  if (target) target.classList.add('active');
   const screens = document.querySelector('.screens');
   if (screens) screens.scrollTop = 0;
 }
 
 // ===== 음성 안내 =====
+// iOS Safari 포함 모든 브라우저 호환
+// speechSynthesis 없으면 버튼 자체를 비활성화
 const VOICE_KEY = 'nolmap_voice';
 let _voiceOn = false;
-let _synth = window.speechSynthesis || null;
-let _voiceKo = null;
+const _synth = window.speechSynthesis || null;
 
-function loadVoices() {
-  if (!_synth) return;
-  const voices = _synth.getVoices();
-  _voiceKo = voices.find(v => v.lang.startsWith('ko')) || voices[0] || null;
+function _getKoVoice() {
+  if (!_synth) return null;
+  const vs = _synth.getVoices();
+  return vs.find(v => v.lang === 'ko-KR') ||
+         vs.find(v => v.lang.startsWith('ko')) ||
+         vs[0] || null;
 }
-if (_synth) {
-  loadVoices();
-  _synth.onvoiceschanged = loadVoices;
+
+// iOS에서는 getVoices()가 비동기. onvoiceschanged로 보완
+if (_synth && _synth.onvoiceschanged !== undefined) {
+  _synth.onvoiceschanged = () => {};
 }
 
 function speak(text) {
   if (!_voiceOn || !_synth) return;
-  _synth.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'ko-KR';
-  u.rate = 0.92;
-  u.pitch = 1;
-  if (_voiceKo) u.voice = _voiceKo;
-  _synth.speak(u);
+  try {
+    _synth.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    u.rate = 0.9;
+    u.pitch = 1.0;
+    u.volume = 1.0;
+    const v = _getKoVoice();
+    if (v) u.voice = v;
+    _synth.speak(u);
+  } catch(e) { console.warn('speak error', e); }
+}
+
+function _voiceSupported() {
+  return !!_synth;
 }
 
 function setVoice(on) {
+  if (on && !_voiceSupported()) {
+    const st = document.getElementById('voiceStatus');
+    if (st) st.textContent = '⚠️ 이 기기에서는 음성 안내를 지원하지 않아요.';
+    const cb = document.getElementById('voiceToggle');
+    if (cb) cb.checked = false;
+    return;
+  }
   _voiceOn = on;
   const cb = document.getElementById('voiceToggle');
   if (cb) cb.checked = on;
   try { localStorage.setItem(VOICE_KEY, on ? '1' : '0'); } catch(_) {}
   const st = document.getElementById('voiceStatus');
-  if (st) st.textContent = on ? '음성 안내가 켜졌어요.' : '음성 안내가 꺼졌어요.';
+  if (st) st.textContent = on ? '✅ 음성 안내가 켜졌어요.' : '음성 안내가 꺼졌어요.';
+  // 켤 때 즉시 한 마디 (사용자 제스처 안에서 호출돼야 iOS에서 작동)
   if (on) speak('음성 안내가 켜졌어요.');
 }
 
 function testVoice() {
-  if (!_synth) {
+  if (!_voiceSupported()) {
     const st = document.getElementById('voiceStatus');
-    if (st) st.textContent = '이 브라우저는 음성 안내를 지원하지 않아요.';
+    if (st) st.textContent = '⚠️ 이 기기는 음성 안내를 지원하지 않아요.';
     return;
   }
-  const was = _voiceOn;
+  // 사용자가 직접 버튼을 눌렀으므로 iOS도 허용
+  const prevOn = _voiceOn;
   _voiceOn = true;
   speak('안녕하세요! 놀구로 오는 길, 음성 안내 테스트예요.');
-  _voiceOn = was;
+  _voiceOn = prevOn;
+  const st = document.getElementById('voiceStatus');
+  if (st) st.textContent = '🔊 테스트 중...';
 }
 
-// 버튼에 음성 안내 자동 연결
+// 버튼 클릭 시 음성 읽기 (클릭 이벤트 = 사용자 제스처 → iOS 허용)
 document.addEventListener('click', function(e) {
   if (!_voiceOn) return;
-  const btn = e.target.closest('button, .quicklink, .tab, .shop-item');
+  const btn = e.target.closest('button:not(.dev-console-btn), .quicklink, .tab, .shop-item');
   if (!btn) return;
-  const text =
+  const text = (
     btn.querySelector('h5')?.textContent ||
-    btn.querySelector('.ticon + *')?.textContent ||
-    btn.textContent?.trim();
-  if (text && text.length < 60) speak(text);
+    btn.querySelector('span:not(.ticon):not(.fic):not(.arrow)')?.textContent ||
+    btn.textContent
+  )?.trim().replace(/\s+/g,' ');
+  if (text && text.length > 0 && text.length < 60) speak(text);
 }, true);
 
 // ===== 색 테마 · 고대비 =====
@@ -1473,7 +1520,7 @@ function setHighContrast(on) {
     const vc = localStorage.getItem(VOICE_KEY) === '1';
     setTheme(t);
     if (hc) setHighContrast(true);
-    if (sz && sz !== 'normal') setFontSize(sz);
+    setFontSize(sz || 'normal');
     if (vc) { _voiceOn = true; const cb = document.getElementById('voiceToggle'); if(cb) cb.checked = true; }
   } catch(_) {}
 })();
