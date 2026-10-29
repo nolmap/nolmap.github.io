@@ -49,6 +49,81 @@
     --safe:#F97316; --safe-bg:#FFEDD5; --ink:#3A1800; --muted:#A07050;
     --shadow:0 8px 20px rgba(249,115,22,0.18);
   }
+
+  /* ===== 글자 크기 토큰 ===== */
+  :root{
+    --fs-base:13px; --fs-sm:11px; --fs-xs:10px;
+    --fs-h4:15px; --fs-h5:13px; --fs-title:19px;
+    --fs-tab:9.5px; --fs-ticon:17px;
+    --tab-w:30px; --tab-h:30px;
+  }
+  :root[data-size="large"]{
+    --fs-base:16px; --fs-sm:14px; --fs-xs:13px;
+    --fs-h4:19px; --fs-h5:17px; --fs-title:22px;
+    --fs-tab:12px; --fs-ticon:21px;
+    --tab-w:36px; --tab-h:36px;
+  }
+  :root[data-size="xlarge"]{
+    --fs-base:20px; --fs-sm:18px; --fs-xs:16px;
+    --fs-h4:24px; --fs-h5:21px; --fs-title:26px;
+    --fs-tab:14px; --fs-ticon:26px;
+    --tab-w:44px; --tab-h:44px;
+  }
+  body{ font-size:var(--fs-base); }
+  .title{ font-size:var(--fs-title); }
+  .subtitle{ font-size:var(--fs-xs); }
+  .section-label{ font-size:var(--fs-h5); }
+  .quicklink h5, .setting-label h5, .shop-txt h5,
+  .place-head h4, .info-head h4{ font-size:var(--fs-h5); }
+  .quicklink p, .setting-label p, .shop-txt p,
+  .info-body, .place-desc{ font-size:var(--fs-sm); }
+  .info-head h4{ font-size:var(--fs-h4); }
+  .btn{ font-size:var(--fs-h5); }
+  .tab{ font-size:var(--fs-tab); }
+  .tab .ticon{ font-size:var(--fs-ticon); width:var(--tab-w); height:var(--tab-h); }
+
+  /* ===== 서브화면 (사용자 지정) ===== */
+  .subscreen{display:none;}
+  .subscreen.active{display:block; animation:fade .2s ease;}
+  .subscreen-head{
+    display:flex; align-items:center; gap:10px;
+    padding:14px 0 10px; margin-bottom:4px;
+  }
+  .back-btn{
+    border:none; background:var(--safe-bg); color:var(--leaf-deep);
+    border-radius:999px; padding:7px 13px;
+    font-family:'Jua',sans-serif; font-size:13px; cursor:pointer;
+  }
+  .subscreen-head h3{
+    margin:0; font-family:'Jua',sans-serif;
+    font-size:var(--fs-h4); color:var(--ink);
+  }
+
+  /* ===== 글자 크기 선택 버튼 ===== */
+  .size-btns{ display:flex; gap:8px; width:100%; }
+  .size-btn{
+    flex:1; border:2px solid var(--leaf); background:var(--white);
+    color:var(--leaf-text); border-radius:16px;
+    padding:12px 4px; cursor:pointer;
+    font-family:'Jua',sans-serif; display:flex;
+    flex-direction:column; align-items:center; gap:4px;
+    transition:background .15s;
+  }
+  .size-btn .sz-label{ font-size:11px; color:var(--muted); }
+  .size-btn .sz-preview{ line-height:1; }
+  .size-btn.active{ background:var(--leaf); color:#fff; }
+  .size-btn.active .sz-label{ color:rgba(255,255,255,.8); }
+
+  /* ===== 음성 안내 버튼 ===== */
+  .voice-status{
+    font-size:var(--fs-sm); color:var(--muted);
+    margin-top:4px; text-align:center;
+  }
+  /* 고대비 + 대형 글자 조합 보정 */
+  :root.hc .back-btn{ font-size:16px; padding:10px 16px; }
+  :root.hc .size-btn{ padding:16px 4px; }
+  :root[data-size="xlarge"] .size-btn{ padding:16px 4px; }
+  :root[data-size="xlarge"] .back-btn{ font-size:17px; }
   /* ===== 고대비 모드 ===== */
   :root.hc{
     --bg-mint:#FFFFF0; --leaf:#1A7A00; --leaf-deep:#0F5500; --leaf-text:#0A3D00;
@@ -988,54 +1063,118 @@
 
     <!-- ============ 설정 ============ -->
     <section class="screen" id="screen-settings">
-      <div class="section-label">🎨 화면 설정</div>
 
-      <!-- 색 테마 -->
-      <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:12px;">
-        <div class="setting-label">
-          <span class="fic">🎨</span>
-          <div><h5>색 테마</h5><p>앱 전체 색을 바꿔요</p></div>
-        </div>
-        <div class="theme-swatches">
-          <button class="theme-swatch active" data-t="green"  style="background:#8FD14F;" title="초록" onclick="setTheme('green')"></button>
-          <button class="theme-swatch"        data-t="blue"   style="background:#3A9EDB;" title="파랑" onclick="setTheme('blue')"></button>
-          <button class="theme-swatch"        data-t="purple" style="background:#8B5CF6;" title="보라" onclick="setTheme('purple')"></button>
-          <button class="theme-swatch"        data-t="orange" style="background:#F97316;" title="주황" onclick="setTheme('orange')"></button>
+      <!-- 메인 설정 목록 -->
+      <div class="subscreen active" id="settings-main">
+        <div class="section-label">⚙️ 설정</div>
+
+        <button class="quicklink" onclick="openSub('settings-custom')">
+          <div class="qicon">🎨</div>
+          <div><h5>사용자 지정</h5><p>색 테마, 고대비, 글자 크기, 음성 안내</p></div>
+          <div class="arrow">›</div>
+        </button>
+
+        <div class="section-label">👤 계정 · 정보</div>
+        <button class="quicklink" onclick="openPrivacy()">
+          <div class="qicon">📄</div>
+          <div><h5>이용약관 · 개인정보처리방침</h5><p>안전하게 관리되고 있어요</p></div>
+          <div class="arrow">›</div>
+        </button>
+        <button class="quicklink" type="button" onclick="openContactModal()">
+          <div class="qicon">💌</div>
+          <div><h5>문의하기</h5><p>불편하거나 궁금한 점을 남겨주세요</p></div>
+          <div class="arrow">›</div>
+        </button>
+
+        <div class="app-version">놀구로오는길 v1.0.0</div>
+        <div class="dev-console">
+          <button class="dev-console-btn" type="button" onclick="toggleDevConsole()">developer console</button>
+          <form class="dev-console-box" id="devConsole" onsubmit="return runDevConsole(event)">
+            <span>&gt;</span>
+            <input id="devConsoleInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="developer console">
+          </form>
         </div>
       </div>
 
-      <!-- 고대비 토글 -->
-      <div class="setting-row">
-        <div class="setting-label">
-          <span class="fic">♿</span>
-          <div><h5>고대비</h5><p>글자·버튼 크게, 색 대비 높게</p></div>
+      <!-- 사용자 지정 서브화면 -->
+      <div class="subscreen" id="settings-custom">
+        <div class="subscreen-head">
+          <button class="back-btn" onclick="openSub('settings-main')">‹ 뒤로</button>
+          <h3>사용자 지정</h3>
         </div>
-        <label class="switch">
-          <input type="checkbox" id="hcToggle" onchange="setHighContrast(this.checked)">
-          <span class="slider"></span>
-        </label>
+
+        <!-- 색 테마 -->
+        <div class="section-label">🎨 색 테마</div>
+        <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:12px;">
+          <div class="setting-label">
+            <span class="fic">🎨</span>
+            <div><h5>테마 색상</h5><p>앱 전체 색을 골라요</p></div>
+          </div>
+          <div class="theme-swatches">
+            <button class="theme-swatch active" data-t="green"  style="background:#8FD14F;" title="초록" onclick="setTheme('green')"></button>
+            <button class="theme-swatch"        data-t="blue"   style="background:#3A9EDB;" title="파랑" onclick="setTheme('blue')"></button>
+            <button class="theme-swatch"        data-t="purple" style="background:#8B5CF6;" title="보라" onclick="setTheme('purple')"></button>
+            <button class="theme-swatch"        data-t="orange" style="background:#F97316;" title="주황" onclick="setTheme('orange')"></button>
+          </div>
+        </div>
+
+        <!-- 고대비 -->
+        <div class="section-label">♿ 접근성</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="fic">♿</span>
+            <div><h5>고대비</h5><p>색 대비를 높여 잘 보이게 해요</p></div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="hcToggle" onchange="setHighContrast(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- 글자 크기 -->
+        <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:12px;">
+          <div class="setting-label">
+            <span class="fic">🔤</span>
+            <div><h5>글자 크기</h5><p>화면의 글자와 버튼 크기를 조절해요</p></div>
+          </div>
+          <div class="size-btns">
+            <button class="size-btn active" data-sz="normal" onclick="setFontSize('normal')">
+              <span class="sz-preview" style="font-size:14px;font-family:'Jua',sans-serif;">가</span>
+              <span class="sz-label">기본</span>
+            </button>
+            <button class="size-btn" data-sz="large" onclick="setFontSize('large')">
+              <span class="sz-preview" style="font-size:18px;font-family:'Jua',sans-serif;">가</span>
+              <span class="sz-label">크게</span>
+            </button>
+            <button class="size-btn" data-sz="xlarge" onclick="setFontSize('xlarge')">
+              <span class="sz-preview" style="font-size:24px;font-family:'Jua',sans-serif;">가</span>
+              <span class="sz-label">매우 크게</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 음성 안내 -->
+        <div class="section-label">🔊 음성 안내</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="fic">🔊</span>
+            <div><h5>음성 안내</h5><p>버튼을 누르면 내용을 읽어줘요</p></div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="voiceToggle" onchange="setVoice(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:10px;">
+          <div class="setting-label">
+            <span class="fic">▶️</span>
+            <div><h5>음성 테스트</h5><p>지금 음성이 잘 나오는지 확인해요</p></div>
+          </div>
+          <button class="btn primary" style="width:100%;" onclick="testVoice()">🔊 테스트 듣기</button>
+          <div class="voice-status" id="voiceStatus"></div>
+        </div>
       </div>
 
-      <div class="section-label">👤 계정 · 정보</div>
-
-      <button class="quicklink" onclick="openPrivacy()">
-        <div class="qicon">📄</div>
-        <div><h5>이용약관 · 개인정보처리방침</h5><p>안전하게 관리되고 있어요</p></div>
-        <div class="arrow">›</div>
-      </button>
-      <button class="quicklink" type="button" onclick="openContactModal()">
-        <div class="qicon">💌</div><div><h5>문의하기</h5><p>불편하거나 궁금한 점을 남겨주세요</p></div><div class="arrow">›</div>
-      </button>
-
-      <div class="app-version">놀구로오는길 v1.0.0</div>
-
-      <div class="dev-console">
-        <button class="dev-console-btn" type="button" onclick="toggleDevConsole()">developer console</button>
-        <form class="dev-console-box" id="devConsole" onsubmit="return runDevConsole(event)">
-          <span>&gt;</span>
-          <input id="devConsoleInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="developer console">
-        </form>
-      </div>
     </section>
 
   </div>
@@ -1220,6 +1359,90 @@
 </div>
 
 <script>
+
+// ===== 글자 크기 =====
+const SIZE_KEY = 'nolmap_size';
+function setFontSize(sz) {
+  const root = document.documentElement;
+  root.removeAttribute('data-size');
+  if (sz && sz !== 'normal') root.setAttribute('data-size', sz);
+  document.querySelectorAll('.size-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.sz === sz)
+  );
+  try { localStorage.setItem(SIZE_KEY, sz); } catch(_) {}
+}
+
+// ===== 서브화면 전환 =====
+function openSub(id) {
+  document.querySelectorAll('.subscreen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) { target.classList.add('active'); }
+  // 화면 스크롤 최상단
+  const screens = document.querySelector('.screens');
+  if (screens) screens.scrollTop = 0;
+}
+
+// ===== 음성 안내 =====
+const VOICE_KEY = 'nolmap_voice';
+let _voiceOn = false;
+let _synth = window.speechSynthesis || null;
+let _voiceKo = null;
+
+function loadVoices() {
+  if (!_synth) return;
+  const voices = _synth.getVoices();
+  _voiceKo = voices.find(v => v.lang.startsWith('ko')) || voices[0] || null;
+}
+if (_synth) {
+  loadVoices();
+  _synth.onvoiceschanged = loadVoices;
+}
+
+function speak(text) {
+  if (!_voiceOn || !_synth) return;
+  _synth.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ko-KR';
+  u.rate = 0.92;
+  u.pitch = 1;
+  if (_voiceKo) u.voice = _voiceKo;
+  _synth.speak(u);
+}
+
+function setVoice(on) {
+  _voiceOn = on;
+  const cb = document.getElementById('voiceToggle');
+  if (cb) cb.checked = on;
+  try { localStorage.setItem(VOICE_KEY, on ? '1' : '0'); } catch(_) {}
+  const st = document.getElementById('voiceStatus');
+  if (st) st.textContent = on ? '음성 안내가 켜졌어요.' : '음성 안내가 꺼졌어요.';
+  if (on) speak('음성 안내가 켜졌어요.');
+}
+
+function testVoice() {
+  if (!_synth) {
+    const st = document.getElementById('voiceStatus');
+    if (st) st.textContent = '이 브라우저는 음성 안내를 지원하지 않아요.';
+    return;
+  }
+  const was = _voiceOn;
+  _voiceOn = true;
+  speak('안녕하세요! 놀구로 오는 길, 음성 안내 테스트예요.');
+  _voiceOn = was;
+}
+
+// 버튼에 음성 안내 자동 연결
+document.addEventListener('click', function(e) {
+  if (!_voiceOn) return;
+  const btn = e.target.closest('button, .quicklink, .tab, .shop-item');
+  if (!btn) return;
+  const text =
+    btn.querySelector('h5')?.textContent ||
+    btn.querySelector('.ticon + *')?.textContent ||
+    btn.textContent?.trim();
+  if (text && text.length < 60) speak(text);
+}, true);
+
 // ===== 색 테마 · 고대비 =====
 const THEME_KEY = 'nolmap_theme';
 const HC_KEY    = 'nolmap_hc';
@@ -1246,8 +1469,12 @@ function setHighContrast(on) {
   try {
     const t  = localStorage.getItem(THEME_KEY) || 'green';
     const hc = localStorage.getItem(HC_KEY) === '1';
+    const sz = localStorage.getItem(SIZE_KEY) || 'normal';
+    const vc = localStorage.getItem(VOICE_KEY) === '1';
     setTheme(t);
     if (hc) setHighContrast(true);
+    if (sz && sz !== 'normal') setFontSize(sz);
+    if (vc) { _voiceOn = true; const cb = document.getElementById('voiceToggle'); if(cb) cb.checked = true; }
   } catch(_) {}
 })();
 
@@ -1340,7 +1567,7 @@ setInterval(updateNolguroStatus, 60000);
     angel: ['구로엔젤', '우리 동네 안전 도우미'],
     discover: ['삼대발견', '놀구로 가는 길에 만나는 곳'],
     place: ['신도림놀구로', '우리가 놀러가는 그곳'],
-    settings: ['설정', '테마 · 고대비 · 약관 · 문의']
+    settings: ['설정', '앱 설정을 바꿔요']
   };
 
   function go(name){
