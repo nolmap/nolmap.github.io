@@ -1406,23 +1406,31 @@ function openSub(id) {
 }
 
 // ===== 음성 안내 =====
-// iOS Safari 포함 모든 브라우저 호환
-// speechSynthesis 없으면 버튼 자체를 비활성화
 const VOICE_KEY = 'nolmap_voice';
 let _voiceOn = false;
 const _synth = window.speechSynthesis || null;
 
-function _getKoVoice() {
-  if (!_synth) return null;
-  const vs = _synth.getVoices();
-  return vs.find(v => v.lang === 'ko-KR') ||
-         vs.find(v => v.lang.startsWith('ko')) ||
-         vs[0] || null;
+// 음성 목록 — 삼성/안드로이드는 비동기 로딩
+let _voices = [];
+function _loadVoices() {
+  if (!_synth) return;
+  const v = _synth.getVoices();
+  if (v && v.length) _voices = v;
+}
+if (_synth) {
+  _loadVoices();
+  if ('onvoiceschanged' in _synth) _synth.onvoiceschanged = _loadVoices;
+  // 삼성 브라우저: 약간의 딜레이 후 재시도
+  setTimeout(_loadVoices, 500);
+  setTimeout(_loadVoices, 1500);
 }
 
-// iOS에서는 getVoices()가 비동기. onvoiceschanged로 보완
-if (_synth && _synth.onvoiceschanged !== undefined) {
-  _synth.onvoiceschanged = () => {};
+function _getBestVoice() {
+  if (!_voices.length) _loadVoices();
+  // ko-KR 우선 → ko → 아무 목소리
+  return _voices.find(v => v.lang === 'ko-KR') ||
+         _voices.find(v => v.lang.startsWith('ko')) ||
+         _voices[0] || null;
 }
 
 function speak(text) {
@@ -1431,25 +1439,18 @@ function speak(text) {
     _synth.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'ko-KR';
-    u.rate = 0.9;
-    u.pitch = 1.0;
-    u.volume = 1.0;
-    const v = _getKoVoice();
+    u.rate = 0.9; u.pitch = 1.0; u.volume = 1.0;
+    const v = _getBestVoice();
     if (v) u.voice = v;
     _synth.speak(u);
-  } catch(e) { console.warn('speak error', e); }
-}
-
-function _voiceSupported() {
-  return !!_synth;
+  } catch(e) { console.warn('speak:', e); }
 }
 
 function setVoice(on) {
-  if (on && !_voiceSupported()) {
-    const st = document.getElementById('voiceStatus');
-    if (st) st.textContent = '⚠️ 이 기기에서는 음성 안내를 지원하지 않아요.';
-    const cb = document.getElementById('voiceToggle');
-    if (cb) cb.checked = false;
+  // speechSynthesis 자체가 없는 경우만 막음 (목소리 없어도 시도)
+  if (on && !_synth) {
+    document.getElementById('voiceStatus').textContent = '⚠️ 이 브라우저는 음성 안내를 지원하지 않아요.';
+    document.getElementById('voiceToggle').checked = false;
     return;
   }
   _voiceOn = on;
@@ -1457,37 +1458,44 @@ function setVoice(on) {
   if (cb) cb.checked = on;
   try { localStorage.setItem(VOICE_KEY, on ? '1' : '0'); } catch(_) {}
   const st = document.getElementById('voiceStatus');
-  if (st) st.textContent = on ? '✅ 음성 안내가 켜졌어요.' : '음성 안내가 꺼졌어요.';
-  // 켤 때 즉시 한 마디 (사용자 제스처 안에서 호출돼야 iOS에서 작동)
+  if (st) st.textContent = on ? '✅ 음성 안내가 켜졌어요.' : '';
   if (on) speak('음성 안내가 켜졌어요.');
 }
 
 function testVoice() {
-  if (!_voiceSupported()) {
-    const st = document.getElementById('voiceStatus');
-    if (st) st.textContent = '⚠️ 이 기기는 음성 안내를 지원하지 않아요.';
+  if (!_synth) {
+    document.getElementById('voiceStatus').textContent = '⚠️ 이 브라우저는 음성 안내를 지원하지 않아요.';
     return;
   }
-  // 사용자가 직접 버튼을 눌렀으므로 iOS도 허용
-  const prevOn = _voiceOn;
-  _voiceOn = true;
-  speak('안녕하세요! 놀구로 오는 길, 음성 안내 테스트예요.');
-  _voiceOn = prevOn;
   const st = document.getElementById('voiceStatus');
-  if (st) st.textContent = '🔊 테스트 중...';
+  // 사용자 제스처 안에서 직접 호출 → iOS·삼성 모두 허용
+  try {
+    _synth.cancel();
+    const u = new SpeechSynthesisUtterance('안녕하세요! 놀구로 오는 길, 음성 안내 테스트예요.');
+    u.lang = 'ko-KR'; u.rate = 0.9; u.volume = 1.0;
+    const v = _getBestVoice();
+    if (v) u.voice = v;
+    u.onstart = () => { if(st) st.textContent = '🔊 재생 중...'; };
+    u.onend   = () => { if(st) st.textContent = '✅ 잘 들리면 음성 안내를 켜 보세요!'; };
+    u.onerror = (e) => { if(st) st.textContent = '⚠️ 재생에 실패했어요. (' + e.error + ')'; };
+    _synth.speak(u);
+    if(st) st.textContent = '🔊 재생 중...';
+  } catch(e) {
+    if(st) st.textContent = '⚠️ 오류: ' + e.message;
+  }
 }
 
-// 버튼 클릭 시 음성 읽기 (클릭 이벤트 = 사용자 제스처 → iOS 허용)
+// 버튼 클릭 시 자동 음성 읽기
 document.addEventListener('click', function(e) {
   if (!_voiceOn) return;
-  const btn = e.target.closest('button:not(.dev-console-btn), .quicklink, .tab, .shop-item');
+  const btn = e.target.closest('button:not(.dev-console-btn):not(.slider), .quicklink, .tab, .shop-item');
   if (!btn) return;
   const text = (
     btn.querySelector('h5')?.textContent ||
-    btn.querySelector('span:not(.ticon):not(.fic):not(.arrow)')?.textContent ||
+    btn.querySelector('.pp-name')?.textContent ||
     btn.textContent
-  )?.trim().replace(/\s+/g,' ');
-  if (text && text.length > 0 && text.length < 60) speak(text);
+  )?.trim().replace(/\s+/g, ' ').slice(0, 60);
+  if (text) speak(text);
 }, true);
 
 // ===== 색 테마 · 고대비 =====
