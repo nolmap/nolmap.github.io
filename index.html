@@ -1,935 +1,2088 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex, nofollow">
-<title>놀맵 관리자</title>
+<title>놀맵</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#F2FAE7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="놀맵">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
 <script src="hours.js"></script>
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=fdf609543f391b19f0295840c6173357&autoload=false"></script>
 <style>
   :root{
-    --bg:#F2FAE7; --leaf:#8FD14F; --leaf-deep:#5FAE3A; --leaf-text:#3E7A2C;
-    --white:#fff; --ink:#3A4A2E; --muted:#8B9C7E; --line:#E3EED8;
-    --ok:#3E9B2C; --ok-bg:#E9F8E1; --warn:#B07E12; --warn-bg:#FFF3D6; --bad:#E14545; --bad-bg:#FFEAEA;
-    --mono:ui-monospace, Menlo, Consolas, monospace;
-    --shadow:0 6px 16px rgba(95,174,58,0.14);
+    --bg-mint:#F2FAE7;
+    --leaf:#8FD14F;
+    --leaf-deep:#5FAE3A;
+    --leaf-text:#3E7A2C;
+    --white:#FFFFFF;
+    --danger:#FF6B6B;
+    --danger-bg:#FFEAEA;
+    --safe:#63C24A;
+    --safe-bg:#E9F8E1;
+    --lamp:#FFC94A;
+    --ink:#3A4A2E;
+    --muted:#8B9C7E;
+    --shadow: 0 8px 20px rgba(95,174,58,0.18);
   }
+
+  /* 파랑 테마 */
+  :root[data-theme="blue"]{
+    --bg-mint:#E8F4FD; --leaf:#3A9EDB; --leaf-deep:#1976B8; --leaf-text:#0D5A9E;
+    --safe:#3A9EDB; --safe-bg:#DAEEFA; --ink:#0D2A4A; --muted:#5B7FA6;
+    --shadow:0 8px 20px rgba(25,118,184,0.18);
+  }
+  /* 보라 테마 */
+  :root[data-theme="purple"]{
+    --bg-mint:#F3EEFF; --leaf:#8B5CF6; --leaf-deep:#6D28D9; --leaf-text:#4C1D95;
+    --safe:#8B5CF6; --safe-bg:#EDE9FE; --ink:#1E0748; --muted:#7C6BA0;
+    --shadow:0 8px 20px rgba(109,40,217,0.18);
+  }
+  /* 주황 테마 */
+  :root[data-theme="orange"]{
+    --bg-mint:#FFF5EC; --leaf:#F97316; --leaf-deep:#C2500A; --leaf-text:#7C2D00;
+    --safe:#F97316; --safe-bg:#FFEDD5; --ink:#3A1800; --muted:#A07050;
+    --shadow:0 8px 20px rgba(249,115,22,0.18);
+  }
+  /* ===== 고대비 모드 ===== */
+  :root.hc{
+    --bg-mint:#FFFFF0; --leaf:#1A7A00; --leaf-deep:#0F5500; --leaf-text:#0A3D00;
+    --white:#FFFFFF; --safe:#1A7A00; --safe-bg:#DCFFDC;
+    --ink:#000000; --muted:#333333; --danger:#B30000; --danger-bg:#FFE0E0;
+    --shadow:0 4px 12px rgba(0,0,0,0.30);
+  }
+  :root.hc body{ font-size:15px; }
+  :root.hc .title{ font-size:24px; }
+  :root.hc .btn{ padding:17px 0; border-radius:16px; font-size:16px; }
+  :root.hc .tab{ font-size:12px; }
+  :root.hc .tab .ticon{ font-size:22px; width:38px; height:38px; }
+  :root.hc .tabbar{ border-top:2px solid var(--ink); }
+  :root.hc .tab.active{ font-weight:700; }
+  :root.hc .quicklink h5,
+  :root.hc .setting-label h5{ font-size:16px; }
+  :root.hc .section-label,
+  :root.hc .shop-txt h5{ font-size:16px; }
+  /* ===== 색 테마 스와치 ===== */
+  .theme-swatches{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+  .theme-swatch{
+    width:36px; height:36px; border-radius:50%;
+    border:3px solid transparent;
+    cursor:pointer; transition:transform .15s;
+    box-shadow:0 2px 6px rgba(0,0,0,0.18);
+  }
+  .theme-swatch:hover{ transform:scale(1.12); }
+  .theme-swatch.active{
+    border-color:var(--ink) !important;
+    box-shadow:0 0 0 2px var(--white),0 0 0 4px var(--ink);
+  }
+  :root.hc .theme-swatch{ width:46px; height:46px; }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Gowun Dodum',sans-serif;font-size:13px;}
-  .wrap{max-width:860px;margin:0 auto;padding:20px 16px 48px;}
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
-  header h1{margin:0;font-family:'Jua',sans-serif;font-size:22px;color:var(--leaf-text);}
-  header p{margin:2px 0 0;font-size:11px;color:var(--muted);}
-  a.back{font-family:'Jua',sans-serif;font-size:12px;color:var(--leaf-deep);text-decoration:none;
-    background:var(--white);padding:8px 12px;border-radius:999px;box-shadow:var(--shadow);white-space:nowrap;}
-  section{background:var(--white);border-radius:20px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px;}
-  section h2{margin:0 0 4px;font-family:'Jua',sans-serif;font-size:16px;color:var(--ink);display:flex;align-items:center;gap:8px;}
-  section .desc{margin:0 0 12px;font-size:11.5px;color:var(--muted);line-height:1.5;}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-  .b{border:none;border-radius:999px;padding:9px 14px;font-family:'Jua',sans-serif;font-size:12px;cursor:pointer;
-    background:var(--leaf);color:#fff;}
-  .b.ghost{background:var(--bg);color:var(--leaf-text);}
-  .b.danger{background:var(--bad-bg);color:var(--bad);}
-  .b:disabled{opacity:.6;cursor:wait;}
-  .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;}
-  .pill.ok{background:var(--ok-bg);color:var(--ok);}
-  .pill.warn{background:var(--warn-bg);color:var(--warn);}
-  .pill.bad{background:var(--bad-bg);color:var(--bad);}
-  .pill.idle{background:#EEF2EA;color:var(--muted);}
-
-  .status-list{display:grid;gap:8px;}
-  .status-item{display:flex;align-items:center;justify-content:space-between;gap:10px;
-    background:var(--bg);border-radius:12px;padding:10px 12px;}
-  .status-item b{font-family:'Jua',sans-serif;font-weight:normal;font-size:13px;}
-  .status-item small{display:block;color:var(--muted);font-size:10.5px;margin-top:2px;font-family:var(--mono);word-break:break-all;}
-
-  .tbl-wrap{overflow-x:auto;margin:0 -4px;}
-  table{width:100%;border-collapse:collapse;min-width:640px;}
-  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle;}
-  th{font-size:10.5px;color:var(--muted);font-weight:700;}
-  td.name b{font-family:'Jua',sans-serif;font-weight:normal;font-size:13px;}
-  td.name small{display:block;color:var(--muted);font-size:10px;}
-  td.mono{font-family:var(--mono);font-size:11px;}
-  .thumbs{display:flex;gap:4px;}
-  .thumbs img{width:34px;height:34px;object-fit:cover;border-radius:7px;background:var(--bg);}
-  .thumbs img.broken{outline:2px solid var(--bad);}
-  .type{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap;}
-  .type.angel{background:#FFF3D6;color:#B07E12;}
-  .type.disc{background:#F3E8FF;color:#7A3FB5;}
-  .type.home{background:var(--ok-bg);color:var(--ok);}
-  .summary{margin-top:10px;font-size:11.5px;color:var(--muted);}
-
-  #pickMap{width:100%;height:360px;border-radius:14px;background:#EAF7DC;}
-  .pick-out{margin-top:10px;display:grid;gap:8px;}
-  .codebox{display:flex;align-items:center;gap:8px;background:#2B3424;color:#E9F8E1;border-radius:10px;padding:9px 12px;
-    font-family:var(--mono);font-size:12px;}
-  .codebox code{flex:1;word-break:break-all;}
-  .codebox button{border:none;background:rgba(255,255,255,0.14);color:#E9F8E1;border-radius:6px;padding:5px 9px;font-size:11px;cursor:pointer;}
-  .pin{width:18px;height:18px;border-radius:50%;background:#E14545;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);}
-  .home-pin{background:var(--leaf-deep);color:#fff;font-family:'Jua',sans-serif;font-size:11px;padding:4px 9px;border-radius:999px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);white-space:nowrap;}
-
-  .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12px;margin-bottom:12px;}
-  .kv dt{color:var(--muted);}
-  .kv dd{margin:0;font-family:var(--mono);}
-  /* 편집기 */
-  .lbl{display:block;font-family:'Jua',sans-serif;font-size:12px;color:var(--leaf-text);margin:12px 2px 6px;}
-  .inp{width:100%;border:1px solid #DCE9D0;background:#FAFDF7;border-radius:12px;padding:10px 12px;
-    font-family:'Gowun Dodum',sans-serif;font-size:14px;color:var(--ink);outline:none;}
-  .inp:focus{border-color:var(--leaf);}
-  textarea.inp{resize:vertical;line-height:1.5;}
-  .help{margin-top:10px;font-size:11.5px;color:var(--muted);line-height:1.6;}
-  .help summary{cursor:pointer;color:var(--leaf-deep);font-weight:700;}
-  .help ol{margin:6px 0;padding-left:18px;}
-  .msg{margin-top:10px;font-size:12px;line-height:1.5;}
-  .msg.ok{color:var(--ok);} .msg.bad{color:var(--bad);}
-  .gh-who{margin-bottom:12px;}
-  .b.small{padding:6px 11px;font-size:11px;}
-  .chip-group{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;}
-  .chip-lbl{font-family:'Jua',sans-serif;font-size:12px;color:var(--muted);white-space:nowrap;padding-top:6px;width:72px;flex-shrink:0;}
-  .chips{display:flex;flex-wrap:wrap;gap:6px;}
-  .chip{border:1px solid #DCE9D0;background:var(--white);border-radius:999px;padding:6px 11px;font-size:12px;cursor:pointer;
-    font-family:'Gowun Dodum',sans-serif;color:var(--ink);}
-  .chip.on{background:var(--leaf);border-color:var(--leaf);color:#fff;}
-  .edit-pane{margin-top:14px;border-top:1px dashed var(--line);padding-top:14px;}
-  .edit-head{display:flex;align-items:center;gap:10px;}
-  .edit-emoji{width:40px;height:40px;border-radius:13px;background:var(--ok-bg);display:flex;align-items:center;justify-content:center;font-size:20px;}
-  .edit-head b{font-family:'Jua',sans-serif;font-weight:normal;font-size:16px;}
-  .edit-head small{display:block;color:var(--muted);font-size:10.5px;}
-  .ph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
-  .ph{position:relative;border-radius:12px;overflow:hidden;background:var(--bg);aspect-ratio:1/1;}
-  .ph img{width:100%;height:100%;object-fit:cover;display:block;}
-  .ph .no{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;border-radius:999px;padding:2px 7px;}
-  .ph .new{position:absolute;top:6px;right:6px;background:var(--leaf);color:#fff;font-size:10px;border-radius:999px;padding:2px 7px;}
-  .ph .acts{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;padding:6px;
-    background:linear-gradient(transparent,rgba(0,0,0,.55));}
-  .ph .acts button{border:none;background:rgba(255,255,255,.92);border-radius:8px;width:30px;height:28px;font-size:13px;cursor:pointer;}
-  .ph .acts button:disabled{opacity:.35;cursor:default;}
-  .ph .acts .del{color:var(--bad);}
-  .ph-empty{grid-column:1/-1;padding:18px;text-align:center;color:var(--muted);font-size:12px;background:var(--bg);border-radius:12px;}
-  .add-photo{display:inline-flex;align-items:center;margin-top:10px;cursor:pointer;}
-  .shared-note{font-size:11px;color:var(--warn);margin-top:8px;}
-  .shared-note:empty{display:none;}
-  .save-row{margin-top:16px;}
-  .dirty{font-size:11px;color:var(--warn);}
-  .count{font-size:10.5px;color:var(--muted);text-align:right;margin-top:3px;}
-  /* 가게 정보 */
-  .info-box{margin-top:14px;padding:12px;border-radius:14px;background:#FAFDF7;border:1px solid #E3EED8;}
-  .info-box > .lbl:first-child{margin-top:0;}
-  .two{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  @media (max-width:480px){ .two{grid-template-columns:1fr;} }
-  .inp.sm{padding:8px 10px;font-size:13px;}
-  .hours-grid{display:grid;gap:6px;}
-  .hrow{display:grid;grid-template-columns:28px 108px 1fr;gap:6px;align-items:center;}
-  .hrow .d{font-family:'Jua',sans-serif;font-size:13px;color:var(--leaf-text);text-align:center;}
-  .hrow.we .d{color:#C0504D;}
-  .hrow select,.hrow input{border:1px solid #DCE9D0;background:#fff;border-radius:9px;padding:6px 7px;font-size:13px;font-family:inherit;color:var(--ink);min-width:0;}
-  .hrow .times{display:flex;gap:4px;align-items:center;min-width:0;}
-  .hrow .times input[type=time]{flex:1;}
-  .hrow .times input[type=text]{flex:1;}
-  .hrow .times span{color:var(--muted);font-size:12px;}
-  .hrow .times:empty{display:none;}
-  /* 좁은 화면: 시간 입력을 요일 선택 아래 줄로 내려서 잘리지 않게 */
-  @media (max-width:520px){
-    .hrow{grid-template-columns:24px 1fr;}
-    .hrow .times{grid-column:2;}
+  html, body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg-mint);
+    font-family:'Gowun Dodum', sans-serif;
+    color:var(--ink);
+    overscroll-behavior:none;
+    -webkit-tap-highlight-color:transparent;
   }
-  .hours-tools{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
-  .hours-prev{margin-top:8px;font-size:12px;background:#fff;border-radius:10px;padding:8px 10px;border:1px dashed #DCE9D0;line-height:1.6;}
-  .hours-prev b{font-weight:700;}
-  .chk{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--ink);margin-top:8px;cursor:pointer;}
-  .rows-list{display:grid;gap:6px;}
-  .rrow{display:grid;grid-template-columns:48px 1fr auto;gap:6px;align-items:center;}
-  .rrow input{border:1px solid #DCE9D0;background:#fff;border-radius:9px;padding:7px 8px;font-size:13px;font-family:inherit;color:var(--ink);min-width:0;}
-  .rrow input.ic{text-align:center;font-size:16px;padding:5px 2px;}
-  .rrow input[readonly]{background:#F1F6EC;color:var(--muted);}
-  .rrow .acts{display:flex;gap:3px;}
-  .rrow .acts button{border:none;background:var(--bg);border-radius:7px;width:26px;height:28px;cursor:pointer;font-size:11px;color:var(--leaf-text);}
-  .rrow .acts button.del{color:var(--bad);}
-  .rrow .acts button:disabled{opacity:.35;cursor:default;}
-  .note{font-size:11px;color:var(--warn);margin-top:6px;}
-  .note:empty{display:none;}
+  .phone{
+    width:100%;
+    height:100dvh;
+    background:var(--bg-mint);
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    padding-top:env(safe-area-inset-top);
+  }
+  @media (min-width: 600px){
+    body{background:#DCE9D0; display:flex; justify-content:center;}
+    .phone{max-width:430px; box-shadow:0 0 40px rgba(0,0,0,0.12);}
+  }
+  .status{display:none;}
+  .header{
+    padding:18px 22px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
+  }
+  .mascot-sm{width:42px;height:42px;flex-shrink:0;display:block;border-radius:10px;
+    box-shadow:0 3px 10px rgba(95,174,58,0.18);}
+  .title{
+    font-family:'Jua', sans-serif;
+    font-size:19px;
+    color:var(--leaf-text);
+    line-height:1.15;
+  }
+  .subtitle{
+    font-size:11px;
+    color:#79936A;
+    margin-top:1px;
+  }
+
+  .screens{
+    flex:1;
+    overflow-y:auto;
+    padding:0 18px 18px;
+    position:relative;
+  }
+  .screen{display:none;}
+  .screen.active{display:block; animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  /* 지도 전체화면 모드 */
+  .screens.fullmap{padding:0; overflow:hidden;}
+  .map-screen{position:relative; width:100%; height:100%;}
+  .map-screen.active{display:block;}
+  .map-top-bar{
+    position:absolute; top:12px; left:12px; right:12px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:8px; z-index:5; pointer-events:none;
+  }
+  .map-top-bar .map-title{
+    background:var(--white);
+    padding:8px 14px; border-radius:999px;
+    box-shadow:var(--shadow);
+    font-family:'Jua', sans-serif; font-size:14px; color:var(--leaf-text);
+  }
+  .map-top-bar .badge-pill{
+    background:var(--white); box-shadow:var(--shadow);
+    padding:8px 13px;
+  }
+  .map-ctrl{
+    position:absolute; right:14px; z-index:6;
+    bottom:20px;
+    display:flex; flex-direction:column; gap:8px;
+    transition:bottom .28s ease;
+  }
+  .map-ctrl.up{bottom:calc(var(--panel-h, 180px) + 16px);}
+  .map-ctrl button{
+    width:46px; height:46px; border-radius:16px;
+    border:none; background:var(--white);
+    box-shadow:0 4px 12px rgba(0,0,0,0.18);
+    font-size:16px; cursor:pointer;
+  }
+  .angel-btn{border:none; cursor:pointer; pointer-events:auto; font-family:'Jua', sans-serif;}
+  .angel-btn.off{color:#A7B89A;}
+
+  /* 하단 장소 정보 패널 */
+  .info-panel{
+    position:absolute; left:0; right:0; bottom:0; z-index:7;
+    background:var(--white);
+    border-radius:24px 24px 0 0;
+    box-shadow:0 -8px 24px rgba(0,0,0,0.18);
+    padding:16px 18px 20px;
+    transform:translateY(105%);
+    transition:transform .28s ease;
+    max-height:52%; overflow-y:auto;
+  }
+  .info-panel.open{transform:translateY(0);}
+  .info-close{
+    position:absolute; top:12px; right:14px;
+    width:30px; height:30px; border-radius:50%;
+    border:none; background:var(--bg-mint); color:var(--muted);
+    font-size:15px; cursor:pointer; line-height:1;
+  }
+  .info-head{display:flex; align-items:center; gap:12px; margin-bottom:10px; padding-right:34px;}
+  .info-emoji{
+    width:44px; height:44px; border-radius:15px; background:var(--safe-bg);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; flex-shrink:0;
+  }
+  .info-head h4{font-family:'Jua', sans-serif; font-size:15px; margin:0; color:var(--ink);}
+  .info-head .sub{font-size:10.5px; color:var(--leaf-deep); margin-top:3px;}
+  .info-body{font-size:11.5px; color:var(--muted); line-height:1.55; margin:0 0 10px;}
+  .info-rows{background:var(--bg-mint); border-radius:14px; padding:10px 12px;}
+  .info-rows .info-row{display:flex; gap:8px; font-size:11px; color:#5E7150; line-height:1.5; padding:3px 0;}
+  .info-acts{display:flex; gap:8px; margin-top:12px;}
+  .info-acts a, .info-acts button{
+    flex:1; border:none; border-radius:999px; padding:12px 0;
+    font-family:'Jua', sans-serif; font-size:12.5px;
+    text-align:center; text-decoration:none; cursor:pointer;
+  }
+  .info-acts .go{background:var(--leaf); color:white;}
+  .info-acts .pic{background:#FFF3D6; color:#B07E12;}
+  .info-acts .story{background:#F3E8FF; color:#7A3FB5;}
+  .info-acts a, .info-acts button{white-space:nowrap;}
+  .info-acts.many{gap:6px;}
+  .info-acts.many a, .info-acts.many button{font-size:11.5px;}
+  /* 삼대발견 자세한 설명 */
+  .detail-body{padding:14px 18px 18px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .detail-body .detail-sub{font-size:11px; color:#7A3FB5; margin:0 0 10px;}
+  .detail-body p{font-size:13px; line-height:1.75; color:#4C5E40; margin:0 0 10px; word-break:keep-all;}
+  .detail-body .detail-empty{color:var(--muted, #8B9C7E);}
+  .detail-body img{width:100%; border-radius:14px; margin:4px 0 12px; display:block;}
+  .photo-view{
+    position:fixed; inset:0; z-index:2000;
+    background:rgba(20,30,15,0.88);
+    display:none; align-items:center; justify-content:center;
+    flex-direction:column; gap:12px; padding:24px 0;
+  }
+  .photo-view.open{display:flex;}
+  /* 옆으로 넘기는 사진 트랙 */
+  .photo-track{
+    width:100%; max-width:600px;
+    display:flex; overflow-x:auto; overflow-y:hidden;
+    scroll-snap-type:x mandatory; scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    overscroll-behavior-x:contain;
+  }
+  .photo-track::-webkit-scrollbar{display:none;}
+  .photo-slide{
+    flex:0 0 100%; scroll-snap-align:center; scroll-snap-stop:always;
+    display:flex; align-items:center; justify-content:center;
+    padding:0 24px; min-height:40vh;
+  }
+  .photo-slide img{
+    max-width:100%; max-height:72vh;
+    border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,0.5);
+    user-select:none; -webkit-user-drag:none;
+  }
+  .photo-slide .photo-err{color:#fff; font-size:13px;}
+  .photo-dots{display:flex; gap:7px; justify-content:center;}
+  .photo-dots span{
+    width:7px; height:7px; border-radius:50%;
+    background:rgba(255,255,255,0.4); transition:all .2s ease;
+  }
+  .photo-dots span.on{background:#fff; width:18px; border-radius:999px;}
+  .photo-nav{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:40px; height:40px; border-radius:50%;
+    border:none; background:rgba(255,255,255,0.85);
+    font-size:20px; line-height:1; cursor:pointer;
+    display:none;
+  }
+  .photo-nav.prev{left:12px;} .photo-nav.next{right:12px;}
+  @media (hover:hover){ .photo-view.multi .photo-nav{display:block;} }
+  .photo-cap{
+    color:#fff; font-family:'Jua',sans-serif; font-size:14px;
+    text-align:center; padding:0 24px;
+  }
+  .photo-close{
+    position:absolute; top:18px; right:18px;
+    width:38px; height:38px; border-radius:50%;
+    border:none; background:rgba(255,255,255,0.9);
+    font-size:16px; cursor:pointer;
+  }
+  .info-acts .call{background:var(--bg-mint); color:var(--leaf-text);}
+  .discover-pin{
+    width:32px;height:32px;border-radius:50%;
+    background:#F3E8FF;border:3px solid #A96BE0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px; box-shadow:0 3px 8px rgba(0,0,0,0.22); cursor:pointer;
+  }
+  .angel-pin{
+    width:32px;height:32px;border-radius:50%;
+    background:#FFF3D6;border:3px solid var(--leaf);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px; box-shadow:0 3px 8px rgba(0,0,0,0.22); cursor:pointer;
+  }
+  /* 장소마다 다른 지도 핀: 가운데는 장소 아이콘, 오른쪽 위 작은 배지로 구로엔젤/삼대발견 구분 */
+  .place-pin{
+    position:relative; width:36px; height:36px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; line-height:1; cursor:pointer;
+    box-shadow:0 3px 8px rgba(0,0,0,0.22);
+  }
+  .place-pin.angel{background:#FFF3D6; border:3px solid var(--leaf);}
+  .place-pin.disc{background:#F3E8FF; border:3px solid #A96BE0;}
+  .place-pin.angel.disc{border-color:var(--leaf); box-shadow:0 0 0 3px #A96BE0, 0 3px 8px rgba(0,0,0,0.22);}
+  .pp-badges{position:absolute; top:-7px; right:-9px; display:flex; gap:1px;}
+  .pp-badge{
+    width:17px; height:17px; border-radius:50%; background:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; box-shadow:0 1px 3px rgba(0,0,0,0.25);
+  }
+  .pp-name{
+    position:absolute; top:calc(100% + 3px); left:50%; transform:translateX(-50%);
+    white-space:nowrap; font-family:'Jua',sans-serif; font-size:10.5px; line-height:1;
+    padding:3px 7px; border-radius:999px; background:rgba(255,255,255,0.95);
+    box-shadow:0 1px 4px rgba(0,0,0,0.18); pointer-events:none;
+    display:none;
+  }
+  .place-pin.angel .pp-name{color:var(--leaf-text);}
+  .place-pin.disc .pp-name{color:#7A3FB5;}
+  .show-pin-names .pp-name{display:block;}
+  /* 지금 영업 중 표시 */
+  .open-tag{
+    display:inline-block; font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:999px;
+    margin-left:4px; vertical-align:middle; white-space:nowrap; font-family:'Gowun Dodum',sans-serif;
+  }
+  .open-tag.on{background:#E3F6DA; color:#2F8A1E;}
+  .open-tag.soon{background:#FFF1D6; color:#B26A00;}
+  .open-tag.off{background:#EFF1EC; color:#7C8A73;}
+  .info-open{margin-top:5px; font-size:11.5px; font-weight:700;}
+  .info-open.on{color:#2F8A1E;} .info-open.soon{color:#B26A00;} .info-open.off{color:#7C8A73;}
+  .info-open small{font-weight:normal; opacity:.85; margin-left:4px;}
+  .pp-open{
+    position:absolute; left:-3px; bottom:-3px; width:11px; height:11px; border-radius:50%;
+    border:2px solid #fff; box-shadow:0 1px 2px rgba(0,0,0,.25); display:none;
+  }
+  .pp-open.on{display:block; background:#2FBF3A;}
+  .pp-open.soon{display:block; background:#FFA41B;}
+  .pp-open.off{display:block; background:#B9C0B3;}
+  .dist-tag{
+    display:inline-block; background:var(--safe-bg); color:var(--leaf-deep);
+    font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:999px;
+    margin-left:5px; vertical-align:middle;
+  }
+  .shop-item{
+    display:flex; align-items:center; gap:10px;
+    background:var(--white); border:1px solid #EAF3E0;
+    border-radius:16px; padding:11px 12px; margin-bottom:8px;
+    cursor:pointer;
+  }
+  .shop-item:active{background:var(--bg-mint);}
+  .shop-no{
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    background:var(--leaf); color:#fff;
+    font-family:'Jua',sans-serif; font-size:11px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .shop-ic{font-size:19px; flex-shrink:0; width:38px; text-align:center;}
+  .shop-thumb{
+    width:38px; height:38px; border-radius:10px;
+    object-fit:cover; flex-shrink:0; background:var(--bg-mint);
+  }
+  .shop-txt{flex:1; min-width:0;}
+  .shop-txt h5{font-family:'Jua',sans-serif;font-size:12.5px;margin:0 0 2px;color:var(--ink);}
+  .shop-txt p{font-size:10.5px;margin:0;color:var(--muted);line-height:1.45;}
+  .shop-txt .shop-meta{color:var(--leaf-deep);margin-top:2px;}
+  .shop-go{color:var(--leaf-deep); font-size:17px; flex-shrink:0;}
+  .tappable{cursor:pointer; position:relative; padding-right:26px;}
+  .tappable::after{
+    content:'›'; position:absolute; right:14px; top:50%;
+    transform:translateY(-50%); color:var(--leaf-deep); font-size:17px;
+  }
+  .phone.mapmode .header{display:none;}
+
+  /* 놀구로 소개 카드 */
+  .place-card{
+    background:var(--white);
+    border-radius:22px;
+    padding:16px;
+    box-shadow:var(--shadow);
+    margin-bottom:6px;
+  }
+  .place-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .place-emoji{
+    width:46px;height:46px;border-radius:16px;
+    background:var(--safe-bg);
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;flex-shrink:0;
+  }
+  .place-head h4{
+    font-family:'Jua', sans-serif;font-size:15px;margin:0;color:var(--ink);
+  }
+  .place-tag{
+    font-size:10.5px;color:var(--leaf-deep);margin:3px 0 0;
+    background:var(--safe-bg);display:inline-block;
+    padding:3px 9px;border-radius:999px;
+  }
+  .place-desc{
+    font-size:11.5px;color:var(--muted);line-height:1.55;margin:0 0 12px;
+  }
+  .place-info{
+    background:var(--bg-mint);border-radius:14px;padding:10px 12px;
+  }
+  .info-row{
+    display:flex;gap:8px;align-items:flex-start;
+    font-size:11px;color:#5E7150;line-height:1.5;
+    padding:3px 0;
+  }
+  .info-row .ic{flex-shrink:0;}
+  .place-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .ptag{
+    background:var(--safe-bg);color:var(--leaf-deep);
+    font-size:10.5px;font-weight:700;
+    padding:5px 10px;border-radius:999px;
+  }
+
+  /* 카드 공통 */
+  .card{
+    background:var(--white);
+    border-radius:22px;
+    padding:14px 14px 12px;
+    box-shadow:var(--shadow);
+  }
+  .card .icon-circle{
+    width:36px;height:36px;
+    border-radius:50%;
+    background:var(--leaf);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:7px;
+    font-size:16px;
+  }
+  .card .icon-circle.red{background:var(--danger-bg);}
+  .card .icon-circle.yellow{background:#FFF3D6;}
+  .card h4{
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+  .card p{
+    font-size:11px;
+    margin:0;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .card .stat{
+    font-family:'Jua', sans-serif;
+    font-size:18px;
+    color:var(--leaf-deep);
+  }
+  .grid2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .section-label{
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    color:var(--leaf-text);
+    margin:14px 2px 8px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .section-label:first-child{margin-top:2px;}
+
+  /* -------- 홈 화면 -------- */
+  .hero-card{
+    background:linear-gradient(135deg,var(--leaf),var(--leaf-deep));
+    border-radius:26px;
+    padding:18px;
+    color:white;
+    box-shadow:var(--shadow);
+    margin-bottom:14px;
+  }
+  .hero-card .status-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,0.25);
+    font-size:11px;font-weight:700;
+    padding:5px 12px;border-radius:999px;
+    margin-bottom:8px;
+  }
+  .hero-card h3, .hero-card h4{
+    font-family:'Jua', sans-serif;
+    font-size:17px;
+    margin:0;
+    line-height:1.3;
+  }
+  .hero-card p{
+    font-size:11.5px;
+    margin:0;
+    opacity:0.92;
+  }
+  .btnrow{display:flex;gap:8px;margin-top:14px;}
+  .btn{
+    flex:1;
+    border:none;
+    border-radius:999px;
+    padding:13px 0;
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:5px;
+  }
+  .btn.primary{background:var(--leaf);color:white;box-shadow:0 10px 18px rgba(95,174,58,0.35);}
+  .btn.ghost{background:var(--white);color:var(--leaf-text);border:2px solid var(--leaf);}
+  .btn.on-hero{background:white;color:var(--leaf-deep);}
+  .btn.on-hero.outline{background:rgba(255,255,255,0.18);color:white;border:2px solid rgba(255,255,255,0.6);}
+
+  .quicklink{
+    background:var(--white);
+    border-radius:20px;
+    padding:12px 14px;
+    box-shadow:var(--shadow);
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:10px;
+    cursor:pointer;
+    border:none;width:100%;text-align:left;
+  }
+  .quicklink .qicon{
+    width:42px;height:42px;border-radius:14px;
+    background:var(--bg-mint);
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;flex-shrink:0;
+  }
+  .quicklink h5{font-family:'Jua', sans-serif;font-size:13px;margin:0 0 2px;color:var(--ink);}
+  .quicklink p{font-size:11px;margin:0;color:var(--muted);}
+  .quicklink .arrow{margin-left:auto;color:var(--leaf-deep);font-size:16px;}
 
 
-  /* 버전코드 편집 */
-  .version-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;}
-  .version-inp{border:1px solid #DCE9D0;background:#FAFDF7;border-radius:10px;padding:8px 12px;
-    font-family:'Gowun Dodum',sans-serif;font-size:14px;color:var(--ink);outline:none;width:160px;}
-  .version-inp:focus{border-color:var(--leaf);}
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;
-    background:#2B3424;color:#fff;padding:9px 16px;border-radius:999px;font-size:12px;transition:all .2s;pointer-events:none;}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  /* -------- 개인정보처리방침 모달 -------- */
+  .privacy-modal{
+    position:absolute;
+    inset:0;
+    z-index:100;
+    display:none;
+    background:rgba(0,0,0,0.42);
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+  }
+  .privacy-modal.open{display:flex;}
+  .privacy-card{
+    width:100%;
+    max-height:calc(100% - 12px);
+    background:var(--white);
+    border-radius:24px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.25);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .privacy-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:16px 18px 12px;
+    border-bottom:1px solid #E7F1DC;
+    flex-shrink:0;
+  }
+  .privacy-head h3{
+    margin:0;
+    font-family:'Jua', sans-serif;
+    font-size:18px;
+    color:var(--leaf-text);
+  }
+  .privacy-close{
+    border:none;
+    background:#EEF6E8;
+    color:var(--leaf-deep);
+    border-radius:999px;
+    padding:8px 12px;
+    font-family:'Jua', sans-serif;
+    font-size:12px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .privacy-body{
+    overflow-y:auto;
+    padding:16px 18px 20px;
+    font-size:11px;
+    line-height:1.65;
+    color:var(--ink);
+  }
+  .privacy-body h4{
+    margin:18px 0 7px;
+    font-family:'Jua', sans-serif;
+    font-size:13px;
+    color:var(--leaf-text);
+  }
+  .privacy-body h4:first-child{margin-top:0;}
+  .privacy-body p{margin:0 0 8px;}
+  .privacy-body .privacy-list{margin:5px 0 8px 18px; padding:0;}
+  .privacy-body .privacy-list li{margin-bottom:3px;}
+  .privacy-body .contact-box{
+    background:var(--bg-mint);
+    border-radius:14px;
+    padding:10px 12px;
+    margin:8px 0;
+  }
+
+  /* -------- 지도 화면 -------- */
+  .map-card{
+    background:var(--white);
+    border-radius:24px;
+    box-shadow:var(--shadow);
+    padding:12px;
+    margin-bottom:12px;
+  }
+  .map-title-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:2px 4px 8px;
+  }
+  .map-title{font-family:'Jua', sans-serif;font-size:15px;color:var(--leaf-text);}
+  .badge-pill{
+    background:var(--safe-bg);color:var(--leaf-deep);
+    font-size:10.5px;font-weight:700;
+    padding:4px 11px;border-radius:999px;
+    display:flex;align-items:center;gap:4px;
+  }
+  svg.mapimg{width:100%;display:block;border-radius:18px;background:#EAF7DC;}
+  #kakaoMap{
+    width:100%;height:100%;
+    background:#EAF7DC;
+  }
+  .pin-icon, .lamp-icon, .danger-icon{
+    display:flex;align-items:center;justify-content:center;
+    border-radius:50%;
+    box-shadow:0 3px 8px rgba(0,0,0,0.25);
+    border:2px solid white;
+  }
+  .pin-icon{width:28px;height:28px;background:var(--leaf-deep);color:white;font-size:14px;}
+  .lamp-icon{width:20px;height:20px;background:var(--lamp);font-size:11px;}
+  .danger-icon{width:22px;height:22px;background:var(--danger);color:white;font-size:12px;font-family:'Jua',sans-serif;}
+  .label-pill{
+    background:var(--leaf-deep);color:white;
+    font-family:'Jua', sans-serif;font-size:11px;
+    padding:5px 10px;border-radius:999px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.25);
+    border:2px solid white;white-space:nowrap;
+    text-align:center;
+  }
+  .legend{display:flex;gap:12px;padding:9px 4px 0;font-size:10.5px;color:#6E8461;flex-wrap:wrap;}
+  .route-stats{display:flex;gap:8px;margin-top:10px;}
+  .route-stat{
+    flex:1;background:var(--safe-bg);border-radius:14px;padding:9px 6px;text-align:center;
+  }
+  .route-stat .num{font-family:'Jua', sans-serif;font-size:16px;color:var(--leaf-deep);}
+  .route-stat .lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+  .my-loc{
+    width:18px;height:18px;border-radius:50%;
+    background:#4A90E2;border:3px solid white;
+    box-shadow:0 0 0 4px rgba(74,144,226,0.25), 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .legend span{display:flex;align-items:center;gap:5px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  /* -------- 위험요소 -------- */
+  .risk-card{
+    background:var(--danger-bg);
+    border-radius:20px;
+    padding:12px 14px;
+    box-shadow:0 6px 16px rgba(255,107,107,0.18);
+    margin-bottom:12px;
+  }
+  .risk-card .rtitle{
+    font-family:'Jua', sans-serif;font-size:12.5px;color:#E14545;
+    display:flex;align-items:center;gap:6px;margin-bottom:7px;
+  }
+  .risk-tag{
+    display:inline-flex;align-items:center;gap:5px;
+    background:#FFFFFF;color:#E14545;font-size:10.5px;font-weight:700;
+    padding:5px 9px;border-radius:999px;margin:0 5px 5px 0;
+  }
+
+  /* -------- 구로엔젤 화면 -------- */
+  .angel-hero{
+    background:var(--white);
+    border-radius:26px;
+    padding:20px;
+    box-shadow:var(--shadow);
+    text-align:center;
+    margin-bottom:14px;
+  }
+  .angel-big{width:90px;height:90px;margin-bottom:8px;}
+  .angel-hero h3{font-family:'Jua', sans-serif;font-size:16px;margin:0 0 6px;color:var(--ink);}
+  .angel-hero p{font-size:12px;color:var(--muted);line-height:1.5;margin:0;}
+  .feature-item{
+    display:flex;gap:12px;align-items:flex-start;
+    background:var(--white);border-radius:18px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .feature-item .fic{font-size:20px;}
+  .feature-item h5{font-family:'Jua', sans-serif;font-size:12.5px;margin:0 0 3px;color:var(--ink);}
+  .feature-item p{font-size:11px;margin:0;color:var(--muted);line-height:1.4;}
+
+  /* -------- 삼대발견 화면 -------- */
+  .discover-card{
+    display:flex;align-items:center;gap:12px;
+    background:var(--white);border-radius:20px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .discover-num{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--leaf);color:white;
+    font-family:'Jua', sans-serif;font-size:14px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .discover-card h5{margin:0;font-family:'Jua', sans-serif;font-size:13px;color:var(--ink);}
+  .discover-card p{margin:2px 0 0;font-size:11px;color:var(--muted);}
+
+  /* -------- 설정 화면 -------- */
+  .setting-row{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--white);border-radius:18px;
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  }
+  .setting-label{display:flex;align-items:center;gap:10px;}
+  .setting-label .fic{font-size:18px;}
+  .setting-label h5{margin:0;font-family:'Jua', sans-serif;font-size:12.5px;color:var(--ink);}
+  .setting-label p{margin:2px 0 0;font-size:10.5px;color:var(--muted);}
+  .switch{position:relative;display:inline-block;width:50px;height:28px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{
+    position:absolute;cursor:pointer;inset:0;
+    background:#DCE6D2;border-radius:999px;
+    transition:.2s;
+  }
+  .slider::before{
+    content:"";position:absolute;height:22px;width:22px;left:3px;bottom:3px;
+    background:white;border-radius:50%;transition:.2s;
+    box-shadow:0 1px 3px rgba(0,0,0,0.25);
+  }
+  .switch input:checked + .slider{background:var(--leaf);}
+  .switch input:checked + .slider::before{transform:translateX(22px);}
+
+
+  /* -------- 문의하기 모달 -------- */
+  .contact-modal{position:fixed;inset:0;background:rgba(39,55,31,0.42);display:none;align-items:center;justify-content:center;padding:18px;z-index:1002;}
+  .contact-modal.open{display:flex;}
+  .contact-card{width:min(100%,370px);max-height:88vh;overflow:hidden;background:var(--bg-mint);border-radius:24px;box-shadow:0 18px 45px rgba(0,0,0,0.22);display:flex;flex-direction:column;}
+  .contact-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;background:var(--white);border-bottom:1px solid #E7F1DC;flex-shrink:0;}
+  .contact-head h3{margin:0;font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);}
+  .contact-body{overflow-y:auto;padding:16px;}
+  .contact-input{width:100%;border:1px solid #DCE9D0;background:#FAFDF7;border-radius:12px;padding:11px 12px;margin-bottom:9px;font-family:'Gowun Dodum',sans-serif;font-size:12px;color:var(--ink);outline:none;}
+  .contact-input:focus{border-color:var(--leaf);}
+  .contact-textarea{min-height:150px;resize:vertical;}
+  .contact-label{display:block;font-family:'Jua',sans-serif;font-size:11px;color:var(--leaf-text);margin:2px 2px 5px;}
+  .contact-note{font-size:10px;color:var(--muted);line-height:1.5;margin:2px 2px 10px;}
+  .contact-status{display:none;border-radius:14px;padding:11px 12px;margin-bottom:10px;font-size:11px;line-height:1.5;}
+  .contact-status.show{display:block;}
+  .contact-status.success{background:var(--safe-bg);color:var(--leaf-deep);}
+  .contact-status.error{background:var(--danger-bg);color:#E14545;}
+  .contact-submit:disabled{opacity:.65;cursor:wait;}
+
+  /* -------- 구로엔젤 가게 목록 모달 -------- */
+  .angel-shop-modal{position:fixed;inset:0;background:rgba(39,55,31,0.42);display:none;align-items:center;justify-content:center;padding:18px;z-index:1001;}
+  .angel-shop-modal.open{display:flex;}
+  .angel-shop-card{width:min(100%,370px);max-height:88vh;overflow:hidden;background:var(--bg-mint);border-radius:24px;box-shadow:0 18px 45px rgba(0,0,0,0.22);display:flex;flex-direction:column;}
+  .angel-shop-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;background:var(--white);border-bottom:1px solid #E7F1DC;flex-shrink:0;}
+  .angel-shop-head h3{margin:0;font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);}
+  .angel-shop-body{overflow-y:auto;padding:16px;}
+  .angel-shop-empty{padding:28px 14px;text-align:center;color:var(--muted);font-size:11px;line-height:1.6;background:var(--white);border-radius:18px;}
+
+
+  .app-version{
+    text-align:center;font-size:10.5px;color:#A7B89A;
+    margin:18px 0 6px;
+  }
+
+  /* -------- developer console (아주 작게) -------- */
+  .dev-console{text-align:center; margin:2px 0 4px;}
+  .dev-console-btn{
+    border:none; background:none; padding:2px 4px; cursor:pointer;
+    font-family:ui-monospace, Menlo, Consolas, monospace;
+    font-size:8px; color:#C3CFB8; letter-spacing:0.3px;
+  }
+  .dev-console-box{
+    display:none; align-items:center; gap:4px;
+    width:150px; margin:4px auto 0; padding:3px 7px;
+    background:#2B3424; border-radius:6px;
+    font-family:ui-monospace, Menlo, Consolas, monospace; font-size:10px; color:#8FD14F;
+  }
+  .dev-console-box.open{display:flex;}
+  .dev-console-box input{
+    flex:1; min-width:0; border:none; outline:none; background:none;
+    font:inherit; font-size:16px; /* 16px 미만이면 아이폰이 입력 시 화면을 확대해요 */
+    color:#E9F8E1; padding:0;
+  }
+  .dev-console-box.err{animation:devShake .3s;}
+  @keyframes devShake{25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+
+  /* -------- 하단 탭바 -------- */
+  .tabbar{
+    flex-shrink:0;
+    display:flex;
+    background:var(--white);
+    border-top:1px solid #E7F1DC;
+    padding:8px 6px 4px;
+    box-shadow:0 -6px 16px rgba(95,174,58,0.10);
+  }
+  .tab{
+    flex:1;
+    border:none;background:none;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:6px 0 4px;
+    cursor:pointer;
+    color:#A7B89A;
+    font-family:'Jua', sans-serif;
+    font-size:9.5px;
+    white-space:nowrap;
+  }
+  .tab .ticon{
+    font-size:17px;
+    width:30px;height:30px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:12px;
+    transition:all .2s ease;
+  }
+  .tab.active{color:var(--leaf-deep);}
+  .tab.active .ticon{background:var(--safe-bg);}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
+<div class="phone">
+
+  <div class="header">
+    <img class="mascot-sm" src="images/logo.png" alt="놀맵" width="42" height="42">
     <div>
-      <h1>🛠️ 놀맵 관리자</h1>
-      <p>서비스 상태 · 장소 데이터 점검 · 좌표 찾기</p>
+      <div class="title" id="screenTitle">❤️놀맵❤️</div>
+      <div class="subtitle" id="screenSubtitle">⭐신도림놀구로를 가는 가장 안전한 길⭐</div>
     </div>
-    <a class="back" href="index.html">← 놀맵으로</a>
-  </header>
+  </div>
 
-  <!-- 0. 소개글 · 사진 수정 -->
-  <section id="editorSection">
-    <h2>✏️ 소개글 · 사진 수정</h2>
-    <p class="desc">구로엔젤과 삼대발견의 소개글과 사진을 고쳐서 저장해요. 저장하고 1~2분 뒤 놀맵에 반영돼요.</p>
+  <div class="screens">
 
-    <!-- 관리자 로그인 (저장은 Cloudflare Worker가 GitHub에 대신 해요) -->
-    <form id="ghLogin" class="gh-login" onsubmit="event.preventDefault(); ghLogin();">
-      <label class="lbl" for="ghToken">관리자 비밀번호</label>
-      <div class="row">
-        <input id="ghToken" class="inp" type="password" autocomplete="current-password" placeholder="비밀번호" style="flex:1;min-width:200px;">
-        <button class="b" type="submit">들어가기</button>
-      </div>
-      <p class="help">비밀번호는 Cloudflare Worker의 <code>ADMIN_PASSWORD</code> secret이에요. 이 탭을 닫으면 다시 입력해야 해요.</p>
-      <div class="msg" id="ghLoginMsg"></div>
-    </form>
-
-    <!-- 편집기 -->
-    <div id="ghEditor" style="display:none;">
-      <div class="row gh-who">
-        <span class="pill ok" id="ghWho">연결됨</span>
-        <button class="b ghost small" type="button" onclick="ghLogout()">나가기</button>
+    <!-- ============ 홈 ============ -->
+    <section class="screen active" id="screen-home">
+      <div class="hero-card">
+        <div class="status-pill">🟢 지금 통행 가능해요</div>
+        <h4>오늘도 안전하게, 신도림놀구로!</h4>
+        <div class="btnrow">
+          <button class="btn on-hero" onclick="go('map'); whenMapReady(() => findMyRoute());">🍀 경로 보기</button>
+          <button class="btn on-hero outline" onclick="go('place')">🎈 놀구로 소개</button>
+        </div>
       </div>
 
-      <div class="chip-group"><span class="chip-lbl">🧚 구로엔젤</span><div class="chips" id="chipsAngel"></div></div>
-      <div class="chip-group"><span class="chip-lbl">✨ 삼대발견</span><div class="chips" id="chipsDisc"></div></div>
-
-      <div id="editPane" class="edit-pane" style="display:none;">
-        <div class="edit-head">
-          <div class="edit-emoji" id="edEmoji"></div>
-          <div><b id="edName"></b><small id="edId"></small></div>
+      <div class="section-label">👀 바로가기</div>
+      <button class="quicklink" onclick="go('map')">
+        <div class="qicon">🗺️</div>
+        <div>
+          <h5>최적의 길 · 지도</h5>
+          <p>안전 경로와 위험 구간을 한눈에</p>
         </div>
-
-        <label class="lbl" for="edBody">소개글</label>
-        <textarea id="edBody" class="inp" rows="3" maxlength="300"></textarea>
-
-        <div id="edDetailWrap">
-          <label class="lbl" for="edDetail">자세한 설명 <small style="color:var(--muted);font-weight:normal;">· 삼대발견 "📖 설명" 버튼을 누르면 나와요. 빈 줄로 문단을 나눠요</small></label>
-          <textarea id="edDetail" class="inp" rows="8" maxlength="3000"></textarea>
-          <div class="count" id="edDetailCount"></div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink" onclick="go('angel')">
+        <div class="qicon">🧚</div>
+        <div>
+          <h5>구로엔젤</h5>
+          <p>우리 동네 안전 도우미 소개</p>
         </div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink" onclick="go('discover')">
+        <div class="qicon">✨</div>
+        <div>
+          <h5>삼대발견</h5>
+          <p>우리 동네의 새로운 발견</p>
+        </div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink" onclick="go('place')">
+        <div class="qicon">🎈</div>
+        <div>
+          <h5>신도림놀구로</h5>
+          <p>어떤 곳인지 알아보기</p>
+        </div>
+        <div class="arrow">›</div>
+      </button>
+    </section>
 
-        <div class="info-box">
-          <label class="lbl">🏷️ 가게 정보</label>
-          <div class="two">
-            <div><label class="lbl" for="edAddr" style="margin-top:4px;">목록에 보이는 주소</label>
-              <input id="edAddr" class="inp sm" type="text" maxlength="60" placeholder="예: 신도림동 296-61"></div>
-            <div><label class="lbl" for="edTel" style="margin-top:4px;">☎️ 전화 버튼 번호 <small style="color:var(--muted);font-weight:normal;">· 비우면 버튼이 없어져요</small></label>
-              <input id="edTel" class="inp sm" type="tel" maxlength="20" placeholder="예: 02-2676-1241"></div>
+    <!-- ============ 지도 ============ -->
+    <section class="screen map-screen" id="screen-map">
+      <div id="kakaoMap"></div>
+
+      <div class="map-top-bar">
+        <div class="map-title">🗺️ 최적의 길</div>
+        <button class="badge-pill angel-btn" id="angelToggle" type="button" onclick="toggleAngels()">🧚 구로엔젤</button>
+      </div>
+
+      <div class="map-ctrl" id="mapCtrl">
+        <button type="button" onclick="superZoom(1)" title="더 크게">🔍➕</button>
+        <button type="button" onclick="superZoom(-1)" title="작게">🔍➖</button>
+        <button type="button" onclick="findMyRoute()" title="현재 위치에서 길찾기" id="findBtn">📍</button>
+      </div>
+
+      <div class="info-panel" id="infoPanel"></div>
+    </section>
+
+    <!-- ============ 구로엔젤 ============ -->
+    <section class="screen" id="screen-angel">
+      <div class="angel-hero">
+        <svg class="angel-big" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="48" fill="#FFF3D6"/>
+          <path d="M20 40 Q50 15 80 40 L74 46 Q50 28 26 46 Z" fill="#8FD14F"/>
+          <circle cx="50" cy="55" r="22" fill="#FFFFFF" stroke="#8FD14F" stroke-width="3"/>
+          <circle cx="43" cy="53" r="3" fill="#3E7A2C"/>
+          <circle cx="57" cy="53" r="3" fill="#3E7A2C"/>
+          <path d="M42 62 Q50 68 58 62" stroke="#3E7A2C" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <circle cx="34" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+          <circle cx="66" cy="58" r="4" fill="#FFC1C1" opacity="0.8"/>
+        </svg>
+        <h3>구로엔젤이 함께 걸어요</h3>
+        <p>놀구로에 오고 가는 길을 안전하게 지켜주는 가게들이에요!</p>
+      </div>
+
+      <button class="btn primary" style="width:100%;margin-top:12px;" type="button" onclick="openAngelShops()">🏪 구로엔젤 가게 목록</button>
+    </section>
+
+    <!-- ============ 삼대발견 ============ -->
+    <section class="screen" id="screen-discover">
+      <div class="section-label">✨ 놀구로 가는 길에 만나는 곳</div>
+      <div id="discoverList"></div>
+    </section>
+
+    <!-- ============ 놀구로 소개 ============ -->
+    <section class="screen" id="screen-place">
+      <div class="place-card">
+        <div class="place-head">
+          <div class="place-emoji">🎈</div>
+          <div>
+            <h4>신도림놀구로</h4>
+            <p class="place-tag">청소년활동시설 · 청소년입장지대</p>
           </div>
-
-          <label class="lbl">🕗 운영시간 <small style="color:var(--muted);font-weight:normal;">· "정보 없음"인 요일엔 영업 중 표시를 안 해요</small></label>
-          <div class="hours-grid" id="edHours"></div>
-          <div class="hours-tools">
-            <button class="b ghost small" type="button" onclick="copyHours('weekdays')">월요일 → 평일 모두</button>
-            <button class="b ghost small" type="button" onclick="copyHours('all')">월요일 → 매일</button>
-            <button class="b ghost small" type="button" onclick="copyHours('clear')">모두 정보 없음</button>
-          </div>
-          <div class="hours-prev" id="edHoursPrev"></div>
-          <label class="chk"><input type="checkbox" id="edAutoHour" checked onchange="onInfoChange()"> 아래 정보 줄의 🕗 운영시간도 자동으로 맞추기</label>
-
-          <label class="lbl">📋 정보 줄 <small style="color:var(--muted);font-weight:normal;">· 정보 창에 나오는 줄이에요. 왼쪽 칸은 아이콘(이모지)</small></label>
-          <div class="rows-list" id="edRows"></div>
-          <button class="b ghost small" type="button" style="margin-top:8px;" onclick="addRow()">＋ 줄 추가</button>
-          <div class="note" id="edMirror"></div>
         </div>
-
-        <label class="lbl">사진 <small style="color:var(--muted);font-weight:normal;">· 첫 번째 사진이 목록 썸네일이에요</small></label>
-        <div class="ph-grid" id="edPhotos"></div>
-        <div class="shared-note" id="edShared"></div>
-        <label class="b ghost add-photo">＋ 사진 추가
-          <input type="file" accept="image/*" multiple onchange="addPhotos(this)" hidden>
-        </label>
-
-        <div class="row save-row">
-          <button class="b" type="button" id="saveBtn" onclick="saveEdit()">💾 GitHub에 저장</button>
-          <button class="b ghost" type="button" onclick="selectPlace(EDIT.id)">되돌리기</button>
-          <span class="dirty" id="edDirty"></span>
-        </div>
-        <div class="msg" id="saveMsg"></div>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- 버전코드 변경 -->
-  <section id="versionSection">
-    <h2>🏷️ 앱 버전코드 변경</h2>
-    <p class="desc">설정 화면에 표시되는 버전 문자열을 바꿔요. 저장 후 1~2분 뒤 반영돼요.<br>
-      형식 예시: <code>v1.0.0</code> · <code>v1.2.3-beta</code></p>
-    <div>
-      <label class="lbl" for="versionInput">새 버전코드</label>
-      <div class="version-row">
-        <input id="versionInput" class="version-inp" type="text" maxlength="32"
-          placeholder="예: v1.0.1" oninput="previewVersion()">
-        <button class="b" type="button" id="versionSaveBtn" onclick="saveVersion()">💾 저장</button>
-      </div>
-      <p id="versionPreview" style="margin-top:6px;font-size:11.5px;color:var(--muted);">현재 버전을 불러오는 중...</p>
-      <div class="msg" id="versionMsg"></div>
-    </div>
-  </section>
-
-  <!-- 1. 서비스 상태 -->
-  <section>
-    <h2>📡 서비스 상태</h2>
-    <p class="desc">놀맵이 쓰는 외부 서비스가 지금 응답하는지 확인해요.</p>
-    <div class="status-list" id="statusList"></div>
-    <div class="row" style="margin-top:10px;">
-      <button class="b ghost" type="button" onclick="checkServices()">다시 확인</button>
-      <button class="b ghost" type="button" id="mailTestBtn" onclick="testContactMail()">✉️ 문의 메일 테스트 보내기</button>
-    </div>
-    <div class="msg" id="mailTestMsg"></div>
-  </section>
-
-  <!-- 2. 장소 점검 -->
-  <section>
-    <h2>📍 장소 · 사진 점검</h2>
-    <p class="desc">지금 배포된 <code>places.json</code>의 장소 데이터를 읽어와요. 사진이 안 열리는 장소는 빨간 테두리로 표시돼요.
-      <b>도보 거리 재측정</b>을 누르면 놀구로에서 각 장소까지 실제 걷는 거리를 다시 재고, 화면에 적힌 거리와 30m 이상 차이 나면 알려줘요.</p>
-    <div class="row" style="margin-bottom:10px;">
-      <button class="b" type="button" id="measureBtn" onclick="measureAll()">🚶 도보 거리 재측정</button>
-    </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>구분</th><th>장소</th><th>사진</th><th>적힌 거리</th><th>측정 도보</th><th>좌표</th></tr></thead>
-        <tbody id="placeRows"><tr><td colspan="6" style="color:var(--muted);">불러오는 중...</td></tr></tbody>
-      </table>
-    </div>
-    <div class="summary" id="placeSummary"></div>
-  </section>
-
-  <!-- 3. 좌표 찾기 -->
-  <section>
-    <h2>🎯 좌표 찾기</h2>
-    <p class="desc">지도에서 새 장소를 누르면 좌표와 놀구로까지의 도보 거리를 알려줘요. 나온 코드를 그대로 장소 데이터에 붙여 넣으면 돼요.</p>
-    <div id="pickMap"></div>
-    <div class="pick-out" id="pickOut">
-      <div class="codebox"><code id="pickCode">지도를 눌러 위치를 고르세요.</code><button type="button" onclick="copyText('pickCode')">복사</button></div>
-    </div>
-  </section>
-
-  <!-- 4. 이 기기 데이터 -->
-  <section>
-    <h2>📱 이 기기에 저장된 데이터</h2>
-    <p class="desc">놀맵이 이 브라우저에 저장해 둔 값이에요. 다른 사람의 기기에는 영향을 주지 않아요.</p>
-    <dl class="kv" id="localInfo"></dl>
-    <div class="row">
-      <button class="b danger" type="button" onclick="clearRouteCache()">경로 캐시 지우기</button>
-    </div>
-  </section>
+        <p class="place-desc">
+          PLAY YOUR DREAM! 문화 · 여가 · 진로 활동을 마음껏 즐길 수 있는
+          청소년 전용 공간이에요. 친구들과 놀고, 쉬고, 하고 싶은 걸 찾아볼 수 있어요.
+        </p>
+        <div class="place-info">
+          <div class="info-row"><span class="ic">📍</span>서울 구로구 신도림로13길 51 (지하1층, 1~2층)</div>
+          <div class="info-row">
+  <span class="ic">🕗</span>
+  <span id="nolguro-status">운영 정보 확인 중...</span>
 </div>
-<div class="toast" id="toast"></div>
+          <div class="info-row"><span class="ic">☎️</span>02-2068-2511</div>
+          <div class="info-row"><span class="ic">🎫</span>이용료 무료</div>
+          <div class="info-row"><span class="ic">🏠</span><a href="https://www.playguro.or.kr/" target="_blank" rel="noopener" style="color:var(--leaf-deep);font-weight:700;text-decoration:underline;">놀구로 홈페이지</a></div>
+        </div>
+        <div class="place-tags">
+          <span class="ptag">🎮 놀이공간</span>
+          <span class="ptag">📚 진로활동</span>
+          <span class="ptag">🛋️ 휴식공간</span>
+        </div>
+      </div>
+
+            <div class="section-label">🌱 293번지 르네상스</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <a class="btn primary" style="text-decoration:none;" href="/293/">
+          🗺️ 놀맵 × 293
+        </a>
+        <a class="btn ghost" style="text-decoration:none;" href="https://www.playguro.or.kr/45" target="_blank" rel="noopener">
+          🔗 공식 소개
+        </a>
+      </div>
+      <div class="section-label">🎯 이런 걸 할 수 있어요</div>
+      <div class="feature-item">
+        <div class="fic">🎮</div>
+        <div>
+          <h5>놀이 공간</h5>
+          <p>보드게임, 콘솔게임 등 친구들과 즐길 거리가 가득해요</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fic">📚</div>
+        <div>
+          <h5>진로 · 문화 프로그램</h5>
+          <p>하고 싶은 걸 찾고 배워볼 수 있는 활동이 열려요</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fic">🛋️</div>
+        <div>
+          <h5>편히 쉬는 공간</h5>
+          <p>학교 끝나고 부담 없이 들러 쉬어갈 수 있어요</p>
+        </div>
+      </div>
+
+      <a class="btn ghost" style="width:100%;margin-top:6px;text-decoration:none;"
+         href="https://www.playguro.or.kr/" target="_blank" rel="noopener">🔎 놀구로 더 자세히 보기</a>
+      <button class="btn primary" style="width:100%;margin-top:10px;" type="button" onclick="openPlace('nolguro')">
+        🗺️ 놀구로 가는 길 보기
+      </button>
+    </section>
+
+    <!-- ============ 설정 ============ -->
+    <section class="screen" id="screen-settings">
+      <div class="section-label">🎨 화면 설정</div>
+
+      <!-- 색 테마 -->
+      <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:12px;">
+        <div class="setting-label">
+          <span class="fic">🎨</span>
+          <div><h5>색 테마</h5><p>앱 전체 색을 바꿔요</p></div>
+        </div>
+        <div class="theme-swatches">
+          <button class="theme-swatch active" data-t="green"  style="background:#8FD14F;" title="초록" onclick="setTheme('green')"></button>
+          <button class="theme-swatch"        data-t="blue"   style="background:#3A9EDB;" title="파랑" onclick="setTheme('blue')"></button>
+          <button class="theme-swatch"        data-t="purple" style="background:#8B5CF6;" title="보라" onclick="setTheme('purple')"></button>
+          <button class="theme-swatch"        data-t="orange" style="background:#F97316;" title="주황" onclick="setTheme('orange')"></button>
+        </div>
+      </div>
+
+      <!-- 고대비 토글 -->
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="fic">♿</span>
+          <div><h5>고대비</h5><p>글자·버튼 크게, 색 대비 높게</p></div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="hcToggle" onchange="setHighContrast(this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="section-label">👤 계정 · 정보</div>
+
+      <button class="quicklink" onclick="openPrivacy()">
+        <div class="qicon">📄</div>
+        <div><h5>이용약관 · 개인정보처리방침</h5><p>안전하게 관리되고 있어요</p></div>
+        <div class="arrow">›</div>
+      </button>
+      <button class="quicklink" type="button" onclick="openContactModal()">
+        <div class="qicon">💌</div><div><h5>문의하기</h5><p>불편하거나 궁금한 점을 남겨주세요</p></div><div class="arrow">›</div>
+      </button>
+
+      <div class="app-version">놀구로오는길 v1.0.0</div>
+
+      <div class="dev-console">
+        <button class="dev-console-btn" type="button" onclick="toggleDevConsole()">developer console</button>
+        <form class="dev-console-box" id="devConsole" onsubmit="return runDevConsole(event)">
+          <span>&gt;</span>
+          <input id="devConsoleInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="developer console">
+        </form>
+      </div>
+    </section>
+
+  </div>
+
+
+  <!-- ============ 구로엔젤 가게 목록 ============ -->
+  <div class="angel-shop-modal" id="angelShopModal" role="dialog" aria-modal="true" aria-labelledby="angelShopTitle">
+    <div class="angel-shop-card">
+      <div class="angel-shop-head">
+        <h3 id="angelShopTitle">구로엔젤 가게 목록</h3>
+        <button class="privacy-close" type="button" onclick="closeAngelShops()">닫기</button>
+      </div>
+      <div class="angel-shop-body">
+        <div id="angelShopList"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============ 문의하기 ============ -->
+  <div class="contact-modal" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+    <div class="contact-card">
+      <div class="contact-head">
+        <h3 id="contactTitle">문의하기</h3>
+        <button class="privacy-close" type="button" onclick="closeContactModal()">닫기</button>
+      </div>
+      <form class="contact-body" id="contactForm">
+        <label class="contact-label" for="contactSubject">제목</label>
+        <input class="contact-input" id="contactSubject" type="text" maxlength="100" placeholder="문의 제목을 입력해 주세요.">
+        <label class="contact-label" for="contactMessage">문의 내용</label>
+        <textarea class="contact-input contact-textarea" id="contactMessage" maxlength="3000" placeholder="궁금한 점이나 불편한 점을 적어 주세요." required></textarea>
+        <label class="contact-label" for="contactName">이름 <span style="font-weight:normal;color:var(--muted);">(선택)</span></label>
+        <input class="contact-input" id="contactName" type="text" maxlength="30" placeholder="이름을 입력해 주세요.">
+        <label class="contact-label" for="contactPhone">연락처 <span style="font-weight:normal;color:var(--muted);">(선택)</span></label>
+        <input class="contact-input" id="contactPhone" type="tel" maxlength="20" placeholder="답변을 원하면 연락처를 남겨 주세요.">
+        <p class="contact-note">이메일 주소는 입력하지 않아도 돼요. 이름과 연락처도 선택사항이에요.</p>
+        <div class="contact-status" id="contactStatus"></div>
+        <button class="btn primary contact-submit" id="contactSubmit" type="submit" style="width:100%;">💌 문의 보내기</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ 삼대발견 자세한 설명 ============ -->
+  <div class="privacy-modal" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle"
+       onclick="if(event.target === this) closeDetail()">
+    <div class="privacy-card">
+      <div class="privacy-head">
+        <h3 id="detailTitle">설명</h3>
+        <button class="privacy-close" type="button" onclick="closeDetail()">닫기</button>
+      </div>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+  </div>
+
+  <!-- ============ 개인정보처리방침 ============ -->
+  <div class="privacy-modal" id="privacyModal" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
+    <div class="privacy-card">
+      <div class="privacy-head">
+        <h3 id="privacyTitle">개인정보처리방침</h3>
+        <button class="privacy-close" onclick="closePrivacy()">닫기</button>
+      </div>
+      <div class="privacy-body">
+        <p><strong>청소년입장지대 신도림놀구로</strong>(이하 ‘회사’라 한다)는 개인정보 보호법 제30조에 따라 정보 주체의 개인정보를 보호하고 이와 관련한 고충을 신속하고 원활하게 처리할 수 있도록 하기 위하여 다음과 같이 개인정보 처리지침을 수립, 공개합니다.</p>
+
+        <h4>제1조 (개인정보의 처리목적)</h4>
+        <p>회사는 다음의 목적을 위하여 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 개인정보보호법 제18조에 따라 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.</p>
+        <p><strong>1. 홈페이지 회원 가입 및 관리</strong><br>회원 가입 의사 확인, 회원제 서비스 제공에 따른 본인 식별․인증, 회원자격 유지․관리, 제한적 본인확인제 시행에 따른 본인확인, 서비스 부정 이용 방지, 만 14세 미만 아동의 개인정보처리 시 법정대리인의 동의 여부 확인, 각종 고지․통지, 고충 처리 등을 목적으로 개인정보를 처리합니다.</p>
+        <p><strong>2. 재화 또는 서비스 제공</strong><br>물품 배송, 서비스 제공, 계약서 및 청구서 발송, 콘텐츠 제공, 맞춤서비스 제공, 본인인증, 연령인증, 요금 결제 및 정산, 채권추심 등을 목적으로 개인정보를 처리합니다.</p>
+        <p><strong>3. 고충 처리</strong><br>민원인의 신원 확인, 민원사항 확인, 사실조사를 위한 연락․통지, 처리 결과 통보 등의 목적으로 개인정보를 처리합니다.</p>
+
+        <h4>제2조 (개인정보의 처리 및 보유기간)</h4>
+        <p>① 회사는 법령에 따른 개인정보 보유, 이용 기간 또는 정보주체로부터 개인정보를 수집 시에 동의 받은 개인정보 보유, 이용 기간 내에서 개인정보를 처리, 보유합니다.</p>
+        <p>② 각각의 개인정보 처리 및 보유 기간은 다음과 같습니다.</p>
+        <p><strong>1. 홈페이지 회원 가입 및 관리 : 홈페이지 탈퇴 시까지</strong><br>다만, 다음의 사유에 해당하는 경우에는 해당 사유 종료 시까지</p>
+        <ol class="privacy-list">
+          <li>관계 법령 위반에 따른 수사, 조사 등이 진행 중인 경우에는 해당 수사, 조사 종료 시까지</li>
+          <li>홈페이지 이용에 따른 채권 및 채무관계 잔존 시에는 해당 채권, 채무 관계 정산 시까지</li>
+        </ol>
+
+        <h4>제3조 (개인정보의 제3자 제공)</h4>
+        <p>① 회사는 정보주체의 개인정보를 제1조(개인정보의 처리목적)에서 명시한 범위 내에서만 처리하며, 정보주체의 동의, 법률의 특별한 규정 등 개인정보 보호법 제17조 및 제 18조에 해당하는 경우에만 개인정보를 제3자에게 제공하고 그 외에는 정보주체의 개인정보를 제3자에게 제공하지 않습니다.</p>
+        <p>② 회사는 원활한 서비스 제공을 위해 다음의 경우 개인정보보호법 제17조 제1항 제1호에 따라 정보주체의 동의를 얻어 필요 최소한의 범위로만 개인정보를 제3자에게 제공할 수 있습니다.</p>
+        <div class="contact-box">
+          개인정보를 제공받는 자 : &lt;청소년입장지대 신도림놀구로&gt;<br>
+          제공받는 자의 개인정보 이용목적 : &lt;프로그램 진행을 위한 참여자 관리, 프로그램 홍보, 안전관리 등&gt;<br>
+          제공하는 개인정보 항목 : &lt;성명, 주소, 연락처&gt;<br>
+          제공받는 자의 보유, 이용기간 : &lt;개인정보 제3자 제공 철회 시까지&gt;
+        </div>
+
+        <h4>제4조(정보주체 및 법정대리인의 권리와 그 행사 방법)</h4>
+        <p>① 정보주체는 회사에 대해 언제든지 다음 각 호의 개인정보 보호 관련 권리를 행사할 수 있습니다.</p>
+        <ol class="privacy-list">
+          <li>개인정보 열람 요구</li>
+          <li>오류 등이 있을 경우 정정 요구</li>
+          <li>삭제요구</li>
+          <li>처리정지 요구</li>
+        </ol>
+        <p>② 제1항에 따른 권리 행사는 회사에 대해 서면, 전화, 전자우편, 모사전송(FAX) 등을 통하여 하실 수 있으며 회사는 이에 대해 지체없이 조치하겠습니다.</p>
+        <p>③ 정보주체가 개인정보의 오류 등에 대한 정정 또는 삭제를 요구한 경우에는 회사는 정정 또는 삭제를 완료할 때까지 당해 개인정보를 이용하거나 제공하지 않습니다.</p>
+        <p>④ 제1항에 따른 권리 행사는 정보주체의 법정대리인이나 위임을 받은 자 등 대리인을 통하여 하실 수 있습니다. 이 경우 개인정보 보호법 시행규칙 별지 제11호 서식에 따른 위임장을 제출하셔야 합니다.</p>
+        <p>⑤ 정보주체는 개인정보 보호법 등 관계 법령을 위반하여 회사가 처리하고 있는 정보주체 본인이나 타인의 개인정보 및 사생활을 침해하여서는 아니 됩니다.</p>
+
+        <h4>제5조(처리하는 개인정보 항목)</h4>
+        <p>회사는 다음의 개인정보 항목을 처리하고 있습니다.</p>
+        <p><strong>1. 프로그램 신청자 개인정보</strong><br>필수항목 : &lt;예) 이름, 학교, 나이, 성별, 연락처&gt;</p>
+
+        <h4>제6조(개인정보의 파기)</h4>
+        <p>① 회사는 개인정보 보유 기간의 경과, 처리목적 달성 등 개인정보가 불필요하게 되었을 때에는 지체없이 해당 개인정보를 파기합니다.</p>
+        <p>② 정보주체로부터 동의받은 개인정보 보유 기간이 경과하거나 처리목적이 달성되었음에도 불구하고 다른 법령에 따라 개인정보를 계속 보존하여야 하는 경우에는, 해당 개인정보를 별도의 데이터베이스(DB)로 옮기거나 보관장소를 달리하여 보존합니다.</p>
+        <p>③ 개인정보 파기의 절차 및 방법은 다음과 같습니다.</p>
+        <p><strong>1. 파기 절차</strong><br>회사는 파기 사유가 발생한 개인정보를 선정하고, 개인정보 보호책임자의 승인을 받아 개인정보를 파기합니다.</p>
+        <p><strong>2. 파기 방법</strong><br>회사는 전자적 파일 형태로 기록․저장된 개인정보는 기록을 재생할 수 없도록 파기하며, 종이 문서에 기록․저장된 개인정보는 분쇄기로 분쇄하거나 소각하여 파기합니다.</p>
+
+        <h4>제7조(개인정보의 안전성 확보조치)</h4>
+        <p>회사는 개인정보의 안전성 확보를 위해 다음과 같은 조치를 하고 있습니다.</p>
+        <ol class="privacy-list">
+          <li>관리적 조치 : 내부관리계획 수립 및 시행, 정기적 직원 교육 등</li>
+          <li>기술적 조치 : 개인정보처리시스템 등의 접근 권한 관리, 접근통제시스템 설치, 고유 식별정보 등의 암호화, 보안프로그램 설치</li>
+          <li>물리적 조치 : 전산실, 자료보관실 등의 접근통제</li>
+        </ol>
+
+        <h4>제8조(개인정보 자동 수집 장치의 설치∙운영 및 거부에 관한 사항)</h4>
+        <p>① 회사는 이용자에게 개별적인 맞춤 서비스를 제공하기 위해 이용정보를 저장하고 수시로 불러오는 ‘쿠키(cookie)’를 사용합니다.</p>
+        <p>② 쿠키는 웹사이트를 운영하는데 이용되는 서버(http)가 이용자의 컴퓨터 브라우저에 보내는 소량의 정보이며 이용자들의 PC 또는 모바일에 저장됩니다.</p>
+        <p>③ 정보주체는 웹 브라우저 옵션 설정을 통해 쿠키 허용, 차단 등의 설정을 할 수 있습니다. 다만, 쿠키 저장을 거부할 경우 맞춤형 서비스 이용에 어려움이 발생할 수 있습니다.</p>
+        <p><strong>▶ 웹 브라우저에서 쿠키 허용/차단</strong><br>크롬(Chrome) : 웹 브라우저 설정 &gt; 개인정보 보호 및 보안 &gt; 인터넷 사용기록 삭제<br>엣지(Edge) : 웹 브라우저 설정 &gt; 쿠키 및 사이트 권한 &gt; 쿠키 및 사이트 데이터 관리 및 삭제</p>
+        <p><strong>▶ 모바일 브라우저에서 쿠키 허용/차단</strong><br>크롬(Chrome) : 모바일 브라우저 설정 &gt; 개인정보 보호 및 보안 &gt; 인터넷 사용기록 삭제<br>사파리(Safari) : 모바일 기기 설정 &gt; 사파리(Safari) &gt; 고급 &gt; 모든 쿠키 차단<br>삼성 인터넷 : 인터넷 사용 기록 &gt; 인터넷 사용 기록 삭제</p>
+        <p>④ 회사는 서비스 이용과정에서 사용자가 방문한 각 서비스와 웹 사이트들에 대한 방문 및 이용형태, 인기 검색어, 보안접속 여부 등을 파악하여 이용자에게 최적화된 정보 제공을 위해 수집・이용하고 있습니다.</p>
+
+        <h4>제9조(개인정보 보호책임자)</h4>
+        <p>① 회사는 개인정보 처리에 관한 업무를 총괄해서 책임지고, 개인정보 처리와 관련한 정보주체의 불만처리 및 피해구제 등을 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.</p>
+        <div class="contact-box">
+          개인정보 보호책임자<br>
+          성명 : 박선숙<br>
+          직책 : 관장<br>
+          연락처 : &lt;02-2068-2511&gt;<br>
+          ※ 개인정보 보호 담당부서로 연결됩니다.<br><br>
+          개인정보 보호 담당부서<br>
+          부서명 : 운영지원팀<br>
+          연락처 : &lt;02-2068-2511&gt;
+        </div>
+        <p>② 정보주체께서는 회사의 서비스(또는 사업)을 이용하시면서 발생한 모든 개인정보 보호 관련 문의, 불만 처리, 피해구제 등에 관한 사항을 개인정보 보호책임자 및 담당부서로 문의하실 수 있습니다. 회사는 정보주체의 문의에 대해 지체없이 답변 및 처리해드릴 것입니다.</p>
+
+        <h4>제10조(개인정보 열람청구)</h4>
+        <p>정보주체는 개인정보 보호법 제35조에 따른 개인정보의 열람 청구를 아래의 부서에 할 수 있습니다. 회사는 개인정보 열람 청구가 신속하게 처리되도록 노력하겠습니다.</p>
+        <div class="contact-box">개인정보 열람청구 접수․처리 부서<br>부서명 : 운영지원팀<br>연락처 : &lt;02-2068-2511&gt;</div>
+
+        <h4>제11조(권익침해 구제 방법)</h4>
+        <ol class="privacy-list">
+          <li>개인정보 분쟁조정위원회 : (국번없이) 1833-6972 (www.kopico.go.kr)</li>
+          <li>개인정보침해신고센터 : (국번없이) 118 (privacy.kisa.or.kr)</li>
+          <li>대검찰청 : (국번없이) 1301 (www.spo.go.kr)</li>
+          <li>경찰청 : (국번없이) 182 (ecrm.police.go.kr/minwon/main)</li>
+        </ol>
+
+        <h4>제12조(개인정보 처리방침 시행 및 변경)</h4>
+        <p>이 개인정보 처리방침은 <strong>2026. 1. 30.</strong> 부터 적용됩니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <button class="tab" data-tab="map" onclick="go('map')">
+      <span class="ticon">🗺️</span>지도
+    </button>
+    <button class="tab" data-tab="angel" onclick="go('angel')">
+      <span class="ticon">🧚</span>구로엔젤
+    </button>
+    <button class="tab active" data-tab="home" onclick="go('home')">
+      <span class="ticon">🏠</span>홈
+    </button>
+    <button class="tab" data-tab="discover" onclick="go('discover')">
+      <span class="ticon">✨</span>삼대발견
+    </button>
+    <button class="tab" data-tab="place" onclick="go('place')">
+      <span class="ticon">🎈</span>놀구로
+    </button>
+    <button class="tab" data-tab="settings" onclick="go('settings')">
+      <span class="ticon">⚙️</span>설정
+    </button>
+  </div>
+</div>
 
 <script>
-  const API = 'https://nolmap.nolguro0905.workers.dev';   // 길찾기·공휴일·문의하기 Worker
-  let PLACES = {}, ANGEL_IDS = [], DISCOVER_IDS = [];
-  let HOME = [37.51037, 126.88001];
+// ===== 색 테마 · 고대비 =====
+const THEME_KEY = 'nolmap_theme';
+const HC_KEY    = 'nolmap_hc';
 
-  const $ = id => document.getElementById(id);
-  const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-  function toast(msg){
-    const t = $('toast'); t.textContent = msg; t.classList.add('show');
-    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1600);
-  }
-  function copyText(id){
-    const text = $(id).textContent;
-    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
-      .then(() => toast('복사했어요'))
-      .catch(() => toast('복사하지 못했어요. 길게 눌러 직접 복사해 주세요.'));
-  }
+function setTheme(t) {
+  const root = document.documentElement;
+  root.removeAttribute('data-theme');
+  if (t && t !== 'green') root.setAttribute('data-theme', t);
+  document.querySelectorAll('.theme-swatch').forEach(s =>
+    s.classList.toggle('active', s.dataset.t === t)
+  );
+  try { localStorage.setItem(THEME_KEY, t); } catch(_) {}
+}
 
-  // 도보 경로 (놀맵 앱과 같은 Worker)
-  async function walk(from, to){
-    const url = API + '?sx=' + from[1] + '&sy=' + from[0] + '&ex=' + to[1] + '&ey=' + to[0];
-    const res = await fetch(url);
-    let data = null;
-    try{ data = await res.json(); }catch(_){}
-    if(!res.ok || !data || !data.ok){
-      const why = data && data.detail && data.detail.message ? data.detail.message : (data && data.error) || ('HTTP ' + res.status);
-      throw new Error(why);
-    }
-    if(!Array.isArray(data.path) || !data.path.length) throw new Error('경로 없음');
-    return { distance: Number(data.distance || 0), time: Number(data.time || 0) };
-  }
-  const round5 = m => Math.round(m / 5) * 5;
+function setHighContrast(on) {
+  document.documentElement.classList.toggle('hc', on);
+  const cb = document.getElementById('hcToggle');
+  if (cb) cb.checked = on;
+  try { localStorage.setItem(HC_KEY, on ? '1' : '0'); } catch(_) {}
+}
 
-  // ===== 1. 서비스 상태 =====
-  const SERVICES = [
-    { key:'route',   name:'길찾기 API',    url:'(Worker 경로 조회)' },
-    { key:'holiday', name:'공휴일 API',    url:'(Worker /holiday)' },
-    { key:'kakao',   name:'카카오 지도 SDK', url:'dapi.kakao.com' },
-    { key:'site',    name:'놀맵 페이지',    url:'index.html' },
-    { key:'data',    name:'장소 데이터',    url:'places.json' }
-  ];
-  function renderStatus(key, state, label, detail){
-    const el = $('st-' + key);
-    if(!el) return;
-    el.querySelector('.pill').className = 'pill ' + state;
-    el.querySelector('.pill').textContent = label;
-    if(detail !== undefined) el.querySelector('small').textContent = detail;
-  }
-  async function timed(fn){
-    const t0 = performance.now();
-    const v = await fn();
-    return { v, ms: Math.round(performance.now() - t0) };
-  }
-  function checkServices(){
-    $('statusList').innerHTML = SERVICES.map(s =>
-      '<div class="status-item" id="st-' + s.key + '"><div><b>' + s.name + '</b><small>' + esc(s.url) + '</small></div>' +
-      '<span class="pill idle">확인 중</span></div>').join('');
+// 저장된 설정 즉시 복원
+(function() {
+  try {
+    const t  = localStorage.getItem(THEME_KEY) || 'green';
+    const hc = localStorage.getItem(HC_KEY) === '1';
+    setTheme(t);
+    if (hc) setHighContrast(true);
+  } catch(_) {}
+})();
 
-    timed(() => walk(HOME, [37.5108293, 126.8803841]))
-      .then(r => renderStatus('route', 'ok', '정상 · ' + r.ms + 'ms', '놀구로 → 고가네 며느리 ' + Math.round(r.v.distance) + 'm'))
-      .catch(e => renderStatus('route', 'bad', '오류', e.message));
+// ===== 놀구로 운영 상태 =====
+async function updateNolguroStatus() {
+  const el = document.getElementById('nolguro-status');
+  if (!el) return;
 
-    const today = new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Seoul' }).format(new Date());
-    timed(() => fetch(API + '/holiday?date=' + today).then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
-      .then(r => renderStatus('holiday', r.v && r.v.ok ? 'ok' : 'warn', (r.v && r.v.ok ? '정상' : '응답 이상') + ' · ' + r.ms + 'ms',
-        today + ' → ' + (r.v && r.v.isHoliday ? '공휴일 (' + (r.v.localName || r.v.name || '') + ')' : '평일/주말')))
-      .catch(e => renderStatus('holiday', 'bad', '오류', e.message));
+  // 한국 시간 기준
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23'
+    })
+    .formatToParts(new Date())
+    .filter(p => p.type !== 'literal')
+    .map(p => [p.type, p.value])
+  );
 
-    if(window.kakao && kakao.maps) renderStatus('kakao', 'ok', '정상', 'SDK 로드됨');
-    else renderStatus('kakao', 'bad', '오류', 'SDK를 불러오지 못했어요 (도메인 등록 확인)');
+  const today =
+    `${parts.year}-${parts.month}-${parts.day}`;
 
-    timed(() => fetch('index.html', { cache:'no-store' }).then(r => r.ok ? r.text() : Promise.reject(new Error('HTTP ' + r.status))))
-      .then(r => renderStatus('site', 'ok', '정상 · ' + r.ms + 'ms', 'index.html ' + Math.round(r.v.length / 1024) + 'KB'))
-      .catch(e => renderStatus('site', 'bad', '오류', e.message));
+  // 1. 공휴일 확인
+  try {
+    const res = await fetch(
+      `https://nolmap.nolguro0905.workers.dev/holiday?date=${today}`
+    );
 
-    timed(() => fetch('places.json', { cache:'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
-      .then(r => renderStatus('data', 'ok', '정상 · ' + r.ms + 'ms', '장소 ' + Object.keys(r.v.places || {}).length + '곳'))
-      .catch(e => renderStatus('data', 'bad', '오류', e.message));
-  }
+    const holiday = await res.json();
 
-  // 문의하기 메일이 실제로 가는지 확인 (playguro1@naver.com 으로 테스트 메일 1통)
-  async function testContactMail(){
-    if(!confirm('playguro1@naver.com 으로 테스트 메일을 1통 보낼까요?')) return;
-    const btn = $('mailTestBtn'), msg = $('mailTestMsg');
-    btn.disabled = true; msg.className = 'msg'; msg.textContent = '보내는 중...';
-    try{
-      const res = await fetch(API + '/contact', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: '[테스트] 관리자 페이지 메일 확인', message: '놀맵 관리자 페이지에서 보낸 문의하기 테스트 메일이에요.\n답장하지 않으셔도 돼요.', name: '놀맵 관리자' })
-      });
-      let data = {}; try{ data = await res.json(); }catch(_){}
-      if(!res.ok || !data.ok){
-        const d = data.detail || {};
-        throw new Error((data.error || ('HTTP ' + res.status)) + (d.message ? ' · ' + d.message : ''));
-      }
-      msg.className = 'msg ok'; msg.textContent = '✓ 보냈어요. playguro1@naver.com 받은편지함(또는 스팸함)을 확인해 주세요.';
-    }catch(e){
-      msg.className = 'msg bad'; msg.textContent = '보내지 못했어요: ' + e.message;
-    }finally{ btn.disabled = false; }
-  }
-
-  // ===== 2. 장소 데이터 읽기 =====
-  function applyData(d){
-    PLACES = d.places || {};
-    ANGEL_IDS = (d.angelIds || []).filter(id => PLACES[id]);
-    DISCOVER_IDS = (d.discoverIds || []).filter(id => PLACES[id]);
-    if(PLACES.nolguro && PLACES.nolguro.pos) HOME = PLACES.nolguro.pos;
-  }
-  async function loadPlaces(){
-    const res = await fetch('places.json', { cache:'no-store' });
-    if(!res.ok) throw new Error('places.json을 불러오지 못했어요 (' + res.status + ')');
-    const d = await res.json();
-    if(!remoteLoaded) applyData(d);   // GitHub에서 최신본을 이미 받았으면 그걸 유지
-  }
-
-  function typeOf(id){
-    if(id === 'nolguro') return '<span class="type home">목적지</span>';
-    if(ANGEL_IDS.includes(id)) return '<span class="type angel">구로엔젤</span>';
-    if(DISCOVER_IDS.includes(id)) return '<span class="type disc">삼대발견</span>';
-    return '<span class="type">기타</span>';
-  }
-
-  function renderPlaces(){
-    const order = ['nolguro', ...ANGEL_IDS, ...DISCOVER_IDS, ...Object.keys(PLACES)]
-      .filter((id, i, arr) => PLACES[id] && arr.indexOf(id) === i);
-    $('placeRows').innerHTML = order.map(id => {
-      const p = PLACES[id];
-      const photos = p.photos || [];
-      return '<tr data-id="' + id + '">' +
-        '<td>' + typeOf(id) + '</td>' +
-        '<td class="name"><b>' + esc(p.name) + '</b><small>' + esc(id) + (p.pinOf ? ' · 핀은 ' + esc(p.pinOf) + '와 공유' : '') + '</small></td>' +
-        '<td><div class="thumbs">' + (photos.length
-          ? photos.map(src => '<img src="' + esc(src) + '" alt="" title="' + esc(src) + '" onerror="this.classList.add(\'broken\');checkSummary()">').join('')
-          : (id === 'nolguro' ? '—' : '<span class="pill warn">사진 없음</span>')) + '</div></td>' +
-        '<td>' + esc(p.dist || (id === 'nolguro' ? '—' : '')) + '</td>' +
-        '<td class="measured">' + (id === 'nolguro' ? '—' : '<span class="pill idle">—</span>') + '</td>' +
-        '<td class="mono">' + (p.pos ? p.pos[0].toFixed(6) + ',<br>' + p.pos[1].toFixed(6) : '<span class="pill bad">좌표 없음</span>') + '</td>' +
-      '</tr>';
-    }).join('');
-    checkSummary();
-  }
-
-  function checkSummary(){
-    const ids = Object.keys(PLACES).filter(id => id !== 'nolguro');
-    const noPhoto = ids.filter(id => !(PLACES[id].photos || []).length).map(id => PLACES[id].name);
-    const broken = document.querySelectorAll('.thumbs img.broken').length;
-    $('placeSummary').innerHTML =
-      '장소 ' + ids.length + '곳 (구로엔젤 ' + ANGEL_IDS.length + ', 삼대발견 ' + DISCOVER_IDS.length + ')' +
-      ' · 사진 ' + ids.reduce((n, id) => n + (PLACES[id].photos || []).length, 0) + '장' +
-      (broken ? ' · <b style="color:var(--bad);">열리지 않는 사진 ' + broken + '장</b>' : '') +
-      (noPhoto.length ? ' · 사진 없는 곳: ' + noPhoto.map(esc).join(', ') : '');
-  }
-
-  async function measureAll(){
-    const btn = $('measureBtn');
-    btn.disabled = true; btn.textContent = '⏳ 재는 중...';
-    let mismatch = 0;
-    const rows = [...document.querySelectorAll('#placeRows tr[data-id]')].filter(r => r.dataset.id !== 'nolguro');
-    for(const row of rows){
-      const p = PLACES[row.dataset.id];
-      const cell = row.querySelector('.measured');
-      if(!p.pos){ cell.innerHTML = '<span class="pill bad">좌표 없음</span>'; continue; }
-      cell.innerHTML = '<span class="pill idle">재는 중</span>';
-      try{
-        const r = await walk(HOME, p.pos);
-        const listed = parseInt(String(p.dist || '').replace(/[^0-9]/g, ''), 10);
-        const diff = isNaN(listed) ? null : Math.abs(listed - r.distance);
-        const state = diff === null ? 'warn' : diff >= 30 ? 'bad' : 'ok';
-        if(state === 'bad') mismatch++;
-        cell.innerHTML = '<span class="pill ' + state + '">' + Math.round(r.distance) + 'm</span>' +
-          (state === 'bad' ? '<br><small style="color:var(--bad);font-size:10px;">→ 약 ' + round5(r.distance) + 'm 추천</small>' : '');
-      }catch(e){
-        cell.innerHTML = '<span class="pill bad">실패</span>';
-      }
-    }
-    btn.disabled = false; btn.textContent = '🚶 도보 거리 재측정';
-    toast(mismatch ? '거리 차이가 큰 곳이 ' + mismatch + '곳 있어요' : '모든 거리가 30m 안쪽으로 맞아요');
-  }
-
-  // ===== 3. 좌표 찾기 =====
-  function initPickMap(){
-    if(!(window.kakao && kakao.maps)) {
-      $('pickMap').innerHTML = '<p style="padding:20px;color:var(--muted);">카카오 지도를 불러오지 못했어요.</p>';
+    if (holiday.ok && holiday.isHoliday) {
+      el.textContent =
+        `휴관 · ${holiday.localName || holiday.name || '공휴일'}`;
       return;
     }
-    kakao.maps.load(() => {
-      const LL = p => new kakao.maps.LatLng(p[0], p[1]);
-      const map = new kakao.maps.Map($('pickMap'), { center: LL(HOME), level: 2 });
-      new kakao.maps.CustomOverlay({ position: LL(HOME), content:'<div class="home-pin">🎈 놀구로</div>', yAnchor: 0.5 }).setMap(map);
-      const pin = new kakao.maps.CustomOverlay({ position: LL(HOME), content:'<div class="pin"></div>', yAnchor: 0.5 });
-      let seq = 0;
-      kakao.maps.event.addListener(map, 'click', async e => {
-        const lat = e.latLng.getLat(), lng = e.latLng.getLng();
-        pin.setPosition(e.latLng); pin.setMap(map);
-        const pos = '[' + lat.toFixed(7) + ', ' + lng.toFixed(7) + ']';
-        $('pickCode').textContent = "pos:" + pos + ", dist:'측정 중...',";
-        const my = ++seq;
-        try{
-          const r = await walk(HOME, [lat, lng]);
-          if(my !== seq) return;
-          $('pickCode').textContent = "pos:" + pos + ", dist:'약 " + round5(r.distance) + "m',";
-        }catch(err){
-          if(my !== seq) return;
-          $('pickCode').textContent = "pos:" + pos + ", dist:'', // 도보 거리 측정 실패";
-        }
-      });
+  } catch (error) {
+    console.warn('공휴일 확인 실패:', error);
+  }
+
+  // 2. 요일 확인
+  const weekdayMap = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6
+  };
+
+  const day = weekdayMap[parts.weekday];
+
+  // 일요일 / 월요일 휴관
+  if (day === 0 || day === 1) {
+    el.textContent = '휴관 · 화~토 운영';
+    return;
+  }
+
+  // 3. 운영시간 확인
+  const minutes =
+    Number(parts.hour) * 60 +
+    Number(parts.minute);
+
+  if (minutes < 9 * 60) {
+    el.textContent = '운영 전 · 09:00 운영 시작';
+
+  } else if (minutes < 20 * 60) {
+    el.textContent = '운영 중 · 20:00 운영 종료';
+
+  } else {
+    el.textContent = '운영 종료 · 화~토 09:00~20:00';
+  }
+}
+
+// 페이지 로드 즉시 실행
+updateNolguroStatus();
+
+// 1분마다 자동 갱신
+setInterval(updateNolguroStatus, 60000);
+
+  const titles = {
+    home:  ['놀구로오는길', '신도림놀구로 가는 가장 안전한 길'],
+    map:   ['최적의 길', '안전 경로와 위험 구간을 한눈에'],
+    angel: ['구로엔젤', '우리 동네 안전 도우미'],
+    discover: ['삼대발견', '놀구로 가는 길에 만나는 곳'],
+    place: ['신도림놀구로', '우리가 놀러가는 그곳'],
+    settings: ['설정', '테마 · 고대비 · 약관 · 문의']
+  };
+
+  function go(name){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab[data-tab="' + name + '"]').classList.add('active');
+
+    document.getElementById('screenTitle').textContent = titles[name][0];
+    document.getElementById('screenSubtitle').textContent = titles[name][1];
+
+    if(name === 'discover') dataReady.then(renderDiscover);
+    document.querySelector('.screens').scrollTop = 0;
+    document.querySelector('.screens').classList.toggle('fullmap', name === 'map');
+    document.querySelector('.phone').classList.toggle('mapmode', name === 'map');
+
+    if(name === 'map' && !window._mapInited){
+      window._mapInited = true;
+      if(window.kakao && window.kakao.maps){
+        dataReady.then(() => kakao.maps.load(initKakaoMap));
+      }
+    }
+    if(name === 'map' && window._map){
+      setTimeout(() => window._map.relayout(), 200);
+    }
+  }
+
+  function superZoom(dir){
+    const map = window._map;
+    if(!map) return;
+    const lv = map.getLevel();
+    if(dir > 0){
+      if(lv > 1) map.setLevel(lv - 1, {animate:true});
+    } else {
+      map.setLevel(lv + 1, {animate:true});
+    }
+  }
+
+  // ===== 모든 장소 데이터 (지도 · 목록 공통) =====
+  // ===== 장소 데이터 (places.json에서 불러와요 · admin.html에서 수정) =====
+  let PLACES = {}, DISCOVER_IDS = [], ANGEL_IDS = [], ANGEL_PINS = [];
+  const dataReady = fetch('places.json', { cache:'no-cache' })
+    .then(r => { if(!r.ok) throw new Error('places.json ' + r.status); return r.json(); })
+    .then(d => {
+      PLACES = d.places || {};
+      ANGEL_IDS = (d.angelIds || []).filter(id => PLACES[id]);
+      DISCOVER_IDS = (d.discoverIds || []).filter(id => PLACES[id]);
+      // 각 장소에 자기 id 기록 (지도 핀에서 열어도 사진·길찾기가 맞는 장소로 가도록)
+      Object.keys(PLACES).forEach(k => { PLACES[k]._id = k; });
+      ANGEL_PINS = ANGEL_IDS.filter(id => PLACES[id].pos);
+    })
+    .catch(err => console.error('장소 데이터를 불러오지 못했어요:', err));
+
+  // ===== 하단 정보 패널 =====
+  function openPlace(id){
+    if(typeof closeAngelShops === 'function') closeAngelShops();
+    go('map');
+    dataReady.then(() => whenMapReady(() => {
+      const pl = PLACES[id];
+      if(!pl) return;
+      if(pl.pos){
+        window._map.setLevel(2);
+        window._map.setCenter(window._LL(pl.pos));
+      }
+      showPanel(pl);
+    }));
+  }
+
+  // ===== 지금 영업 중 =====
+  function openState(pl){
+    if(!pl || !pl.hours || !window.NolHours) return null;
+    const s = NolHours.status(pl.hours);
+    if(!s) return null;
+    return { cls: s.open ? (s.soon ? 'soon' : 'on') : 'off', label: s.open && s.soon ? '곧 마감' : s.label, detail: s.detail };
+  }
+  function openTag(pl){
+    const s = openState(pl);
+    return s ? '<span class="open-tag ' + s.cls + '">' + s.label + '</span>' : '';
+  }
+  // 1분마다 지도 핀 점과 열려 있는 목록을 새로 계산
+  function refreshOpenStatus(){
+    document.querySelectorAll('.place-pin[data-id]').forEach(el => {
+      const s = openState(PLACES[el.dataset.id]);
+      const dot = el.querySelector('.pp-open');
+      if(dot) dot.className = 'pp-open' + (s ? ' ' + s.cls : '');
     });
+    const shop = document.getElementById('angelShopModal');
+    if(shop && shop.classList.contains('open')) renderAngelShops();
+    const disc = document.getElementById('screen-discover');
+    if(disc && disc.classList.contains('active')) renderDiscover();
+    const panel = document.getElementById('infoPanel');
+    if(panel && panel.classList.contains('open') && panel._place) showPanel(panel._place);
+  }
+  setInterval(refreshOpenStatus, 60000);
+
+  // 삼대발견 장소면 설명을 보여줄 id (흥왕처럼 구로엔젤 핀을 같이 쓰는 경우도 포함)
+  function detailIdOf(id){
+    if(!id) return null;
+    if(DISCOVER_IDS.includes(id)) return id;
+    return DISCOVER_IDS.find(d => PLACES[d] && PLACES[d].pinOf === id) || null;
   }
 
-  // ===== 4. 이 기기 데이터 =====
-  function routeKeys(){
-    const keys = [];
-    try{ for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if(k && k.startsWith('nolmap_route_')) keys.push(k); } }catch(e){}
-    return keys;
+  function openDetail(id){
+    const pl = PLACES[id];
+    const modal = document.getElementById('detailModal');
+    if(!pl || !modal) return;
+    document.getElementById('detailTitle').textContent = (pl.emoji ? pl.emoji + ' ' : '') + pl.name;
+    const text = String(pl.detail || '').trim();
+    const paras = text
+      ? text.split(/\n\s*\n|\n/).map(s => s.trim()).filter(Boolean).map(s => '<p>' + escapeHtml(s) + '</p>').join('')
+      : '<p>' + escapeHtml(pl.body || '') + '</p><p class="detail-empty">자세한 설명은 준비 중이에요.</p>';
+    document.getElementById('detailBody').innerHTML =
+      '<p class="detail-sub">✨ 삼대발견' + (pl.dist ? ' · 놀구로에서 ' + escapeHtml(pl.dist) : '') + '</p>' +
+      (pl.photos && pl.photos.length ? '<img src="' + pl.photos[0] + '" alt="' + escapeHtml(pl.name) + '" onerror="this.remove()">' : '') +
+      paras;
+    document.getElementById('detailBody').scrollTop = 0;
+    modal.classList.add('open');
   }
-  function renderLocal(){
-    $('localInfo').innerHTML =
-      '<dt>저장된 경로</dt><dd>' + routeKeys().length + '개 (24시간 뒤 자동 만료)</dd>';
-  }
-  function clearRouteCache(){
-    const keys = routeKeys();
-    try{ keys.forEach(k => localStorage.removeItem(k)); }catch(e){}
-    renderLocal();
-    toast('경로 캐시 ' + keys.length + '개를 지웠어요');
-  }
-
-  // ===== 0. 소개글 · 사진 수정 (Cloudflare Worker가 GitHub에 저장) =====
-  const ADMIN_API = 'https://plain-salad-81b0.nolguro0905.workers.dev';
-  const PW_KEY = 'nolmap_admin_pw';
-  let adminPw = '';
-  let EDIT = null;   // { id, body, photos:[{path}|{blob,url,isNew}], origBody, origPhotos }
-  let remoteLoaded = false;
-
-  async function adminApi(path, opts = {}){
-    let res;
-    try{
-      res = await fetch(ADMIN_API + path, {
-        method: opts.method || 'GET',
-        headers: { 'X-Admin-Password': adminPw, ...(opts.body ? { 'Content-Type':'application/json' } : {}) },
-        body: opts.body ? JSON.stringify(opts.body) : undefined
-      });
-    }catch(e){ throw new Error('관리자 서버에 연결하지 못했어요'); }
-    let data = {};
-    try{ data = await res.json(); }catch(_){}
-    if(!res.ok || !data.ok){
-      const err = new Error(data.error || ('서버 오류 ' + res.status)); err.status = res.status; throw err;
-    }
-    return data;
+  function closeDetail(){
+    const modal = document.getElementById('detailModal');
+    if(modal) modal.classList.remove('open');
   }
 
-  function bytesToB64(bytes){
-    let s = '';
-    for(let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-    return btoa(s);
-  }
-
-  async function ghLogin(auto){
-    const input = $('ghToken');
-    const msg = $('ghLoginMsg');
-    const pw = auto ? adminPw : input.value;
-    if(!pw){ msg.className = 'msg bad'; msg.textContent = '비밀번호를 입력해 주세요.'; return; }
-    adminPw = pw;
-    msg.className = 'msg'; msg.textContent = '확인 중...';
-    try{
-      const chk = await adminApi('/admin/check', { method:'POST' });
-      if(!chk.canWrite) throw new Error('Worker의 GITHUB_TOKEN에 저장소 쓰기 권한이 없어요 (Contents: Read and write 필요)');
-      try{ sessionStorage.setItem(PW_KEY, pw); }catch(_){}
-      input.value = '';
-      $('ghLogin').style.display = 'none';
-      $('ghEditor').style.display = '';
-      $('ghWho').textContent = '✓ 관리자 · ' + chk.repo;
-      const { data } = await adminApi('/admin/data');   // 편집은 항상 GitHub의 최신 데이터로
-      applyData(data);
-      remoteLoaded = true;
-      renderChips();
-      renderPlaces();
-      msg.textContent = '';
-    }catch(e){
-      adminPw = '';
-      try{ sessionStorage.removeItem(PW_KEY); }catch(_){}
-      msg.className = 'msg bad';
-      msg.textContent = e.message;
-    }
-  }
-  function ghLogout(){
-    if(EDIT && isDirty() && !confirm('저장하지 않은 수정이 있어요. 나갈까요?')) return;
-    adminPw = ''; EDIT = null;
-    try{ sessionStorage.removeItem(PW_KEY); }catch(_){}
-    $('ghEditor').style.display = 'none';
-    $('editPane').style.display = 'none';
-    $('ghLogin').style.display = '';
-    $('ghLoginMsg').textContent = '';
-  }
-
-  function renderChips(){
-    const chip = id => '<button type="button" class="chip' + (EDIT && EDIT.id === id ? ' on' : '') +
-      '" onclick="selectPlace(\'' + id + '\')">' + esc(PLACES[id].name) + '</button>';
-    $('chipsAngel').innerHTML = ANGEL_IDS.map(chip).join('');
-    $('chipsDisc').innerHTML = DISCOVER_IDS.map(chip).join('');
-  }
-
-  function selectPlace(id){
-    if(EDIT && EDIT.id !== id && isDirty() && !confirm('저장하지 않은 수정이 있어요. 다른 장소로 넘어갈까요?')) return;
-    const p = PLACES[id];
-    if(!p) return;
-    const hasDetail = DISCOVER_IDS.includes(id);
-    EDIT = {
-      id,
-      hasDetail,
-      detail: p.detail || '',
-      origDetail: p.detail || '',
-      body: p.body || '',
-      addr: p.addr || '',
-      tel: p.tel || '',
-      hours: Object.assign({}, p.hours || {}),
-      rows: (p.rows || []).map(r => [r[0], r[1]]),
-      photos: (p.photos || []).map(path => ({ path })),
-      origBody: p.body || '',
-      origPhotos: (p.photos || []).slice()
-    };
-    EDIT.origInfo = infoKey(EDIT);
-    $('edEmoji').textContent = p.emoji || '📍';
-    $('edName').textContent = p.name;
-    $('edId').textContent = id + (ANGEL_IDS.includes(id) ? ' · 구로엔젤' : ' · 삼대발견');
-    $('edBody').value = EDIT.body;
-    $('edDetailWrap').style.display = hasDetail ? '' : 'none';
-    $('edDetail').value = EDIT.detail;
-    $('edDetailCount').textContent = EDIT.detail.length + ' / 3000자';
-    $('edAddr').value = EDIT.addr;
-    $('edTel').value = EDIT.tel;
-    // 🕗 줄이 요약과 같거나 운영시간이 없으면 자동 맞추기를 켜 둬요
-    const hourRow = EDIT.rows.find(r => r[0] === '🕗');
-    $('edAutoHour').checked = !hourRow || !Object.keys(EDIT.hours).length || hourRow[1] === NolHours.summarize(EDIT.hours);
-    const twin = twinOf(id);
-    $('edMirror').textContent = twin ? '※ 가게 정보(주소·전화·운영시간·정보 줄)는 ' + PLACES[twin].name + '(' + twin + ')에도 같이 저장돼요.' : '';
-    customDays.clear();
-    renderHours();
-    renderRows();
-    $('saveMsg').textContent = '';
-    $('editPane').style.display = '';
-    renderChips();
-    renderEditPhotos();
-  }
-
-  function isDirty(){
-    if(!EDIT) return false;
-    const now = EDIT.photos.map(ph => ph.path || '#new');
-    return EDIT.body !== EDIT.origBody || EDIT.detail !== EDIT.origDetail ||
-      infoKey(EDIT) !== EDIT.origInfo || now.join('|') !== EDIT.origPhotos.join('|');
-  }
-  function updateDirty(){ $('edDirty').textContent = isDirty() ? '● 저장 안 된 수정이 있어요' : ''; }
-
-  // ----- 가게 정보 (주소·전화·운영시간·정보 줄) -----
-  const DAY_KO = { mon:'월', tue:'화', wed:'수', thu:'목', fri:'금', sat:'토', sun:'일' };
-  function infoKey(E){
-    const hs = {}; NolHours.DAYS.forEach(d => { if(E.hours[d]) hs[d] = E.hours[d]; });
-    return JSON.stringify([E.addr, E.tel, hs, E.rows]);
-  }
-  // 흥왕처럼 구로엔젤·삼대발견 두 곳에 있는 가게 짝 찾기
-  function twinOf(id){
-    if(PLACES[id] && PLACES[id].pinOf) return PLACES[id].pinOf;
-    return Object.keys(PLACES).find(k => PLACES[k].pinOf === id) || null;
-  }
-  const customDays = new Set();   // "직접 입력"을 고른 요일 (아직 비어 있어도 입력칸 보이기)
-  function dayMode(v, d){
-    if(d && customDays.has(d)) return 'custom';
-    if(!v) return 'none';
-    if(v === 'closed' || v === '24h') return v;
-    return /^\d\d:\d\d-\d\d:\d\d$/.test(v) ? 'open' : 'custom';
-  }
-  function renderHours(){
-    $('edHours').innerHTML = NolHours.DAYS.map(d => {
-      const v = EDIT.hours[d] || '', m = dayMode(v, d);
-      const [o, c] = m === 'open' ? v.split('-') : ['', ''];
-      return '<div class="hrow' + (d === 'sat' || d === 'sun' ? ' we' : '') + '" data-d="' + d + '">' +
-        '<span class="d">' + DAY_KO[d] + '</span>' +
-        '<select onchange="setDayMode(\'' + d + '\', this.value)">' +
-          [['none','정보 없음'],['open','영업'],['closed','휴무'],['24h','24시간'],['custom','직접 입력']]
-            .map(([k, t]) => '<option value="' + k + '"' + (k === m ? ' selected' : '') + '>' + t + '</option>').join('') +
-        '</select>' +
-        '<div class="times">' +
-          (m === 'open' ? '<input type="time" value="' + o + '" onchange="setDayTime(\'' + d + '\')"><span>~</span><input type="time" value="' + c + '" onchange="setDayTime(\'' + d + '\')">' : '') +
-          (m === 'custom' ? '<input type="text" value="' + esc(v) + '" placeholder="11:00-15:00,17:00-21:00" oninput="setDayCustom(\'' + d + '\', this)">' : '') +
-        '</div>' +
+  function showPanel(pl){
+    const el = document.getElementById('infoPanel');
+    if(!el) return;
+    const rows = (pl.rows || [])
+      .map(r => '<div class="info-row"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>').join('');
+    el.innerHTML =
+      '<button class="info-close" type="button" onclick="closePanel()">✕</button>' +
+      '<div class="info-head"><div class="info-emoji">' + pl.emoji + '</div>' +
+      '<div><h4>' + pl.name + '</h4><div class="sub">' + (pl.sub||'') + '</div>' +
+        (() => { const s = openState(pl); return s ? '<div class="info-open ' + s.cls + '">● ' + s.label + (s.detail ? '<small>' + s.detail + '</small>' : '') + '</div>' : ''; })() +
+      '</div></div>' +
+      (pl.body ? '<p class="info-body">' + pl.body + '</p>' : '') +
+      (rows ? '<div class="info-rows">' + rows + '</div>' : '') +
+      (() => {
+        const n = (pl.photos && pl.photos.length ? 1 : 0) + (detailIdOf(pl._id) ? 1 : 0) + (pl.tel ? 1 : 0) + 1;
+        return '<div class="info-acts' + (n >= 4 ? ' many' : '') + '">';
+      })() +
+        (pl.photos && pl.photos.length
+          ? '<button class="pic" type="button" onclick="openPhoto(\'' + pl._id + '\')">📷 사진' +
+            (pl.photos.length > 1 ? ' ' + pl.photos.length + '장' : '') + '</button>'
+          : '') +
+        (detailIdOf(pl._id) ? '<button class="story" type="button" onclick="openDetail(\'' + detailIdOf(pl._id) + '\')">📖 설명</button>' : '') +
+        (pl.tel ? '<a class="call" href="tel:' + pl.tel.replace(/-/g,'') + '">☎️ 전화</a>' : '') +
+        '<button class="go" type="button" onclick="findMyRoute(\'' + (pl._id || 'nolguro') + '\')">📍 길찾기</button>' +
       '</div>';
-    }).join('');
-    onInfoChange();
+    el._place = pl;
+    el.classList.add('open');
+    document.getElementById('mapCtrl').classList.add('up');
   }
-  function setDayMode(d, m){
-    if(m === 'custom') customDays.add(d); else customDays.delete(d);
-    if(m === 'none') delete EDIT.hours[d];
-    else if(m === 'closed' || m === '24h') EDIT.hours[d] = m;
-    else if(m === 'open') EDIT.hours[d] = /^\d\d:\d\d-\d\d:\d\d$/.test(EDIT.hours[d] || '') ? EDIT.hours[d] : '09:00-18:00';
-    else if(EDIT.hours[d] && !['closed','24h'].includes(EDIT.hours[d])) { /* 기존 시간을 그대로 고치기 */ }
-    else delete EDIT.hours[d];
-    renderHours();
+
+  function showHTML(title, html, isErr){
+    const el = document.getElementById('infoPanel');
+    if(!el) return;
+    el.innerHTML =
+      '<button class="info-close" type="button" onclick="closePanel()">✕</button>' +
+      '<div class="info-head" style="margin-bottom:6px;"><div><h4' +
+      (isErr ? ' style="color:#E14545;"' : '') + '>' + title + '</h4></div></div>' + html;
+    el.classList.add('open');
+    document.getElementById('mapCtrl').classList.add('up');
   }
-  function setDayTime(d){
-    const ins = document.querySelectorAll('.hrow[data-d="' + d + '"] input[type=time]');
-    const o = ins[0].value, c = ins[1].value;
-    if(o && c) EDIT.hours[d] = o + '-' + c;
-    onInfoChange();
-  }
-  function setDayCustom(d, el){
-    const v = el.value.replace(/\s/g, '').replace(/~/g, '-');
-    if(v) EDIT.hours[d] = v; else delete EDIT.hours[d];
-    el.style.borderColor = !v || NolHours.isValidDay(v) ? '' : 'var(--bad)';
-    onInfoChange();
-  }
-  function copyHours(kind){
-    if(kind === 'clear'){ EDIT.hours = {}; renderHours(); return; }
-    const v = EDIT.hours.mon;
-    if(!v){ toast('먼저 월요일 시간을 정해 주세요'); return; }
-    const targets = kind === 'weekdays' ? ['tue','wed','thu','fri'] : ['tue','wed','thu','fri','sat','sun'];
-    targets.forEach(d => EDIT.hours[d] = v);
-    renderHours();
-  }
-  function hoursValid(){
-    return NolHours.DAYS.every(d => !EDIT.hours[d] || NolHours.isValidDay(EDIT.hours[d]));
-  }
-  // 운영시간이 바뀌면 미리보기와 🕗 줄을 맞춰요
-  function onInfoChange(){
-    const sum = hoursValid() ? NolHours.summarize(EDIT.hours) : '';
-    const st = hoursValid() ? NolHours.status(EDIT.hours) : null;
-    $('edHoursPrev').innerHTML = !hoursValid()
-      ? '<span style="color:var(--bad);">직접 입력한 시간 형식이 맞지 않아요 (예: 11:00-15:00,17:00-21:00)</span>'
-      : (sum ? '요약: <b>' + esc(sum) + '</b>' : '운영시간 정보 없음') +
-        (st ? '<br>지금: <b style="color:' + (st.open ? (st.soon ? '#B26A00' : '#2F8A1E') : '#7C8A73') + ';">' + esc(st.open && st.soon ? '곧 마감' : st.label) + '</b> ' + esc(st.detail || '') : '');
-    if($('edAutoHour').checked && hoursValid()){
-      const i = EDIT.rows.findIndex(r => r[0] === '🕗');
-      if(sum){ if(i >= 0) EDIT.rows[i][1] = sum; else EDIT.rows.push(['🕗', sum]); }
-      else if(i >= 0 && Object.keys(EDIT.hours).length === 0) { /* 시간 정보를 지웠어도 기존 줄은 남겨요 */ }
+
+  // ===== 사진 보기 =====
+  // 사진이 여러 장이면 옆으로 스와이프해서 넘겨 볼 수 있어요.
+  function openPhoto(id){
+    const pl = PLACES[id];
+    if(!pl || !pl.photos || !pl.photos.length) return;
+    const photos = pl.photos;
+    const multi = photos.length > 1;
+
+    let box = document.getElementById('photoView');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'photoView';
+      box.className = 'photo-view';
+      // 사진 바깥(배경)이나 ✕를 누르면 닫기. 사진을 누르거나 넘길 때는 닫히지 않음.
+      box.addEventListener('click', e => {
+        if(e.target === box || e.target.classList.contains('photo-slide') ||
+           e.target.closest('.photo-close')) closePhoto();
+      });
+      document.body.appendChild(box);
     }
-    renderRows();
-    updateDirty();
-  }
-  function renderRows(){
-    const auto = $('edAutoHour').checked;
-    $('edRows').innerHTML = EDIT.rows.length ? EDIT.rows.map((r, i) => {
-      const locked = auto && r[0] === '🕗' && Object.keys(EDIT.hours).length > 0;
-      return '<div class="rrow">' +
-        '<input class="ic" type="text" maxlength="8" value="' + esc(r[0]) + '" oninput="setRow(' + i + ',0,this.value)"' + (locked ? ' readonly' : '') + '>' +
-        '<input type="text" maxlength="120" value="' + esc(r[1]) + '" oninput="setRow(' + i + ',1,this.value)"' + (locked ? ' readonly title="운영시간에서 자동으로 만들어져요"' : '') + '>' +
-        '<div class="acts">' +
-          '<button type="button" title="위로" onclick="moveRow(' + i + ',-1)"' + (i === 0 ? ' disabled' : '') + '>▲</button>' +
-          '<button type="button" title="아래로" onclick="moveRow(' + i + ',1)"' + (i === EDIT.rows.length - 1 ? ' disabled' : '') + '>▼</button>' +
-          '<button type="button" class="del" title="빼기" onclick="removeRow(' + i + ')">✕</button>' +
-        '</div></div>';
-    }).join('') : '<div class="ph-empty" style="padding:10px;">정보 줄이 없어요.</div>';
-  }
-  function setRow(i, k, v){ EDIT.rows[i][k] = v; updateDirty(); }
-  function moveRow(i, d){ const j = i + d; if(j < 0 || j >= EDIT.rows.length) return; [EDIT.rows[i], EDIT.rows[j]] = [EDIT.rows[j], EDIT.rows[i]]; renderRows(); updateDirty(); }
-  function removeRow(i){ EDIT.rows.splice(i, 1); renderRows(); updateDirty(); }
-  function addRow(){ EDIT.rows.push(['📌', '']); renderRows(); updateDirty(); const ins = $('edRows').querySelectorAll('.rrow input:not(.ic)'); if(ins.length) ins[ins.length - 1].focus(); }
+    if(box._keys){ document.removeEventListener('keydown', box._keys); box._keys = null; }
+    box.classList.toggle('multi', multi);
+    box.innerHTML =
+      '<button class="photo-close" type="button" aria-label="닫기">✕</button>' +
+      '<div class="photo-track">' +
+        photos.map((src, i) =>
+          '<div class="photo-slide"><img src="' + src + '" alt="' + escapeHtml(pl.name) + ' 사진 ' + (i+1) + '" ' +
+          'onerror="this.outerHTML=\'<div class=&quot;photo-err&quot;>사진을 불러오지 못했어요.</div>\'"></div>'
+        ).join('') +
+      '</div>' +
+      (multi
+        ? '<button class="photo-nav prev" type="button" aria-label="이전 사진">‹</button>' +
+          '<button class="photo-nav next" type="button" aria-label="다음 사진">›</button>' +
+          '<div class="photo-dots">' + photos.map((_, i) => '<span' + (i === 0 ? ' class="on"' : '') + '></span>').join('') + '</div>'
+        : '') +
+      '<div class="photo-cap">' + escapeHtml(pl.name) +
+        (multi ? ' <span class="photo-count">1 / ' + photos.length + '</span>' : '') + '</div>';
 
-  function renderEditPhotos(){
-    const list = EDIT.photos;
-    $('edPhotos').innerHTML = list.length ? list.map((ph, i) =>
-      '<div class="ph">' +
-        '<img src="' + esc(ph.isNew ? ph.url : ph.path) + '" alt="">' +
-        '<span class="no">' + (i + 1) + '</span>' +
-        (ph.isNew ? '<span class="new">새 사진</span>' : '') +
-        '<div class="acts">' +
-          '<button type="button" title="앞으로" onclick="movePhoto(' + i + ',-1)"' + (i === 0 ? ' disabled' : '') + '>◀</button>' +
-          '<button type="button" class="del" title="빼기" onclick="removePhoto(' + i + ')">✕</button>' +
-          '<button type="button" title="뒤로" onclick="movePhoto(' + i + ',1)"' + (i === list.length - 1 ? ' disabled' : '') + '>▶</button>' +
-        '</div>' +
-      '</div>').join('')
-      : '<div class="ph-empty">사진이 없어요. 아래 "＋ 사진 추가"로 넣어 주세요.</div>';
+    const track = box.querySelector('.photo-track');
+    const current = () => Math.round(track.scrollLeft / track.clientWidth);
+    const goTo = i => track.scrollTo({ left: Math.max(0, Math.min(photos.length - 1, i)) * track.clientWidth });
 
-    // 같은 사진을 쓰는 다른 장소 안내 (예: 흥왕은 구로엔젤·삼대발견 둘 다)
-    const mine = new Set(EDIT.photos.filter(p => p.path).map(p => p.path));
-    const others = Object.keys(PLACES).filter(id => id !== EDIT.id &&
-      (PLACES[id].photos || []).some(p => mine.has(p)));
-    $('edShared').textContent = others.length
-      ? '※ ' + others.map(id => PLACES[id].name + '(' + id + ')').join(', ') + '도 같은 사진을 써요. 여기서 바꾸면 이 장소에만 적용돼요.'
-      : '';
-    updateDirty();
-  }
-
-  function movePhoto(i, d){
-    const j = i + d, a = EDIT.photos;
-    if(j < 0 || j >= a.length) return;
-    [a[i], a[j]] = [a[j], a[i]];
-    renderEditPhotos();
-  }
-  function removePhoto(i){
-    const ph = EDIT.photos.splice(i, 1)[0];
-    if(ph && ph.url) URL.revokeObjectURL(ph.url);
-    renderEditPhotos();
-  }
-
-  // 웹용으로 줄이기 (긴 변 1000px, JPEG 82%) — 기존 사진과 같은 기준
-  async function resizeImage(file){
-    let src;
-    try{ src = await createImageBitmap(file, { imageOrientation:'from-image' }); }
-    catch(_){
-      src = await new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = URL.createObjectURL(file); });
+    if(multi){
+      const dots = box.querySelectorAll('.photo-dots span');
+      const count = box.querySelector('.photo-count');
+      track.addEventListener('scroll', () => {
+        const i = current();
+        dots.forEach((d, j) => d.classList.toggle('on', j === i));
+        if(count) count.textContent = (i + 1) + ' / ' + photos.length;
+      }, { passive:true });
+      box.querySelector('.photo-nav.prev').onclick = () => goTo(current() - 1);
+      box.querySelector('.photo-nav.next').onclick = () => goTo(current() + 1);
     }
-    const w0 = src.width, h0 = src.height, k = Math.min(1, 1000 / Math.max(w0, h0));
-    const c = document.createElement('canvas');
-    c.width = Math.round(w0 * k); c.height = Math.round(h0 * k);
-    c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
-    return new Promise((ok, no) => c.toBlob(b => b ? ok(b) : no(new Error('변환 실패')), 'image/jpeg', 0.82));
+
+    box._keys = e => {
+      if(e.key === 'Escape') closePhoto();
+      else if(multi && e.key === 'ArrowRight') goTo(current() + 1);
+      else if(multi && e.key === 'ArrowLeft') goTo(current() - 1);
+    };
+    document.addEventListener('keydown', box._keys);
+    box.classList.add('open');
+  }
+  function closePhoto(){
+    const box = document.getElementById('photoView');
+    if(!box) return;
+    box.classList.remove('open');
+    if(box._keys){ document.removeEventListener('keydown', box._keys); box._keys = null; }
   }
 
-  async function addPhotos(input){
-    const files = [...input.files];
-    input.value = '';
-    if(!files.length || !EDIT) return;
-    $('saveMsg').className = 'msg'; $('saveMsg').textContent = '사진 준비 중...';
-    for(const f of files){
-      try{
-        const blob = await resizeImage(f);
-        EDIT.photos.push({ isNew:true, blob, url: URL.createObjectURL(blob) });
-      }catch(e){
-        $('saveMsg').className = 'msg bad'; $('saveMsg').textContent = f.name + ' 을(를) 읽지 못했어요.';
-      }
-    }
-    if($('saveMsg').className === 'msg') $('saveMsg').textContent = '';
-    renderEditPhotos();
+  function closePanel(){
+    const el = document.getElementById('infoPanel');
+    if(el) el.classList.remove('open');
+    const c = document.getElementById('mapCtrl');
+    if(c) c.classList.remove('up');
   }
 
-  async function saveEdit(){
-    if(!EDIT || !adminPw) return;
-    EDIT.body = $('edBody').value.trim();
-    EDIT.detail = $('edDetail').value.trim();
-    EDIT.addr = $('edAddr').value.trim();
-    EDIT.tel = $('edTel').value.trim();
-    EDIT.rows = EDIT.rows.map(r => [String(r[0]).trim(), String(r[1]).trim()]).filter(r => r[1]);
-    renderRows();
-    if(!hoursValid()){ $('saveMsg').className = 'msg bad'; $('saveMsg').textContent = '운영시간 형식을 먼저 고쳐 주세요.'; return; }
-    if(EDIT.tel && !/^[0-9+\-\s()]{6,20}$/.test(EDIT.tel)){ $('saveMsg').className = 'msg bad'; $('saveMsg').textContent = '전화번호는 숫자와 - 만 써 주세요.'; return; }
-    if(!isDirty()){ toast('바뀐 내용이 없어요'); return; }
-    const btn = $('saveBtn'), msg = $('saveMsg');
-    btn.disabled = true;
-    msg.className = 'msg';
-    const newCount = EDIT.photos.filter(p => p.isNew).length;
-    msg.textContent = newCount ? '사진 ' + newCount + '장 올리고 저장하는 중... (조금 걸려요)' : '저장하는 중...';
-    try{
-      const photos = [];
-      for(const ph of EDIT.photos){
-        photos.push(ph.isNew ? { data: bytesToB64(new Uint8Array(await ph.blob.arrayBuffer())) } : ph.path);
-      }
-      const hours = {}; NolHours.DAYS.forEach(d => { if(EDIT.hours[d]) hours[d] = EDIT.hours[d]; });
-      const payload = { id: EDIT.id, body: EDIT.body, photos, addr: EDIT.addr, tel: EDIT.tel, hours, rows: EDIT.rows };
-      if(EDIT.hasDetail) payload.detail = EDIT.detail;
-      const r = await adminApi('/admin/save', { method:'POST', body: payload });
-      if(r.place.rows === undefined && infoKey(EDIT) !== EDIT.origInfo){
-        throw new Error('Cloudflare Worker 코드가 예전 버전이라 가게 정보가 저장되지 않았어요. cloudflare/admin-worker.js를 다시 배포해 주세요.');
-      }
-      if(EDIT.hasDetail && EDIT.detail !== EDIT.origDetail && r.place.detail === undefined){
-        throw new Error('Cloudflare Worker 코드가 예전 버전이라 자세한 설명이 저장되지 않았어요. cloudflare/admin-worker.js를 다시 배포해 주세요.');
-      }
-      applyData(r.data);
-      EDIT.photos.forEach(ph => { if(ph.url) URL.revokeObjectURL(ph.url); });
-      EDIT.photos = r.place.photos.map(path => ({ path }));
-      EDIT.body = r.place.body;
-      EDIT.origBody = r.place.body;
-      if(EDIT.hasDetail){ EDIT.detail = r.place.detail || ''; EDIT.origDetail = EDIT.detail; $('edDetail').value = EDIT.detail; }
-      EDIT.origPhotos = r.place.photos.slice();
-      if(r.place.rows){
-        EDIT.addr = r.place.addr || ''; EDIT.tel = r.place.tel || '';
-        EDIT.hours = Object.assign({}, r.place.hours || {}); EDIT.rows = r.place.rows.map(x => [x[0], x[1]]);
-        EDIT.origInfo = infoKey(EDIT);
-        $('edAddr').value = EDIT.addr; $('edTel').value = EDIT.tel;
-        renderHours();
-      }
-      renderEditPhotos();
-      renderPlaces();
-      msg.className = 'msg ok';
-      msg.textContent = '✓ 저장했어요. 1~2분 뒤 놀맵에 반영돼요.' + (r.deleted && r.deleted.length ? ' (안 쓰는 사진 ' + r.deleted.length + '장 삭제)' : '');
-    }catch(e){
-      msg.className = 'msg bad';
-      if(e.status === 401){ msg.textContent = '비밀번호가 바뀌었거나 맞지 않아요. 다시 들어가 주세요.'; }
-      else if(e.status === 409){ msg.textContent = '그 사이 다른 곳에서 데이터가 바뀌었어요. 다시 저장해 주세요.'; }
-      else msg.textContent = '저장하지 못했어요: ' + e.message;
-    }finally{
-      btn.disabled = false;
-    }
+  // 지도 준비되면 실행할 작업 대기열
+  const _mapReadyQueue = [];
+  function whenMapReady(cb){
+    if(window._map) cb();
+    else _mapReadyQueue.push(cb);
   }
-  $('edBody') && $('edBody').addEventListener('input', () => { if(EDIT){ EDIT.body = $('edBody').value.trim(); updateDirty(); } });
-  $('edAddr').addEventListener('input', () => { if(EDIT){ EDIT.addr = $('edAddr').value.trim(); updateDirty(); } });
-  $('edTel').addEventListener('input', () => { if(EDIT){ EDIT.tel = $('edTel').value.trim(); updateDirty(); } });
-  $('edDetail') && $('edDetail').addEventListener('input', () => {
-    if(!EDIT) return;
-    EDIT.detail = $('edDetail').value.trim();
-    $('edDetailCount').textContent = $('edDetail').value.length + ' / 3000자';
-    updateDirty();
-  });
-  window.addEventListener('beforeunload', e => { if(isDirty()){ e.preventDefault(); e.returnValue = ''; } });
 
-  // ===== 시작 =====
-  try{ localStorage.removeItem('nolmap_admin_token'); }catch(_){}   // 예전 방식 토큰이 남아 있으면 지우기
-  try{ adminPw = sessionStorage.getItem(PW_KEY) || ''; }catch(_){}
-  if(adminPw) ghLogin(true);
-  loadCurrentVersion();
-  checkServices();
-  renderLocal();
-  loadPlaces()
-    .then(() => { renderPlaces(); initPickMap(); })
-    .catch(e => {
-      $('placeRows').innerHTML = '<tr><td colspan="6" style="color:var(--bad);">' + esc(e.message) + '</td></tr>';
-      initPickMap();
+  function initKakaoMap(){
+    const end = PLACES.nolguro.pos;
+    const LL = p => new kakao.maps.LatLng(p[0], p[1]);
+    const map = new kakao.maps.Map(document.getElementById('kakaoMap'), {
+      center: LL(end), level: 1
     });
+    map.setMinLevel(1);
+    map.setMaxLevel(14);
+    map.setZoomable(true);
+    kakao.maps.event.addListener(map, 'click', closePanel);
+
+    window._map = map;
+    window._LL = LL;
+    window._dest = end;
+
+    new kakao.maps.CustomOverlay({
+      position: LL(end),
+      content: '<div class="label-pill" onclick="showPanel(PLACES.nolguro)">🎈 신도림놀구로</div>',
+      yAnchor: 0.5
+    }).setMap(map);
+
+    // 장소 핀: 가게마다 자기 아이콘 + 구로엔젤(🧚)/삼대발견(✨) 배지 + 가까이 보면 이름
+    const sharedDisc = new Set(DISCOVER_IDS.map(id => PLACES[id].pinOf).filter(Boolean));
+    const placePin = (id, isAngel, isDisc) => {
+      const p = PLACES[id];
+      const s = openState(p);
+      return '<div class="place-pin' + (isAngel ? ' angel' : '') + (isDisc ? ' disc' : '') +
+        '" data-id="' + id + '" onclick="showPanel(PLACES.' + id + ')" title="' + escapeHtml(p.name) + '">' +
+        '<span class="pp-open' + (s ? ' ' + s.cls : '') + '"></span>' +
+        '<span>' + (p.emoji || '📍') + '</span>' +
+        '<span class="pp-badges">' +
+          (isAngel ? '<span class="pp-badge">🧚</span>' : '') +
+          (isDisc ? '<span class="pp-badge">✨</span>' : '') +
+        '</span>' +
+        '<span class="pp-name">' + escapeHtml(p.name) + '</span>' +
+      '</div>';
+    };
+
+    window._angelMarks = ANGEL_PINS.map(id => {
+      const ov = new kakao.maps.CustomOverlay({
+        position: LL(PLACES[id].pos),
+        content: placePin(id, true, sharedDisc.has(id)),
+        yAnchor: 0.5
+      });
+      ov.setMap(map);
+      return ov;
+    });
+    window._angelsOn = true;
+
+    // 삼대발견 핀
+    DISCOVER_IDS.filter(id => PLACES[id].pos && !PLACES[id].pinOf).forEach(id => {
+      new kakao.maps.CustomOverlay({
+        position: LL(PLACES[id].pos),
+        content: placePin(id, false, true),
+        yAnchor: 0.5,
+        zIndex: 2
+      }).setMap(map);
+    });
+
+    // 가까이 확대했을 때만 가게 이름 보이기 (멀리서는 겹쳐서 복잡해요)
+    const mapEl = document.getElementById('kakaoMap');
+    const syncNames = () => mapEl.classList.toggle('show-pin-names', map.getLevel() <= 2);
+    kakao.maps.event.addListener(map, 'zoom_changed', syncNames);
+    syncNames();
+
+    // 대기 중이던 작업 실행
+    _mapReadyQueue.splice(0).forEach(cb => cb());
+  }
+
+  function toggleAngels(){
+    if(!window._angelMarks) return;
+    window._angelsOn = !window._angelsOn;
+    window._angelMarks.forEach(m => m.setMap(window._angelsOn ? window._map : null));
+    const btn = document.getElementById('angelToggle');
+    if(btn) btn.classList.toggle('off', !window._angelsOn);
+  }
+
+  // ===== 놀맵 길찾기 Cloudflare Worker =====
+  const ROUTE_API = 'https://nolmap.nolguro0905.workers.dev';
+
+  // ===== 길찾기 캐시 =====
+
+function getRouteCacheKey(sx, sy, ex, ey){
+  const round = n => Number(n).toFixed(4);
+  return [
+    'nolmap_route',
+    round(sx),
+    round(sy),
+    round(ex),
+    round(ey)
+  ].join('_');
+}
+
+function getCachedRoute(key){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return null;
+
+    const saved = JSON.parse(raw);
+
+    // 캐시 유효기간: 24시간
+    const MAX_AGE = 24 * 60 * 60 * 1000;
+
+    if(!saved.time || Date.now() - saved.time > MAX_AGE){
+      localStorage.removeItem(key);
+      return null;
+    }
+
+    return saved.data || null;
+  }catch(e){
+    console.warn('경로 캐시 읽기 실패:', e);
+    return null;
+  }
+}
+
+function saveCachedRoute(key, data){
+  try{
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        time: Date.now(),
+        data: data
+      })
+    );
+  }catch(e){
+    console.warn('경로 캐시 저장 실패:', e);
+  }
+}
+function findMyRoute(placeId = 'nolguro'){
+  const targetPlace = PLACES[placeId] || PLACES.nolguro;
+  const targetPos = (targetPlace && targetPlace.pos) ? targetPlace.pos : window._dest;
+  const targetName = (targetPlace && targetPlace.name) ? targetPlace.name : '신도림놀구로';
+  const btnEl = document.getElementById('findBtn');
+  const setBtn = loading => { if(btnEl) btnEl.textContent = loading ? '⏳' : '📍'; };
+  const show = (isErr, title, body) => showHTML(title, body, isErr);
+
+  if(!window._map){
+    show(true, '⚠️ 지도를 먼저 불러와 주세요', '<p>잠시 후 다시 눌러주세요.</p>');
+    return;
+  }
+
+  if(!navigator.geolocation){
+    show(true, '⚠️ 위치 기능을 쓸 수 없어요', '<p>이 브라우저는 위치 확인을 지원하지 않아요.</p>');
+    return;
+  }
+
+  setBtn(true);
+
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      try{
+        const map = window._map;
+        const LL = window._LL;
+
+        // 출발지(내 위치) / 선택한 도착지
+        const sx = pos.coords.longitude;
+        const sy = pos.coords.latitude;
+        const ex = targetPos[1];
+        const ey = targetPos[0];
+
+        // 도착지와 30m 이내면 API를 부르지 않고 바로 안내
+        const dLat = (sy - ey) * 111000;
+        const dLng = (sx - ex) * 111000 * Math.cos(sy * Math.PI / 180);
+        if(Math.hypot(dLat, dLng) < 30){
+          show(false, '🎈 거의 다 왔어요!', '<p>' + targetName + ' 바로 앞이에요.</p>');
+          return;
+        }
+
+        const cacheKey = getRouteCacheKey(sx, sy, ex, ey);
+
+        // 1. 기기 캐시 먼저 확인
+        let data = getCachedRoute(cacheKey);
+
+        if(data){
+          console.log('🚀 놀맵 경로 캐시 사용');
+        }else{
+          // 2. 캐시가 없을 때만 Cloudflare Worker /route 호출
+          console.log('🌐 새로운 경로 요청');
+
+          const url =
+            ROUTE_API +
+            '?sx=' + encodeURIComponent(sx) +
+            '&sy=' + encodeURIComponent(sy) +
+            '&ex=' + encodeURIComponent(ex) +
+            '&ey=' + encodeURIComponent(ey);
+
+          const response = await fetch(url);
+
+          if(!response.ok){
+            const errText = await response.text().catch(() => '');
+            throw new Error('Route API ' + response.status + ': ' + errText);
+          }
+
+          data = await response.json();
+
+          if(data && Array.isArray(data.path) && data.path.length > 0){
+            saveCachedRoute(cacheKey, data);
+          }
+        }
+
+        if(!data || !Array.isArray(data.path) || data.path.length === 0){
+          throw new Error('경로 데이터가 없습니다.');
+        }
+
+        // 기존 경로 제거
+        if(window._routeLine){
+          window._routeLine.setMap(null);
+        }
+
+        // 새 경로 표시
+        const path = data.path.map(p => LL(p));
+
+        window._routeLine = new kakao.maps.Polyline({
+          path,
+          strokeWeight: 6,
+          strokeColor: '#4285F4',
+          strokeOpacity: 0.9,
+          strokeStyle: 'solid'
+        });
+        window._routeLine.setMap(map);
+
+        // 경로 전체가 보이게
+        const bounds = new kakao.maps.LatLngBounds();
+        data.path.forEach(p => bounds.extend(LL(p)));
+        map.setBounds(bounds, 60, 40, 60, 40);
+
+        // 거리 / 시간
+        const dist = Number(data.distance || 0);
+        const distText = dist >= 1000
+          ? (dist / 1000).toFixed(1) + 'km'
+          : Math.round(dist) + 'm';
+        const mins = Math.max(1, Math.round(Number(data.time || dist / 1.1) / 60));
+
+        show(
+          false,
+          '🍀 ' + targetName + '까지 길을 찾았어요',
+          '<div class="route-stats">' +
+            '<div class="route-stat"><div class="num">' + distText + '</div><div class="lbl">거리</div></div>' +
+            '<div class="route-stat"><div class="num">' + mins + '분</div><div class="lbl">도보</div></div>' +
+          '</div>' +
+          '<p style="margin-top:10px;">파란 선을 따라 실제 경로를 따라가면 ' + targetName + '에 도착할 수 있어요.</p>'
+        );
+
+      }catch(e){
+        console.error('놀맵 경로 오류:', e);
+
+        const dest = targetPos;
+        const url =
+          'https://map.kakao.com/link/to/' + encodeURIComponent(targetName) + ',' + dest[0] + ',' + dest[1];
+
+        show(
+          true,
+          '⚠️ 경로를 불러오지 못했어요',
+          '<p>지금은 길 안내를 받지 못했어요. 아래 버튼으로 카카오맵에서 길을 확인할 수 있어요.</p>' +
+          '<a class="btn primary" style="width:100%;margin-top:10px;text-decoration:none;" ' +
+          'href="' + url + '" target="_blank">🗺️ 카카오맵으로 길찾기</a>'
+        );
+      }finally{
+        setBtn(false);
+      }
+    },
+
+    err => {
+      setBtn(false);
+
+      let msg = '위치를 확인하지 못했어요.';
+      if(err.code === 1){
+        msg = '위치 권한이 꺼져 있어요. 브라우저 설정에서 위치를 허용해 주세요.';
+      }else if(err.code === 2){
+        msg = '지금은 위치 신호를 잡지 못했어요. 실외에서 다시 시도해 주세요.';
+      }else if(err.code === 3){
+        msg = '위치 확인이 오래 걸려요. 잠시 후 다시 눌러주세요.';
+      }
+
+      show(true, '📍 위치를 확인할 수 없어요', '<p>' + msg + '</p>');
+    },
+
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+  );
+}
+
+
+
+
+  // ===== 구로엔젤 가게 목록 =====
+  function openAngelShops(){
+    dataReady.then(renderAngelShops);
+    const modal=document.getElementById('angelShopModal');
+    if(!modal)return;
+    modal.classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+
+  function renderDiscover(){
+    const box = document.getElementById('discoverList');
+    if(!box) return;
+    box.innerHTML = DISCOVER_IDS.map((id, i) => {
+      const d = PLACES[id];
+      return '<div class="shop-item" onclick="openPlace(\''+id+'\')">' +
+        '<div class="shop-no">'+(i+1)+'</div>' +
+        (d.photos && d.photos.length
+          ? '<img class="shop-thumb" src="'+d.photos[0]+'" alt="'+d.name+'">'
+          : '<div class="shop-ic">'+d.emoji+'</div>') +
+        '<div class="shop-txt">' +
+          '<h5>'+d.name+' <span class="dist-tag">'+d.dist+'</span>'+openTag(d)+'</h5>' +
+          '<p>'+d.body+'</p>' +
+          '<p class="shop-meta">'+d.addr+'</p>' +
+        '</div><div class="shop-go">›</div></div>';
+    }).join('');
+  }
+
+  function renderAngelShops(){
+    const box = document.getElementById('angelShopList');
+    if(!box) return;
+    box.className = '';
+    box.innerHTML =
+      '<p style="font-size:11px;color:var(--muted);margin:0 0 12px;line-height:1.5;">' +
+      '놀구로 오가는 길을 지켜주는 가게 ' + ANGEL_IDS.length + '곳이에요.<br>' +
+      '가까운 순이고, 누르면 지도에서 위치를 볼 수 있어요.</p>' +
+      ANGEL_IDS.map((id, i) => {
+        const a = PLACES[id];
+        const hour = (a.rows || []).find(r => r[0] === '🕗');
+        return '<div class="shop-item" onclick="openPlace(\''+id+'\')">' +
+          '<div class="shop-no">'+(i+1)+'</div>' +
+          (a.photos && a.photos.length
+            ? '<img class="shop-thumb" src="'+a.photos[0]+'" alt="'+a.name+'" onerror="this.outerHTML=\'<div class=&quot;shop-ic&quot;>'+a.emoji+'</div>\'">'
+            : '<div class="shop-ic">'+a.emoji+'</div>') +
+          '<div class="shop-txt">' +
+            '<h5>'+a.name+' <span class="dist-tag">'+a.dist+'</span>'+openTag(a)+'</h5>' +
+            '<p>'+a.addr+'</p>' +
+            (a.tel || hour ? '<p class="shop-meta">' +
+              (a.tel ? '☎️ '+a.tel : '') +
+              (a.tel && hour ? ' · ' : '') +
+              (hour ? '🕗 '+hour[1] : '') + '</p>' : '') +
+          '</div><div class="shop-go">›</div></div>';
+      }).join('');
+  }
+  function closeAngelShops(){
+    const modal=document.getElementById('angelShopModal');
+    if(!modal)return;
+    modal.classList.remove('open');
+    document.body.style.overflow='';
+  }
+
+  function escapeHtml(value){return String(value).replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
+  document.addEventListener('click',function(event){
+    const contactModal=document.getElementById('contactModal');
+    if(contactModal&&event.target===contactModal){closeContactModal();return;}
+    const shopModal=document.getElementById('angelShopModal');
+    if(shopModal&&event.target===shopModal){closeAngelShops();return;}
+  });
+  document.addEventListener('keydown',function(event){
+    if(event.key==='Escape'){
+      const contactModal=document.getElementById('contactModal');
+      if(contactModal&&contactModal.classList.contains('open')){closeContactModal();return;}
+      const shopModal=document.getElementById('angelShopModal');
+      if(shopModal&&shopModal.classList.contains('open')){closeAngelShops();return;}
+      const detailModal=document.getElementById('detailModal');
+      if(detailModal&&detailModal.classList.contains('open')){closeDetail();return;}
+    }
+  });
+
+
+  // ===== 문의하기 =====
+  const CONTACT_API = "https://nolmap.nolguro0905.workers.dev/contact";
+  const CONTACT_TO  = 'playguro1@naver.com';
+
+  function openContactModal(){
+    const modal=document.getElementById('contactModal');
+    if(!modal)return;
+    modal.classList.add('open');
+    document.body.style.overflow='hidden';
+    const status=document.getElementById('contactStatus');
+    if(status){status.className='contact-status';status.textContent='';}
+    setTimeout(()=>{const input=document.getElementById('contactSubject');if(input)input.focus();},50);
+  }
+
+  function closeContactModal(){
+    const modal=document.getElementById('contactModal');
+    if(!modal)return;
+    modal.classList.remove('open');
+    document.body.style.overflow='';
+  }
+
+  async function submitContact(event){
+    event.preventDefault();
+    const subject=document.getElementById('contactSubject').value.trim();
+    const message=document.getElementById('contactMessage').value.trim();
+    const name=document.getElementById('contactName').value.trim();
+    const phone=document.getElementById('contactPhone').value.trim();
+    const status=document.getElementById('contactStatus');
+    const submit=document.getElementById('contactSubmit');
+
+    if(!message){
+      status.className='contact-status show error';
+      status.textContent='문의 내용을 입력해 주세요.';
+      return;
+    }
+
+    submit.disabled=true;
+    submit.textContent='📨 보내는 중...';
+    status.className='contact-status';
+    status.textContent='';
+
+    try{
+      const res=await fetch(CONTACT_API,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({subject,message,name,phone,to:CONTACT_TO})
+      });
+      let data={};
+      try{data=await res.json();}catch(_){}
+      if(!res.ok || !data.ok) throw new Error(data.error || '문의 전송에 실패했습니다.');
+
+      status.className='contact-status show success';
+      status.textContent='문의가 정상적으로 전송되었어요. 감사합니다!';
+      document.getElementById('contactForm').reset();
+      setTimeout(()=>closeContactModal(),1400);
+    }catch(error){
+      console.error('문의 전송 오류:',error);
+      const body =
+        (name  ? '이름: '+name+'\n' : '') +
+        (phone ? '연락처: '+phone+'\n' : '') +
+        '\n' + message;
+      const mailto = 'mailto:' + CONTACT_TO +
+        '?subject=' + encodeURIComponent('[놀맵 문의] ' + (subject || '문의')) +
+        '&body=' + encodeURIComponent(body);
+      status.className='contact-status show error';
+      status.innerHTML =
+        '문의 전송에 실패했어요.<br>' +
+        '<a href="' + mailto + '" style="color:#E14545;font-weight:700;text-decoration:underline;">' +
+        '메일 앱으로 보내기 (' + CONTACT_TO + ')</a>';
+    }finally{
+      submit.disabled=false;
+      submit.textContent='💌 문의 보내기';
+    }
+  }
+
+  document.getElementById('contactForm')?.addEventListener('submit',submitContact);
+
+  // ===== developer console =====
+  function toggleDevConsole(){
+    const box = document.getElementById('devConsole');
+    if(!box) return;
+    const open = box.classList.toggle('open');
+    if(open){
+      const input = document.getElementById('devConsoleInput');
+      input.value = '';
+      setTimeout(() => input.focus(), 30);
+    }
+  }
+  function runDevConsole(event){
+    event.preventDefault();
+    const box = document.getElementById('devConsole');
+    const input = document.getElementById('devConsoleInput');
+    if(input.value.trim() === 'nolmap!!'){
+      location.href = 'admin.html';
+    } else {
+      input.value = '';
+      box.classList.remove('err'); void box.offsetWidth; box.classList.add('err');
+    }
+    return false;
+  }
+
+  // 개인정보처리방침 모달
+  function openPrivacy(){
+    const modal = document.getElementById('privacyModal');
+    if (!modal) return;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePrivacy(){
+    const modal = document.getElementById('privacyModal');
+    if (!modal) return;
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('click', function(event){
+    const modal = document.getElementById('privacyModal');
+    if (modal && event.target === modal) closePrivacy();
+  });
+
+  document.addEventListener('keydown', function(event){
+    if (event.key === 'Escape') closePrivacy();
+  });
+
+  // ===== 앱처럼 설치 (서비스 워커) =====
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => console.warn('서비스 워커 등록 실패:', err));
+    });
+  }
 </script>
 </body>
 </html>
