@@ -152,6 +152,12 @@
   .note{font-size:11px;color:var(--warn);margin-top:6px;}
   .note:empty{display:none;}
 
+
+  /* 버전코드 편집 */
+  .version-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;}
+  .version-inp{border:1px solid #DCE9D0;background:#FAFDF7;border-radius:10px;padding:8px 12px;
+    font-family:'Gowun Dodum',sans-serif;font-size:14px;color:var(--ink);outline:none;width:160px;}
+  .version-inp:focus{border-color:var(--leaf);}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;
     background:#2B3424;color:#fff;padding:9px 16px;border-radius:999px;font-size:12px;transition:all .2s;pointer-events:none;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -247,6 +253,24 @@
         </div>
         <div class="msg" id="saveMsg"></div>
       </div>
+    </div>
+  </section>
+
+
+  <!-- 버전코드 변경 -->
+  <section id="versionSection">
+    <h2>🏷️ 앱 버전코드 변경</h2>
+    <p class="desc">설정 화면에 표시되는 버전 문자열을 바꿔요. 저장 후 1~2분 뒤 반영돼요.<br>
+      형식 예시: <code>v1.0.0</code> · <code>v1.2.3-beta</code></p>
+    <div>
+      <label class="lbl" for="versionInput">새 버전코드</label>
+      <div class="version-row">
+        <input id="versionInput" class="version-inp" type="text" maxlength="32"
+          placeholder="예: v1.0.1" oninput="previewVersion()">
+        <button class="b" type="button" id="versionSaveBtn" onclick="saveVersion()">💾 저장</button>
+      </div>
+      <p id="versionPreview" style="margin-top:6px;font-size:11.5px;color:var(--muted);">현재 버전을 불러오는 중...</p>
+      <div class="msg" id="versionMsg"></div>
     </div>
   </section>
 
@@ -897,6 +921,7 @@
   try{ localStorage.removeItem('nolmap_admin_token'); }catch(_){}   // 예전 방식 토큰이 남아 있으면 지우기
   try{ adminPw = sessionStorage.getItem(PW_KEY) || ''; }catch(_){}
   if(adminPw) ghLogin(true);
+  loadCurrentVersion();
   checkServices();
   renderLocal();
   loadPlaces()
