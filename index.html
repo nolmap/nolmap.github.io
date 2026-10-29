@@ -1462,22 +1462,47 @@ function setVoice(on) {
 function testVoice() {
   const s = _synth();
   const st = document.getElementById('voiceStatus');
+
+  // 1단계: speechSynthesis 존재 확인
   if (!s) {
-    if (st) st.textContent = '⚠️ 이 브라우저는 음성 안내를 지원하지 않아요.';
+    if (st) st.textContent = '❌ speechSynthesis 없음 — 브라우저 미지원';
     return;
   }
-  if (st) st.textContent = '🔊 재생 중...';
+
+  // 2단계: 음성 목록 확인 (디버그용)
+  const voices = s.getVoices();
+  const koVoices = voices.filter(v => v.lang.startsWith('ko'));
+  console.log('[놀맵 음성] 전체:', voices.length, '한국어:', koVoices.length, koVoices.map(v=>v.name+'/'+v.lang));
+
+  if (st) st.textContent = '🔊 재생 중... (전체:'+voices.length+'개, 한국어:'+koVoices.length+'개)';
+
   try {
     s.cancel();
-    const u = new SpeechSynthesisUtterance('안녕하세요! 놀구로 오는 길, 음성 안내 테스트예요.');
-    u.lang = 'ko-KR'; u.rate = 0.9; u.volume = 1.0;
-    const v = _getBestVoice();
-    if (v) u.voice = v;
-    u.onend   = () => { if (st) st.textContent = '✅ 잘 들리면 음성 안내를 켜 보세요!'; };
-    u.onerror = (e) => { if (st) st.textContent = '⚠️ 재생 실패: ' + (e.error || '알 수 없는 오류'); };
+    const u = new SpeechSynthesisUtterance('안녕하세요! 놀구로 오는 길 음성 테스트예요.');
+    u.lang = 'ko-KR';
+    u.rate = 0.9;
+    u.volume = 1.0;
+    // 한국어 목소리 있으면 설정, 없으면 브라우저 기본값
+    const v = koVoices[0] || voices[0] || null;
+    if (v) { u.voice = v; console.log('[놀맵 음성] 사용:', v.name, v.lang); }
+    else { console.log('[놀맵 음성] 기본 목소리 사용'); }
+    u.onstart = () => { if (st) st.textContent = '🔊 재생 중!'; };
+    u.onend   = () => { if (st) st.textContent = '✅ 완료! 잘 들리면 음성 안내를 켜 보세요.'; };
+    u.onerror = (e) => {
+      console.error('[놀맵 음성] 오류:', e.error, e);
+      if (st) st.textContent = '❌ 오류: ' + (e.error || '알 수 없음');
+    };
     s.speak(u);
+    // 삼성 인터넷: speak 후 pending 상태로 멈추는 버그 대응
+    setTimeout(() => {
+      if (s.pending || s.paused) {
+        console.warn('[놀맵 음성] pending/paused 감지 — resume 시도');
+        s.resume();
+      }
+    }, 200);
   } catch(e) {
-    if (st) st.textContent = '⚠️ 오류: ' + e.message;
+    console.error('[놀맵 음성] catch:', e);
+    if (st) st.textContent = '❌ catch 오류: ' + e.message;
   }
 }
 
