@@ -343,6 +343,61 @@
       .catch(() => toast('복사하지 못했어요. 길게 눌러 직접 복사해 주세요.'));
   }
 
+
+  // ===== 버전코드 =====
+  const VERSION_REGEX = /놀구로오는길 (v[\w.+-]+)/;
+  let _currentVersion = '';
+
+  async function loadCurrentVersion(){
+    try{
+      const text = await fetch('index.html', { cache:'no-store' }).then(r => r.text());
+      const m = text.match(VERSION_REGEX);
+      if(m){
+        _currentVersion = m[1];
+        $('versionInput').placeholder = '현재: ' + m[1];
+        $('versionPreview').textContent = '현재 버전: 놀구로오는길 ' + m[1];
+      } else {
+        $('versionPreview').textContent = '버전 문자열을 찾지 못했어요.';
+      }
+    }catch(e){
+      $('versionPreview').textContent = '버전 정보를 불러오지 못했어요.';
+    }
+  }
+
+  function previewVersion(){
+    const v = $('versionInput').value.trim();
+    $('versionPreview').textContent = v
+      ? '미리보기: 놀구로오는길 ' + v
+      : (_currentVersion ? '현재 버전: 놀구로오는길 ' + _currentVersion : '');
+  }
+
+  async function saveVersion(){
+    if(!adminPw){
+      $('versionMsg').className = 'msg bad';
+      $('versionMsg').textContent = '먼저 관리자 로그인을 해 주세요.';
+      return;
+    }
+    const v = $('versionInput').value.trim();
+    if(!v){ $('versionMsg').className='msg bad'; $('versionMsg').textContent='버전코드를 입력해 주세요.'; return; }
+    if(!_currentVersion){ $('versionMsg').className='msg bad'; $('versionMsg').textContent='현재 버전을 불러오지 못했어요.'; return; }
+    if(v === _currentVersion){ toast('이미 같은 버전이에요'); return; }
+    const btn=$('versionSaveBtn'), msg=$('versionMsg');
+    btn.disabled=true; msg.className='msg'; msg.textContent='저장 중...';
+    try{
+      await adminApi('/admin/version', { method:'POST', body:{ version: v } });
+      _currentVersion = v;
+      $('versionInput').value = '';
+      $('versionInput').placeholder = '현재: ' + v;
+      $('versionPreview').textContent = '현재 버전: 놀구로오는길 ' + v;
+      msg.className='msg ok';
+      msg.textContent='✓ ' + v + '(으)로 저장했어요. 1~2분 뒤 반영돼요.';
+    }catch(e){
+      msg.className='msg bad';
+      if(e.status===401) msg.textContent='비밀번호가 맞지 않아요.';
+      else msg.textContent='저장하지 못했어요: ' + e.message;
+    }finally{ btn.disabled=false; }
+  }
+
   // 도보 경로 (놀맵 앱과 같은 Worker)
   async function walk(from, to){
     const url = API + '?sx=' + from[1] + '&sy=' + from[0] + '&ex=' + to[1] + '&ey=' + to[0];
