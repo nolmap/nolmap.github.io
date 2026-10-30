@@ -2107,6 +2107,8 @@ function saveCachedRoute(key, data){
   let _remainLine = null;
   let _routeTarget = null;
 
+  let _autoFollow = true;   // 지도 자동 따라가기 여부
+
   function _updateMyLoc(lat, lng) {
     const map = window._map, LL = window._LL;
     if (!map || !LL) return;
@@ -2120,6 +2122,10 @@ function saveCachedRoute(key, data){
       _myLocOverlay.setMap(map);
     } else {
       _myLocOverlay.setPosition(pos);
+    }
+    // 자동 따라가기 켜져 있으면 지도 이동
+    if (_autoFollow && _watchId !== null) {
+      map.setCenter(pos);
     }
     if (_routePath.length > 0) _updateRouteProgress(lat, lng);
   }
@@ -2172,6 +2178,8 @@ function saveCachedRoute(key, data){
 
   function stopTracking() {
     if (_watchId !== null) { navigator.geolocation.clearWatch(_watchId); _watchId = null; }
+    _autoFollow = true;
+    _hideMyLocBtn();
     const btn = document.getElementById('findBtn');
     if (btn) btn.textContent = '📍';
   }
@@ -2179,6 +2187,8 @@ function saveCachedRoute(key, data){
   function startTracking() {
     if (!navigator.geolocation) return;
     stopTracking();
+    _autoFollow = true;
+    _hideMyLocBtn();
     _watchId = navigator.geolocation.watchPosition(
       pos => _updateMyLoc(pos.coords.latitude, pos.coords.longitude),
       err => console.warn('위치 추적 오류:', err),
@@ -2186,10 +2196,51 @@ function saveCachedRoute(key, data){
     );
     const btn = document.getElementById('findBtn');
     if (btn) btn.textContent = '🔵';
+    // 지도 드래그하면 자동따라가기 OFF
+    if (window._map && !window._dragListenerSet) {
+      window._dragListenerSet = true;
+      kakao.maps.event.addListener(window._map, 'dragstart', () => {
+        if (_watchId !== null) {
+          _autoFollow = false;
+          _showMyLocBtn();
+        }
+      });
+    }
+  }
+
+  function _showMyLocBtn() {
+    let btn = document.getElementById('myLocBtn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'myLocBtn';
+      btn.textContent = '📍 현 위치로';
+      btn.onclick = _centerMyLoc;
+      btn.style.cssText = [
+        'position:absolute', 'bottom:20px', 'left:50%',
+        'transform:translateX(-50%)',
+        'z-index:8', 'border:none',
+        'background:#fff', 'color:#3A4A2E',
+        'font-family:Jua,sans-serif', 'font-size:13px',
+        'padding:10px 20px', 'border-radius:999px',
+        'box-shadow:0 4px 14px rgba(0,0,0,0.22)',
+        'cursor:pointer', 'white-space:nowrap',
+        'display:flex', 'align-items:center', 'gap:4px'
+      ].join(';');
+      // 지도 컨테이너에 추가
+      const mapScreen = document.getElementById('screen-map');
+      if (mapScreen) mapScreen.appendChild(btn);
+    }
+    btn.style.display = 'flex';
+  }
+  function _hideMyLocBtn() {
+    const btn = document.getElementById('myLocBtn');
+    if (btn) btn.style.display = 'none';
   }
 
   function _centerMyLoc() {
     if (!_myLocOverlay || !window._map) return;
+    _autoFollow = true;
+    _hideMyLocBtn();
     window._map.setCenter(_myLocOverlay.getPosition());
     window._map.setLevel(3, { animate: true });
   }
