@@ -49,6 +49,50 @@
     --safe:#F97316; --safe-bg:#FFEDD5; --ink:#3A1800; --muted:#A07050;
     --shadow:0 8px 20px rgba(249,115,22,0.18);
   }
+  /* 빨강/핑크 테마 */
+  :root[data-theme="red"]{
+    --bg-mint:#FFF0F3; --leaf:#F43F5E; --leaf-deep:#BE123C; --leaf-text:#9F1239;
+    --safe:#F43F5E; --safe-bg:#FFE4E9; --ink:#3B0015; --muted:#A06070;
+    --shadow:0 8px 20px rgba(244,63,94,0.18);
+  }
+  /* 노랑 테마 */
+  :root[data-theme="yellow"]{
+    --bg-mint:#FFFBEB; --leaf:#EAB308; --leaf-deep:#A16207; --leaf-text:#713F12;
+    --safe:#EAB308; --safe-bg:#FEF9C3; --ink:#3B2A00; --muted:#A08040;
+    --shadow:0 8px 20px rgba(234,179,8,0.18);
+  }
+  /* 하늘/민트 테마 */
+  :root[data-theme="mint"]{
+    --bg-mint:#ECFEFF; --leaf:#06B6D4; --leaf-deep:#0E7490; --leaf-text:#155E75;
+    --safe:#06B6D4; --safe-bg:#CFFAFE; --ink:#0C2A33; --muted:#4A8090;
+    --shadow:0 8px 20px rgba(6,182,212,0.18);
+  }
+  /* 갈색/브라운 테마 */
+  :root[data-theme="brown"]{
+    --bg-mint:#FDF8F4; --leaf:#92400E; --leaf-deep:#6B2D00; --leaf-text:#451A03;
+    --safe:#92400E; --safe-bg:#FDE8D5; --ink:#1C0A00; --muted:#8B6A50;
+    --shadow:0 8px 20px rgba(146,64,14,0.18);
+  }
+  /* 그레이 테마 */
+  :root[data-theme="gray"]{
+    --bg-mint:#F4F4F5; --leaf:#52525B; --leaf-deep:#27272A; --leaf-text:#18181B;
+    --safe:#52525B; --safe-bg:#E4E4E7; --ink:#09090B; --muted:#71717A;
+    --shadow:0 8px 20px rgba(39,39,42,0.18);
+  }
+  /* 다크모드 테마 */
+  :root[data-theme="dark"]{
+    --bg-mint:#1A1A2E; --leaf:#7C3AED; --leaf-deep:#5B21B6; --leaf-text:#C4B5FD;
+    --white:#2D2D44; --safe:#7C3AED; --safe-bg:#2E1B5E;
+    --ink:#F0EEFF; --muted:#9D8EC8; --danger:#F87171; --danger-bg:#3B1515;
+    --shadow:0 8px 20px rgba(0,0,0,0.45);
+  }
+  :root[data-theme="dark"] .tabbar{ border-top-color:#3D3D5C; }
+  :root[data-theme="dark"] .quicklink,
+  :root[data-theme="dark"] .setting-row,
+  :root[data-theme="dark"] .shop-item{ border-color:#3D3D5C; }
+  :root[data-theme="dark"] .privacy-card,
+  :root[data-theme="dark"] .contact-card,
+  :root[data-theme="dark"] .angel-shop-card{ background:#2D2D44; }
 
   /* ===== 글자 크기 — JS로 클래스 적용 ===== */
   /* 기본: 변화 없음 */
@@ -167,12 +211,14 @@
   :root.hc .section-label,
   :root.hc .shop-txt h5{ font-size:16px; }
   /* ===== 색 테마 스와치 ===== */
-  .theme-swatches{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+  .theme-swatches{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
   .theme-swatch{
-    width:36px; height:36px; border-radius:50%;
+    width:34px; height:34px; border-radius:50%;
     border:3px solid transparent;
     cursor:pointer; transition:transform .15s;
     box-shadow:0 2px 6px rgba(0,0,0,0.18);
+    font-size:13px; display:flex; align-items:center; justify-content:center;
+    color:rgba(255,255,255,0.9); line-height:1;
   }
   .theme-swatch:hover{ transform:scale(1.12); }
   .theme-swatch.active{
@@ -1143,10 +1189,16 @@
             <div><h5>테마 색상</h5><p>앱 전체 색을 골라요</p></div>
           </div>
           <div class="theme-swatches">
-            <button class="theme-swatch active" data-t="green"  style="background:#8FD14F;" title="초록" onclick="setTheme('green')"></button>
-            <button class="theme-swatch"        data-t="blue"   style="background:#3A9EDB;" title="파랑" onclick="setTheme('blue')"></button>
-            <button class="theme-swatch"        data-t="purple" style="background:#8B5CF6;" title="보라" onclick="setTheme('purple')"></button>
+            <button class="theme-swatch active" data-t="green"  style="background:#8FD14F;" title="대표 초록" onclick="setTheme('green')">⭐</button>
+            <button class="theme-swatch"        data-t="red"    style="background:#F43F5E;" title="빨강/핑크" onclick="setTheme('red')"></button>
             <button class="theme-swatch"        data-t="orange" style="background:#F97316;" title="주황" onclick="setTheme('orange')"></button>
+            <button class="theme-swatch"        data-t="yellow" style="background:#EAB308;" title="노랑" onclick="setTheme('yellow')"></button>
+            <button class="theme-swatch"        data-t="mint"   style="background:#06B6D4;" title="하늘/민트" onclick="setTheme('mint')"></button>
+            <button class="theme-swatch"        data-t="blue"   style="background:#3A9EDB;" title="파랑" onclick="setTheme('blue')"></button>
+            <button class="theme-swatch"        data-t="gray"   style="background:#52525B;" title="그레이" onclick="setTheme('gray')"></button>
+            <button class="theme-swatch"        data-t="purple" style="background:#8B5CF6;" title="보라" onclick="setTheme('purple')"></button>
+            <button class="theme-swatch"        data-t="brown"  style="background:#92400E;" title="갈색/브라운" onclick="setTheme('brown')"></button>
+            <button class="theme-swatch"        data-t="dark"   style="background:#1A1A2E;border:2px solid #7C3AED;" title="다크모드" onclick="setTheme('dark')"></button>
           </div>
         </div>
 
@@ -1420,7 +1472,18 @@ let _voiceOn = false;
 
 // speechSynthesis 래퍼 — 삼성 인터넷은 window.speechSynthesis 있어도
 // 첫 호출 타이밍에 따라 실패할 수 있어서 매번 window에서 꺼내 씀
-function _synth() { return window.speechSynthesis || null; }
+function _synth() {
+  // 삼성 인터넷: speechSynthesis가 타이밍에 따라 undefined로 잡히는 버그 대응
+  try {
+    if (typeof speechSynthesis !== 'undefined') return speechSynthesis;
+    if (window.speechSynthesis) return window.speechSynthesis;
+    if (typeof SpeechSynthesisUtterance !== 'undefined') {
+      // API는 있는데 speechSynthesis만 안 잡힐 때
+      return window.speechSynthesis || null;
+    }
+  } catch(e) {}
+  return null;
+}
 
 function _getBestVoice() {
   const s = _synth(); if (!s) return null;
@@ -1450,7 +1513,8 @@ function speak(text) {
 }
 
 function setVoice(on) {
-  if (on && !_synth()) {
+  // 삼성 인터넷: 첫 체크 실패해도 실제로는 지원할 수 있어서 한 번 더 시도
+  if (on && !_synth() && typeof SpeechSynthesisUtterance === 'undefined') {
     const st = document.getElementById('voiceStatus');
     if (st) st.textContent = '⚠️ 이 브라우저는 음성 안내를 지원하지 않아요.';
     const cb = document.getElementById('voiceToggle');
@@ -1472,8 +1536,15 @@ function testVoice() {
   const st = document.getElementById('voiceStatus');
 
   // 1단계: speechSynthesis 존재 확인
-  if (!s) {
-    if (st) st.textContent = '❌ speechSynthesis 없음 — 브라우저 미지원';
+  // speechSynthesis 미지원 체크
+  if (!s && typeof SpeechSynthesisUtterance === 'undefined') {
+    // 네이버/카카오 등 인앱 브라우저인지 확인
+    const ua = navigator.userAgent || '';
+    const isInApp = /NAVER|KAKAOTALK|Instagram|FBAN|FBAV/i.test(ua);
+    if (st) {
+      if (isInApp) st.textContent = '❌ 앱 내 브라우저는 음성을 지원하지 않아요. 삼성 인터넷이나 크롬으로 열어 주세요!';
+      else st.textContent = '❌ 이 브라우저는 음성을 지원하지 않아요.';
+    }
     return;
   }
 
